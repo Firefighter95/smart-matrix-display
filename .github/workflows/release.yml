@@ -1,0 +1,31 @@
+name: Release artifacts
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run portal:esp32
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python -m pip install --upgrade platformio
+      - run: pio run --project-dir firmware
+      - run: pio run --project-dir firmware --target buildfs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smart-matrix-${{ github.ref_name }}
+          path: |
+            firmware/.pio/build/waveshare-esp32-s3-rgb-matrix/firmware.bin
+            firmware/.pio/build/waveshare-esp32-s3-rgb-matrix/littlefs.bin
+            firmware/data
