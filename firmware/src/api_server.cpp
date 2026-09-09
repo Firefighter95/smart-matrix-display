@@ -16,6 +16,9 @@ void ApiServer::begin() {
   server_.on("/api/v1/message", HTTP_POST, [this](AsyncWebServerRequest* request) {
     request->send(501, "application/json", "{\"ok\":false,\"error\":{\"code\":\"BODY_HANDLER_PENDING\",\"message\":\"Message POST wordt in de productie-fase geactiveerd.\"}}");
   });
+  server_.on("/api/v1/weather", HTTP_PUT, [this](AsyncWebServerRequest* request) {
+    request->send(501, "application/json", "{\"ok\":false,\"error\":{\"code\":\"WEATHER_RENDERER_PENDING\",\"message\":\"Weather PUT wordt na hardwarebevestiging geactiveerd.\"}}");
+  });
   server_.on("/api/v1/clear", HTTP_POST, [this](AsyncWebServerRequest* request) {
     display_.setMode(DisplayMode::CLOCK);
     logs_.add(LogCategory::API, LogLevel::INFO, "Display gewist");

@@ -63,3 +63,77 @@ restart:
   target:
     device:
       integration: smart_matrix_display
+
+send_weather:
+  name: Send weather
+  description: Push the current state of a Home Assistant weather entity to one or more displays.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    weather_entity_id:
+      name: Weather entity
+      description: Optional override. If empty, the weather entity selected while adding the display is used.
+      selector:
+        entity:
+          domain: weather
+
+send_p2000:
+  name: Send P2000 alert
+  description: Push a P2000 alert received by Home Assistant to one or more displays.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    title:
+      name: Title
+      default: P2000
+      selector:
+        text:
+    message:
+      name: P2000 message
+      required: true
+      selector:
+        text:
+          multiline: true
+    location:
+      name: Location
+      description: Optional location shown before the alert text.
+      selector:
+        text:
+    capcode:
+      name: Capcode
+      description: Optional source capcode for automation/debugging.
+      selector:
+        text:
+    duration:
+      name: Duration
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 86400
+          mode: box
+          unit_of_measurement: s
+    color:
+      name: Color
+      default: "#FF3B30"
+      selector:
+        text:
+    alignment:
+      name: Alignment
+      default: left
+      selector:
+        select:
+          options:
+            - left
+            - center
+            - right
+    priority:
+      name: Priority
+      default: 90
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider

@@ -48,16 +48,21 @@ class SmartMatrixApiClient:
             headers["X-Smart-Matrix-Token"] = self._token
 
         try:
-            async with async_timeout.timeout(self._timeout), self._session.request(
-                method,
-                f"{self._base_url}{path}",
-                json=payload,
-                headers=headers,
-            ) as response:
+            async with (
+                async_timeout.timeout(self._timeout),
+                self._session.request(
+                    method,
+                    f"{self._base_url}{path}",
+                    json=payload,
+                    headers=headers,
+                ) as response,
+            ):
                 body = await response.json(content_type=None)
                 if response.status >= 400:
                     detail = body.get("error", {}) if isinstance(body, dict) else {}
-                    message = detail.get("message") if isinstance(detail, dict) else None
+                    message = (
+                        detail.get("message") if isinstance(detail, dict) else None
+                    )
                     raise SmartMatrixApiError(
                         message or f"Device returned HTTP {response.status}"
                     )
@@ -65,7 +70,9 @@ class SmartMatrixApiClient:
                     raise SmartMatrixApiError("Device returned an invalid JSON object")
                 if body.get("ok") is False:
                     detail = body.get("error", {})
-                    message = detail.get("message") if isinstance(detail, dict) else None
+                    message = (
+                        detail.get("message") if isinstance(detail, dict) else None
+                    )
                     raise SmartMatrixApiError(message or "Device rejected the request")
                 data = body.get("data")
                 return data if isinstance(data, dict) else body
@@ -88,6 +95,11 @@ class SmartMatrixApiClient:
         """Show a message on the display."""
 
         return await self._request("POST", "/api/v1/message", payload)
+
+    async def async_send_weather(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        """Send a normalized Home Assistant weather snapshot."""
+
+        return await self._request("PUT", "/api/v1/weather", payload)
 
     async def async_clear_display(self) -> dict[str, Any]:
         """Clear the active message and return to the clock."""

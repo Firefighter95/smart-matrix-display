@@ -15,7 +15,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
   "wifi_rssi": -52,
   "uptime": 123456,
   "time_synced": true,
-  "firmware": "1.0.0-dev",
+  "firmware": "1.2.0-dev",
   "resolution": "128x64",
   "ip": "192.168.1.82",
   "hostname": "smartmatrix",
@@ -37,6 +37,25 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 {"title":"WASMACHINE","message":"KLAAR","duration":20,"color":"#00FF00","alignment":"center","priority":50}
 ```
 
+## Weer
+
+`PUT /api/v1/weather` accepteert een compact Home Assistant-snapshot:
+
+```json
+{
+  "source": "home_assistant",
+  "condition": "partlycloudy",
+  "temperatureC": 18.4,
+  "apparentTemperatureC": 17.9,
+  "humidity": 71,
+  "precipitationProbability": 20,
+  "windSpeedKph": 12,
+  "observedAt": "2026-09-10T08:30:00+02:00"
+}
+```
+
+De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. Tijdens de fase-A hardwaretest retourneert het firmwareendpoint nog `501 WEATHER_RENDERER_PENDING`.
+
 ## Overige endpoints
 
 - `POST /api/v1/clear` → wis bericht, ga terug naar `CLOCK`.
@@ -45,10 +64,10 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 
 `device_id` is een stabiele eFuse-gebaseerde identificatie van de ESP32 en wordt door de Home Assistant-integratie gebruikt als device identifier. Het IP-adres blijft alleen het transportadres.
 
-`WEATHER` en `WeatherSnapshot` zijn als uitbreidingscontract voorbereid in `shared/schemas/`; het weerendpoint wordt pas na de V1 hardwarebevestiging geactiveerd.
+`PUT /api/v1/weather` accepteert het genormaliseerde `WeatherSnapshot`-contract. De huidige fase-A firmware retourneert hiervoor nog `501 WEATHER_RENDERER_PENDING`; de HACS-integratie kan de bestaande Home Assistant weatherentity al volgen en pushen zodra de productie-renderer actief is.
 
 De portal gebruikt uitsluitend `DeviceApi`; `MockDeviceApi` en `Esp32DeviceApi` houden UI en transport los van elkaar.
 
 ## Home Assistant
 
-De optionele HACS-integratie staat in `custom_components/smart_matrix_display/`. Voeg elk display via de config flow toe met IP-adres/hostnaam. De integratie maakt status-entiteiten en de services `smart_matrix_display.send_message`, `smart_matrix_display.clear_display` en `smart_matrix_display.restart` beschikbaar. Zie [`docs/home-assistant.md`](home-assistant.md).
+De optionele HACS-integratie staat in `custom_components/smart_matrix_display/`. Voeg elk display via de config flow toe met IP-adres/hostnaam. De integratie maakt status-entiteiten en de services `smart_matrix_display.send_message`, `smart_matrix_display.send_weather`, `smart_matrix_display.send_p2000`, `smart_matrix_display.clear_display` en `smart_matrix_display.restart` beschikbaar. Zie [`docs/home-assistant.md`](home-assistant.md).

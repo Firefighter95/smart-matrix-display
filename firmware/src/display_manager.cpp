@@ -34,6 +34,7 @@ String DisplayManager::modeName() const {
     case DisplayMode::TEST: return "TEST";
     case DisplayMode::CLOCK: return "CLOCK";
     case DisplayMode::MESSAGE: return "MESSAGE";
+    case DisplayMode::WEATHER: return "WEATHER";
     case DisplayMode::OFF: return "OFF";
     default: return "BOOT";
   }
@@ -98,4 +99,3 @@ void DisplayManager::update() {
     renderMovingBlock();
   }
 }
-

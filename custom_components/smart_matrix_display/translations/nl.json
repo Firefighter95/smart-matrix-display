@@ -8,7 +8,8 @@
           "host": "IP-adres of hostnaam",
           "port": "HTTP-poort",
           "token": "API-token",
-          "name": "Displaynaam"
+          "name": "Displaynaam",
+          "weather_entity": "Home Assistant weerentity"
         }
       },
       "reconfigure": {
@@ -18,7 +19,8 @@
           "host": "IP-adres of hostnaam",
           "port": "HTTP-poort",
           "token": "API-token",
-          "name": "Displaynaam"
+          "name": "Displaynaam",
+          "weather_entity": "Home Assistant weerentity"
         }
       }
     },

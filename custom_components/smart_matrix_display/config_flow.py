@@ -8,14 +8,28 @@ from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SmartMatrixApiClient, SmartMatrixApiError
-from .const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_TOKEN, DEFAULT_PORT, DOMAIN
+from .const import (
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_TOKEN,
+    CONF_WEATHER_ENTITY,
+    DEFAULT_PORT,
+    DOMAIN,
+)
 
 
 def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     defaults = defaults or {}
+    weather_field = vol.Optional(CONF_WEATHER_ENTITY)
+    if CONF_WEATHER_ENTITY in defaults:
+        weather_field = vol.Optional(
+            CONF_WEATHER_ENTITY, default=defaults[CONF_WEATHER_ENTITY]
+        )
     return vol.Schema(
         {
             vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, "")): str,
@@ -24,6 +38,9 @@ def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
             ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
             vol.Optional(CONF_TOKEN, default=defaults.get(CONF_TOKEN, "")): str,
             vol.Optional(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
+            weather_field: selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="weather")
+            ),
         }
     )
 
@@ -73,13 +90,16 @@ class SmartMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 or status.get("hostname")
                 or f"Smart Matrix {user_input[CONF_HOST].strip()}"
             )
+            entry_data = {
+                CONF_HOST: user_input[CONF_HOST].strip(),
+                CONF_PORT: user_input[CONF_PORT],
+                CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
+            }
+            if user_input.get(CONF_WEATHER_ENTITY):
+                entry_data[CONF_WEATHER_ENTITY] = user_input[CONF_WEATHER_ENTITY]
             return self.async_create_entry(
                 title=title,
-                data={
-                    CONF_HOST: user_input[CONF_HOST].strip(),
-                    CONF_PORT: user_input[CONF_PORT],
-                    CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
-                },
+                data=entry_data,
             )
 
         return self.async_show_form(step_id="user", data_schema=_schema())
@@ -101,14 +121,14 @@ class SmartMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data_schema=_schema(user_input),
                     errors={"base": "cannot_connect"},
                 )
-            self.hass.config_entries.async_update_entry(
-                entry,
-                data={
-                    CONF_HOST: user_input[CONF_HOST].strip(),
-                    CONF_PORT: user_input[CONF_PORT],
-                    CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
-                },
-            )
+            entry_data = {
+                CONF_HOST: user_input[CONF_HOST].strip(),
+                CONF_PORT: user_input[CONF_PORT],
+                CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
+            }
+            if user_input.get(CONF_WEATHER_ENTITY):
+                entry_data[CONF_WEATHER_ENTITY] = user_input[CONF_WEATHER_ENTITY]
+            self.hass.config_entries.async_update_entry(entry, data=entry_data)
             await self.hass.config_entries.async_reload(entry.entry_id)
             return self.async_abort(reason="reconfigure_successful")
 

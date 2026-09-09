@@ -18,6 +18,7 @@ Smart Matrix Display bevat een lokale Home Assistant custom integration die via 
 7. Ga naar **Settings → Devices & services → Add integration**.
 8. Zoek **Smart Matrix Display**.
 9. Vul het IP-adres of de hostnaam, poort en optionele API-token in.
+10. Selecteer optioneel jouw bestaande Home Assistant `weather.*`-entity.
 
 Herhaal de configuratiestroom voor ieder display. Elk IP-adres wordt een afzonderlijk Home Assistant-device. Geef bij het toevoegen een herkenbare naam, bijvoorbeeld `Matrix woonkamer`, `Matrix keuken` of `Matrix kantoor`.
 
@@ -75,6 +76,61 @@ Ook beschikbaar:
 
 - `smart_matrix_display.clear_display`
 - `smart_matrix_display.restart`
+- `smart_matrix_display.send_weather`
+- `smart_matrix_display.send_p2000`
+
+## Weer vanuit Home Assistant
+
+De integratie leest geen weerprovider en geen thuisadres zelf uit. Je selecteert tijdens het toevoegen de bestaande HA-weatherentity die al aan jouw thuislocatie gekoppeld is, bijvoorbeeld `weather.home`. Home Assistant weather entities leveren actuele conditie en meetwaarden als state en attributen; de integratie normaliseert temperatuur naar °C en windsnelheid naar km/h voordat het snapshot naar het display wordt gestuurd. [Home Assistant weather entity](https://www.home-assistant.io/integrations/weather)
+
+Bij meerdere displays kun je dezelfde `weather.home`-entity bij ieder display selecteren. Een wijziging in de weatherentity wordt dan naar alle gekoppelde displays doorgestuurd. Je kunt ook handmatig pushen:
+
+```yaml
+action:
+  - action: smart_matrix_display.send_weather
+    target:
+      device_id:
+        - DISPLAY_DEVICE_ID_1
+        - DISPLAY_DEVICE_ID_2
+    data:
+      weather_entity_id: weather.home
+```
+
+Weerforecasten worden in Home Assistant via `weather.get_forecasts` opgehaald en zijn geen gewone state-attributen. De eerste Smart Matrix weather-layout gebruikt daarom de actuele snapshot; forecast-layouts kunnen later worden toegevoegd. [Home Assistant weather forecasts](https://www.home-assistant.io/integrations/weather)
+
+## P2000 via Home Assistant
+
+De integratie hoeft niet afhankelijk te zijn van één specifieke P2000/HACS-integratie. Je bestaande P2000-integratie kan een state- of event-trigger gebruiken en daarna `smart_matrix_display.send_p2000` aanroepen.
+
+Voorbeeld als de P2000-integratie een sensor bijwerkt:
+
+```yaml
+alias: P2000 naar matrix
+triggers:
+  - trigger: state
+    entity_id: sensor.p2000_melding
+conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.to_state is not none and
+         trigger.to_state.state not in ['unknown', 'unavailable', ''] }}
+actions:
+  - action: smart_matrix_display.send_p2000
+    target:
+      device_id:
+        - DISPLAY_DEVICE_ID_1
+        - DISPLAY_DEVICE_ID_2
+    data:
+      title: P2000
+      message: "{{ trigger.to_state.state }}"
+      location: "{{ trigger.to_state.attributes.location | default('', true) }}"
+      capcode: "{{ trigger.to_state.attributes.capcode | default('', true) }}"
+      duration: 30
+      color: "#FF3B30"
+      priority: 90
+```
+
+De exacte entity-ID en attribuutnamen kunnen per P2000-integratie verschillen. Controleer deze in **Settings → Developer tools → States**. De service ondersteunt meerdere device-targets, zodat één melding gelijktijdig naar meerdere matrixdisplays kan worden gestuurd.
 
 ## API-token
 
@@ -86,4 +142,4 @@ De integratie gebruikt één config entry per fysieke display. De stabiele devic
 
 ## Versie-status
 
-De HACS-integratie en het servicecontract zijn nu voorbereid en staan in GitHub. De huidige hardwaretestfirmware bevat nog niet de definitieve message-renderer en WiFi-provisioning. Zodra de HUB75-panelconfiguratie fysiek is bevestigd, worden de firmware message-endpoint en productie-renderer geactiveerd zonder de Home Assistant-integratie te wijzigen.
+De HACS-integratie en de HA-services staan in GitHub. De huidige hardwaretestfirmware bevat nog niet de definitieve message/weather-renderers en WiFi-provisioning. Zodra de HUB75-panelconfiguratie fysiek is bevestigd, worden de firmware endpoints en productie-renderers geactiveerd zonder de Home Assistant-configuratie te wijzigen.
