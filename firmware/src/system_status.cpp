@@ -10,7 +10,7 @@ String SystemStatus::json(bool online, int32_t rssi, bool synced, bool displayEn
   result += ",\"wifi_rssi\":" + String(rssi);
   result += ",\"uptime\":" + String(millis() / 1000);
   result += ",\"time_synced\":" + String(synced ? "true" : "false");
-  result += ",\"firmware\":\"1.2.0-dev\",\"resolution\":\"128x64\"";
+  result += ",\"firmware\":\"1.3.0-dev\",\"resolution\":\"128x64\"";
   result += ",\"ip\":\"" + ip + "\",\"hostname\":\"" + hostname + "\"";
   result += ",\"heap_free\":" + String(ESP.getFreeHeap());
   result += ",\"psram_free\":" + String(ESP.getFreePsram());

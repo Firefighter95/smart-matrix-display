@@ -15,7 +15,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
   "wifi_rssi": -52,
   "uptime": 123456,
   "time_synced": true,
-  "firmware": "1.2.0-dev",
+  "firmware": "1.3.0-dev",
   "resolution": "128x64",
   "ip": "192.168.1.82",
   "hostname": "smartmatrix",
