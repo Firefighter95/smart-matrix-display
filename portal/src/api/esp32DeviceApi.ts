@@ -10,6 +10,7 @@ const pick = <T,>(raw: RawRecord, camel: string, snake: string, fallback: T): T 
 
 const normalizeStatus = (raw: RawRecord): DeviceStatus => ({
   online: pick(raw, 'online', 'online', true),
+  deviceId: pick(raw, 'deviceId', 'device_id', undefined),
   mode: pick(raw, 'mode', 'mode', 'CLOCK'),
   brightness: pick(raw, 'brightness', 'brightness', 0),
   wifiRssi: pick(raw, 'wifiRssi', 'wifi_rssi', 0),
@@ -58,4 +59,3 @@ export class Esp32DeviceApi implements DeviceApi {
     return () => this.listeners.delete(listener);
   }
 }
-

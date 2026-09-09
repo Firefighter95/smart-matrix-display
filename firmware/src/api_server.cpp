@@ -7,7 +7,7 @@ ApiServer::ApiServer(ConfigManager& config, DisplayManager& display, LogManager&
 void ApiServer::begin() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   server_.on("/api/v1/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
-    request->send(200, "application/json", status_.json(wifi_.connected(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName()));
+    request->send(200, "application/json", status_.json(wifi_.connected(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname()));
   });
   server_.on("/api/v1/config", HTTP_GET, [this](AsyncWebServerRequest* request) { request->send(200, "application/json", config_.json()); });
   server_.on("/api/v1/config", HTTP_PUT, [this](AsyncWebServerRequest* request) {
@@ -29,4 +29,3 @@ void ApiServer::begin() {
 }
 
 void ApiServer::update() {}
-

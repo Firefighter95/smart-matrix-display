@@ -6,6 +6,7 @@
   "required": ["online", "mode", "brightness", "wifiRssi", "uptime", "timeSynced", "firmware", "resolution", "ip", "hostname", "heapFree", "psramFree", "displayEnabled"],
   "properties": {
     "online": { "type": "boolean" },
+    "deviceId": { "type": "string" },
     "mode": { "enum": ["BOOT", "TEST", "CLOCK", "MESSAGE", "WEATHER", "OFF"] },
     "brightness": { "type": "integer", "minimum": 0, "maximum": 100 },
     "wifiRssi": { "type": "integer" },

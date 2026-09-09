@@ -40,6 +40,7 @@ const initialConfig: DeviceConfig = {
 
 const initialStatus: DeviceStatus = {
   online: true,
+  deviceId: 'AABBCCDDEEFF',
   mode: 'CLOCK',
   brightness: 25,
   wifiRssi: -52,
@@ -209,4 +210,3 @@ export class MockDeviceApiImpl implements MockDeviceApi {
 export const createMockDeviceApi = (): MockDeviceApi => new MockDeviceApiImpl();
 
 export const isMockDeviceApi = (api: DeviceApi): api is MockDeviceApi => api instanceof MockDeviceApiImpl;
-

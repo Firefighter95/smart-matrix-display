@@ -1,6 +1,6 @@
 # Smart Matrix Display
 
-Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal. V1 richt zich op één P2.5 indoorpaneel van 128×64 pixels. P2000, MQTT, Home Assistant, weer en multi-panel zijn bewust voorbereid in de architectuur maar nog niet geactiveerd.
+Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. V1 richt zich op één P2.5 indoorpaneel van 128×64 pixels. P2000, MQTT, weer en multi-panel zijn bewust voorbereid in de architectuur maar nog niet geactiveerd.
 
 ## Eerste milestone
 
@@ -34,7 +34,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-portal.ps1
 
 Zie [`docs/portal.md`](docs/portal.md) voor de ESP32-adapter, `.env`-schakeling en asset-build.
 
-Voor de geplande Home Assistant-weeruitbreiding zie [`docs/home-assistant-weather.md`](docs/home-assistant-weather.md). De snelste route is nu Open-Meteo in Home Assistant; HACS blijft een verwisselbare bronlaag.
+Voor Home Assistant-berichten en meerdere displays zie [`docs/home-assistant.md`](docs/home-assistant.md). Voor de geplande weeruitbreiding zie [`docs/home-assistant-weather.md`](docs/home-assistant-weather.md). HACS installeert de lokale integratie; ieder display wordt via IP als afzonderlijk HA-device toegevoegd.
 
 ## Portal naar LittleFS
 
@@ -71,6 +71,7 @@ De versioned basis is `/api/v1/`: status, config, message, clear, logs en restar
 firmware/        PlatformIO Arduino firmware + LittleFS data
 portal/          lokale Vite/React/TypeScript portal
 shared/schemas/   gedeelde TypeScript-modellen en JSON-schema's
+custom_components/ Home Assistant custom integration voor HACS
 docs/            hardware, API, portal en troubleshooting
 scripts/         Windows build/start helpers
 .github/         portal, firmware en release workflows
@@ -88,4 +89,5 @@ Na de eerste lokale review kunnen desktop- en mobiele screenshots onder `docs/sc
 
 - de exacte HUB75 pinmapping en scanmode zijn nog niet fysiek bevestigd;
 - firmware production renderer, WiFi provisioning, volledige JSON-body parsing, OTA-uploadhandler en config-import/export volgen na hardwarebevestiging;
+- de HACS-integratie en HA-services zijn toegevoegd, maar vereisen de toekomstige productie message-endpoint in de firmware om fysieke berichten te tonen;
 - de lokale portal/mock mode is volledig bruikbaar voor UI- en UX-review zonder ESP32.

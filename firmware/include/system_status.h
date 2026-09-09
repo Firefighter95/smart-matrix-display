@@ -4,6 +4,5 @@
 
 class SystemStatus {
 public:
-  String json(bool online, int32_t rssi, bool synced, bool displayEnabled, const String& mode) const;
+  String json(bool online, int32_t rssi, bool synced, bool displayEnabled, const String& mode, const String& ip, const String& hostname) const;
 };
-

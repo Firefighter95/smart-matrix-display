@@ -5,6 +5,7 @@ export type LogCategory = 'SYSTEM' | 'WIFI' | 'TIME' | 'DISPLAY' | 'API' | 'OTA'
 
 export interface DeviceStatus {
   online: boolean;
+  deviceId?: string;
   mode: DisplayMode;
   brightness: number;
   wifiRssi: number;

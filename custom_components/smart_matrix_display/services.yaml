@@ -1,0 +1,65 @@
+send_message:
+  name: Send message
+  description: Show a message on one or more Smart Matrix Display devices.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    title:
+      name: Title
+      description: Optional title shown above the message.
+      selector:
+        text:
+    message:
+      name: Message
+      description: Main text to show on the matrix.
+      required: true
+      selector:
+        text:
+          multiline: true
+    duration:
+      name: Duration
+      description: Number of seconds before the display returns to its normal mode.
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 86400
+          mode: box
+          unit_of_measurement: s
+    color:
+      name: Color
+      default: "#00FF00"
+      selector:
+        text:
+    alignment:
+      name: Alignment
+      default: center
+      selector:
+        select:
+          options:
+            - left
+            - center
+            - right
+    priority:
+      name: Priority
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+
+clear_display:
+  name: Clear display
+  description: Clear the current message and return the display to its normal mode.
+  target:
+    device:
+      integration: smart_matrix_display
+
+restart:
+  name: Restart
+  description: Restart one or more Smart Matrix Display controllers.
+  target:
+    device:
+      integration: smart_matrix_display

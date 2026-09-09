@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Smart Matrix Display",
+        "description": "Enter the local IP address or hostname of one display. Repeat this flow for additional displays.",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "HTTP port",
+          "token": "API token",
+          "name": "Display name"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Smart Matrix Display",
+        "description": "Update the local connection details for this display.",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "HTTP port",
+          "token": "API token",
+          "name": "Display name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the display. Check the IP address, port, Wi-Fi and API token."
+    },
+    "abort": {
+      "already_configured": "This display is already configured.",
+      "cannot_connect": "The display could not be configured.",
+      "reconfigure_successful": "The display connection was updated."
+    }
+  }
+}

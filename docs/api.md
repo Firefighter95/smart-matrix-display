@@ -9,6 +9,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 ```json
 {
   "online": true,
+  "device_id": "AABBCCDDEEFF",
   "mode": "CLOCK",
   "brightness": 25,
   "wifi_rssi": -52,
@@ -42,6 +43,12 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 - `GET /api/v1/logs` → laatste circa 100 logs.
 - `POST /api/v1/restart` → `202 Accepted`, device herstart.
 
+`device_id` is een stabiele eFuse-gebaseerde identificatie van de ESP32 en wordt door de Home Assistant-integratie gebruikt als device identifier. Het IP-adres blijft alleen het transportadres.
+
 `WEATHER` en `WeatherSnapshot` zijn als uitbreidingscontract voorbereid in `shared/schemas/`; het weerendpoint wordt pas na de V1 hardwarebevestiging geactiveerd.
 
 De portal gebruikt uitsluitend `DeviceApi`; `MockDeviceApi` en `Esp32DeviceApi` houden UI en transport los van elkaar.
+
+## Home Assistant
+
+De optionele HACS-integratie staat in `custom_components/smart_matrix_display/`. Voeg elk display via de config flow toe met IP-adres/hostnaam. De integratie maakt status-entiteiten en de services `smart_matrix_display.send_message`, `smart_matrix_display.clear_display` en `smart_matrix_display.restart` beschikbaar. Zie [`docs/home-assistant.md`](home-assistant.md).
