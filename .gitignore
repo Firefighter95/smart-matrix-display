@@ -1,0 +1,15 @@
+node_modules/
+portal/dist/
+portal/*.tsbuildinfo
+portal/vite.config.js
+portal/vite.config.d.ts
+firmware/.pio/
+firmware/.data-staging/
+firmware/.data-backup-*/
+firmware/data/**/*.gz
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db

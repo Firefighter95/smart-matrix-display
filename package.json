@@ -1,0 +1,15 @@
+{
+  "name": "smart-matrix-display",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["portal"],
+  "scripts": {
+    "dev": "npm --workspace portal run dev",
+    "portal:dev": "npm --workspace portal run dev",
+    "portal:build": "npm --workspace portal run build",
+    "portal:esp32": "npm --workspace portal run build:esp32",
+    "portal:typecheck": "npm --workspace portal run typecheck",
+    "portal:lint": "npm --workspace portal run lint"
+  }
+}
+

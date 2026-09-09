@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "/shared/schemas/device-status.schema.json",
+  "title": "Smart Matrix device status",
+  "type": "object",
+  "required": ["online", "mode", "brightness", "wifiRssi", "uptime", "timeSynced", "firmware", "resolution", "ip", "hostname", "heapFree", "psramFree", "displayEnabled"],
+  "properties": {
+    "online": { "type": "boolean" },
+    "mode": { "enum": ["BOOT", "TEST", "CLOCK", "MESSAGE", "WEATHER", "OFF"] },
+    "brightness": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "wifiRssi": { "type": "integer" },
+    "uptime": { "type": "integer", "minimum": 0 },
+    "timeSynced": { "type": "boolean" },
+    "firmware": { "type": "string" },
+    "resolution": { "const": "128x64" },
+    "ip": { "type": "string" },
+    "hostname": { "type": "string" },
+    "heapFree": { "type": "integer", "minimum": 0 },
+    "psramFree": { "type": "integer", "minimum": 0 },
+    "displayEnabled": { "type": "boolean" }
+  }
+}

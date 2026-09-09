@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "/shared/schemas/device-config.schema.json",
+  "title": "Smart Matrix device configuration",
+  "type": "object",
+  "required": ["schemaVersion", "display", "clock"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "display": { "type": "object" },
+    "clock": { "type": "object" }
+  }
+}
+

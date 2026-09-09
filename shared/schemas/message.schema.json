@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "/shared/schemas/message.schema.json",
+  "title": "Smart Matrix message",
+  "type": "object",
+  "required": ["title", "message", "duration", "color", "alignment", "priority"],
+  "properties": {
+    "title": { "type": "string", "maxLength": 32 },
+    "message": { "type": "string", "maxLength": 128 },
+    "duration": { "type": "integer", "minimum": 1, "maximum": 3600 },
+    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "alignment": { "enum": ["left", "center", "right"] },
+    "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+  }
+}
+

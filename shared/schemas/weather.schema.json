@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "/shared/schemas/weather.schema.json",
+  "title": "Smart Matrix Home Assistant weather snapshot",
+  "type": "object",
+  "required": ["source", "condition", "temperatureC", "observedAt"],
+  "properties": {
+    "source": { "const": "home_assistant" },
+    "condition": { "type": "string" },
+    "temperatureC": { "type": "number" },
+    "apparentTemperatureC": { "type": "number" },
+    "humidity": { "type": "number", "minimum": 0, "maximum": 100 },
+    "precipitationProbability": { "type": "number", "minimum": 0, "maximum": 100 },
+    "windSpeedKph": { "type": "number", "minimum": 0 },
+    "observedAt": { "type": "string", "format": "date-time" }
+  }
+}
