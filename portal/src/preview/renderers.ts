@@ -42,6 +42,7 @@ const FONT: Record<string, string[]> = {
   Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
   ':': ['00000', '00100', '00100', '00000', '00100', '00100', '00000'],
   '.': ['00000', '00000', '00000', '00000', '00000', '00110', '00110'],
+  '°': ['01110', '10001', '10001', '01110', '00000', '00000', '00000'],
   '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
   '/': ['00001', '00010', '00010', '00100', '01000', '01000', '10000'],
   '·': ['00000', '00110', '00110', '00000', '00000', '00000', '00000'],
@@ -83,10 +84,26 @@ export const drawClock = (ctx: CanvasRenderingContext2D, config: ClockConfig, st
   ctx.fillStyle = config.backgroundColor;
   ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
   const time = formatTime(now, config);
-  const scale = config.layout === 'minimal' ? 4 : config.layout === 'classic' ? 3 : 2;
-  const timeY = config.layout === 'compact' ? 16 : 8;
-  drawText(ctx, time, centeredX(time, scale), timeY, scale, config.timeColor);
-  if (config.layout !== 'compact' && config.showDate) {
+  if (config.layout === 'weather') {
+    const scale = config.showSeconds ? 2 : 3;
+    const timeY = config.showSeconds ? 4 : 1;
+    drawText(ctx, time, centeredX(time, scale), timeY, scale, config.timeColor);
+    const date = formatDate(now);
+    const dateY = config.showSeconds ? 25 : 28;
+    const dividerY = config.showSeconds ? 38 : 40;
+    if (config.showDate) drawText(ctx, date, centeredX(date, 1), dateY, 1, config.dateColor);
+    ctx.fillStyle = config.dividerColor;
+    ctx.fillRect(8, dividerY, 112, 1);
+    const temperature = Number.isFinite(status.weather?.temperatureC) ? `${status.weather!.temperatureC.toFixed(1)}°C` : '--°C';
+    const windMs = Number.isFinite(status.weather?.windSpeedKph) ? (status.weather!.windSpeedKph! / 3.6).toFixed(1) : '--.-';
+    const weatherLine = `${temperature} ${windMs}M/S`;
+    drawText(ctx, weatherLine, centeredX(weatherLine, 1), dividerY + 5, 1, config.dateColor);
+  } else {
+    const scale = config.layout === 'minimal' ? 4 : config.layout === 'classic' ? 3 : 2;
+    const timeY = config.layout === 'compact' ? 16 : 8;
+    drawText(ctx, time, centeredX(time, scale), timeY, scale, config.timeColor);
+  }
+  if (config.layout !== 'compact' && config.layout !== 'weather' && config.showDate) {
     ctx.fillStyle = config.dividerColor;
     ctx.fillRect(8, 47, 112, 1);
     const date = formatDate(now);
@@ -145,4 +162,3 @@ export const drawMatrix = (
     drawClock(ctx, config, status, now);
   }
 };
-

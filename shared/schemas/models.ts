@@ -1,5 +1,5 @@
 export type DisplayMode = 'BOOT' | 'TEST' | 'CLOCK' | 'MESSAGE' | 'WEATHER' | 'OFF';
-export type ClockLayout = 'minimal' | 'classic' | 'compact';
+export type ClockLayout = 'minimal' | 'classic' | 'compact' | 'weather';
 export type MessageAlignment = 'left' | 'center' | 'right';
 export type LogCategory = 'SYSTEM' | 'WIFI' | 'TIME' | 'DISPLAY' | 'API' | 'OTA' | 'CONFIG';
 
@@ -19,6 +19,7 @@ export interface DeviceStatus {
   psramFree: number;
   displayEnabled: boolean;
   activeMessage?: Message;
+  weather?: WeatherSnapshot;
 }
 
 export interface ClockConfig {

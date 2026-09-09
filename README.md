@@ -7,6 +7,7 @@ Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en o
 - lokale donkere responsive portal met Dashboard, Display, Klok, Berichten, API en Systeem;
 - mock device-simulator met uptime, RSSI, NTP, berichten-timeout, logs en foutscenario's;
 - één pixel-perfect gedeelde 128×64 `MatrixPreview` voor dashboard, klok, display en berichten;
+- een `Weerklok`-layout met actuele Home Assistant-temperatuur en windsnelheid in m/s;
 - gedeelde contracten en JSON-schema's in `shared/schemas/`;
 - PlatformIO/Arduino ESP32-S3 firmware scaffold met onafhankelijke Fase-A HUB75-test;
 - GitHub Actions voor portal, firmware en tagged release-artifacts.

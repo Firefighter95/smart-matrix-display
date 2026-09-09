@@ -1,4 +1,4 @@
-import type { DeviceConfig, DeviceStatus, LogEntry, Message } from '../../../shared/schemas/models';
+import type { DeviceConfig, DeviceStatus, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
 import type { DeviceApi } from './deviceApi';
 
 type RawRecord = Record<string, unknown>;
@@ -24,6 +24,7 @@ const normalizeStatus = (raw: RawRecord): DeviceStatus => ({
   psramFree: pick(raw, 'psramFree', 'psram_free', 0),
   displayEnabled: pick(raw, 'displayEnabled', 'display_enabled', true),
   activeMessage: raw.activeMessage as Message | undefined,
+  weather: raw.weather as WeatherSnapshot | undefined,
 });
 
 export class Esp32DeviceApi implements DeviceApi {

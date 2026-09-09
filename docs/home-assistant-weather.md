@@ -29,6 +29,10 @@ De ESP32 toont bij verlies van HA de laatst geldige snapshot met een stale-indic
 
 De huidige fase-A firmware accepteert dit endpoint nog niet en retourneert `501 WEATHER_RENDERER_PENDING`. De API-integratie en HA-koppeling zijn wel al versioned voorbereid.
 
+## Weerklok
+
+Kies in de lokale portal onder **Klok → Weerklok** de layout. De preview toont de actuele temperatuur in °C en rekent de aangeleverde `windSpeedKph` om naar windsnelheid in m/s voor het display. De HA-integratie blijft de transportwaarde normaliseren naar km/h, zodat verschillende Home Assistant-weatherproviders hetzelfde contract gebruiken.
+
 ## Forecasts
 
 Voor een dag- of uurprognose moet de HA-automation `weather.get_forecasts` gebruiken; forecastdata is in Home Assistant geen gewoon state-attribuut van de entity. De portal/firmware krijgt daarna alleen de velden die de gekozen layout nodig heeft.

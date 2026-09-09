@@ -56,6 +56,8 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 
 De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. Tijdens de fase-A hardwaretest retourneert het firmwareendpoint nog `501 WEATHER_RENDERER_PENDING`.
 
+De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent `windSpeedKph` visueel om naar m/s. Het transportcontract blijft km/h; dit voorkomt providerafhankelijke eenheden in de HA-integratie.
+
 ## Overige endpoints
 
 - `POST /api/v1/clear` → wis bericht, ga terug naar `CLOCK`.

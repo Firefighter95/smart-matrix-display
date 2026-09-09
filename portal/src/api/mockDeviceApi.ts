@@ -53,6 +53,15 @@ const initialStatus: DeviceStatus = {
   heapFree: 182640,
   psramFree: 3920000,
   displayEnabled: true,
+  weather: {
+    source: 'home_assistant',
+    condition: 'partlycloudy',
+    temperatureC: 18.4,
+    apparentTemperatureC: 17.9,
+    humidity: 68,
+    windSpeedKph: 12,
+    observedAt: new Date().toISOString(),
+  },
 };
 
 const clone = <T,>(value: T): T => structuredClone(value);

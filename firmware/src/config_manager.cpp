@@ -24,4 +24,3 @@ bool ConfigManager::reset() {
   configJson_ = DEFAULT_CONFIG;
   return true;
 }
-
