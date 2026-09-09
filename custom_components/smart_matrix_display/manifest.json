@@ -1,7 +1,7 @@
 {
   "domain": "smart_matrix_display",
   "name": "Smart Matrix Display",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "documentation": "https://github.com/Firefighter95/smart-matrix-display/blob/main/docs/home-assistant.md",
   "issue_tracker": "https://github.com/Firefighter95/smart-matrix-display/issues",
   "codeowners": ["@Firefighter95"],

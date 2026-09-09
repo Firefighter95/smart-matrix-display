@@ -46,7 +46,7 @@ const initialStatus: DeviceStatus = {
   wifiRssi: -52,
   uptime: 123456,
   timeSynced: true,
-  firmware: '1.0.0-dev',
+  firmware: '1.2.0-dev',
   resolution: '128x64',
   ip: '192.168.1.82',
   hostname: 'smartmatrix',
