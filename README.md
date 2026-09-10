@@ -37,6 +37,8 @@ Zie [`docs/portal.md`](docs/portal.md) voor de ESP32-adapter, `.env`-schakeling 
 
 Voor Home Assistant-berichten, meerdere displays en de weerklok zie [`docs/home-assistant.md`](docs/home-assistant.md) en [`docs/home-assistant-weather.md`](docs/home-assistant-weather.md). HACS installeert de lokale integratie; ieder display wordt via IP als afzonderlijk HA-device toegevoegd.
 
+De bestaande builder- en HACS-inventarisatie staat in [`docs/existing-builder.md`](docs/existing-builder.md) en [`docs/existing-hacs.md`](docs/existing-hacs.md). Deze documenten vormen het compatibiliteitsuitgangspunt voor de volgende layout- en Event Engine-fasen.
+
 ## Portal naar LittleFS
 
 ```powershell
