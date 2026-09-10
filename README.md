@@ -1,6 +1,6 @@
 # Smart Matrix Display
 
-Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. Release `V1.3.0` richt zich op één P2.5 indoorpaneel van 128×64 pixels, met HA-routing voor weer en P2000 als uitbreidingscontract.
+Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. Release `V1.4.0` richt zich op één P2.5 indoorpaneel van 128×64 pixels, met HA-routing voor weer en P2000 als uitbreidingscontract.
 
 ## Eerste milestone
 
