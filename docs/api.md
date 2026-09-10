@@ -66,6 +66,8 @@ De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent
 
 `device_id` is een stabiele eFuse-gebaseerde identificatie van de ESP32 en wordt door de Home Assistant-integratie gebruikt als device identifier. Het IP-adres blijft alleen het transportadres.
 
+`faults` is een optioneel statusveld met foutcodes zoals `WIFI_OFFLINE`, `NTP_UNSYNCED`, `DISPLAY_OFFLINE` en `API_UNAVAILABLE`. De portal toont de eerste fout als gekleurd statusbolletje en gebruikt de korte labels onderin de matrix.
+
 `PUT /api/v1/weather` accepteert het genormaliseerde `WeatherSnapshot`-contract. De huidige fase-A firmware retourneert hiervoor nog `501 WEATHER_RENDERER_PENDING`; de HACS-integratie kan de bestaande Home Assistant weatherentity al volgen en pushen zodra de productie-renderer actief is.
 
 De portal gebruikt uitsluitend `DeviceApi`; `MockDeviceApi` en `Esp32DeviceApi` houden UI en transport los van elkaar.

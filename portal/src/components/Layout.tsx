@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import type { DeviceStatus } from '../../../shared/schemas/models';
+import { faultColor, primaryDeviceFault } from '../status/health';
 
 export type Page = 'dashboard' | 'display' | 'clock' | 'messages' | 'api' | 'system';
 
@@ -23,6 +24,9 @@ interface LayoutProps {
 export function Layout({ page, onNavigate, status, isMock, children }: LayoutProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = (nextPage: Page) => { setMobileNavOpen(false); onNavigate(nextPage); };
+  const primaryFault = status ? primaryDeviceFault(status) : undefined;
+  const statusLabel = primaryFault?.label ?? (status?.online ? 'Online' : 'Offline');
+  const statusColor = faultColor(primaryFault?.code);
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileNavOpen ? 'is-open' : ''}`}>
@@ -31,7 +35,7 @@ export function Layout({ page, onNavigate, status, isMock, children }: LayoutPro
           <div><strong>SMART MATRIX</strong><small>DISPLAY HUB</small></div>
         </div>
         <div className="sidebar-device">
-          <span className={`status-dot ${status?.online ? 'is-online' : 'is-offline'}`} />
+          <span className="status-dot" style={{ background: statusColor }} title={statusLabel} />
           <div><strong>{status?.hostname ?? 'smartmatrix'}</strong><span>{status?.ip ?? 'device offline'}</span></div>
         </div>
         <nav className="main-nav" aria-label="Hoofdnavigatie">
@@ -45,7 +49,7 @@ export function Layout({ page, onNavigate, status, isMock, children }: LayoutPro
           ))}
         </nav>
         <div className="sidebar-footer">
-          <div className="connection-pill"><span className={`status-dot ${status?.online ? 'is-online' : 'is-offline'}`} />{status?.online ? 'Verbonden' : 'Offline'}</div>
+          <div className="connection-pill"><span className="status-dot" style={{ background: statusColor }} />{statusLabel}</div>
           <span className="version-label">firmware {status?.firmware ?? '—'}</span>
         </div>
       </aside>
@@ -56,7 +60,7 @@ export function Layout({ page, onNavigate, status, isMock, children }: LayoutPro
           <div className="breadcrumb"><span>SMART MATRIX</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div>
           <div className="topbar-actions">
             {isMock && <span className="dev-badge">DEVELOPMENT / MOCK MODE</span>}
-            <span className={`top-status ${status?.online ? 'online' : 'offline'}`}><span className="status-dot" /> {status?.online ? 'Online' : 'Offline'}</span>
+            <span className={`top-status ${primaryFault ? 'offline' : 'online'}`}><span className="status-dot" style={{ background: statusColor }} /> {statusLabel}</span>
           </div>
         </header>
         <div className="page-content">{children}</div>

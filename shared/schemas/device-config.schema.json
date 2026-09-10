@@ -7,7 +7,25 @@
   "properties": {
     "schemaVersion": { "const": 1 },
     "display": { "type": "object" },
-    "clock": { "type": "object" }
+    "clock": {
+      "type": "object",
+      "properties": {
+        "layout": { "enum": ["minimal", "classic", "compact", "weather", "builder"] },
+        "elements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "enabled", "x", "y", "scale"],
+            "properties": {
+              "id": { "enum": ["time", "date", "temperature", "wind", "status", "fault"] },
+              "enabled": { "type": "boolean" },
+              "x": { "type": "integer", "minimum": 0, "maximum": 127 },
+              "y": { "type": "integer", "minimum": 0, "maximum": 63 },
+              "scale": { "type": "integer", "minimum": 1, "maximum": 4 }
+            }
+          }
+        }
+      }
+    }
   }
 }
-

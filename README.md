@@ -35,7 +35,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-portal.ps1
 
 Zie [`docs/portal.md`](docs/portal.md) voor de ESP32-adapter, `.env`-schakeling en asset-build.
 
-Voor Home Assistant-berichten en meerdere displays zie [`docs/home-assistant.md`](docs/home-assistant.md). Voor de geplande weeruitbreiding zie [`docs/home-assistant-weather.md`](docs/home-assistant-weather.md). HACS installeert de lokale integratie; ieder display wordt via IP als afzonderlijk HA-device toegevoegd.
+Voor Home Assistant-berichten, meerdere displays en de weerklok zie [`docs/home-assistant.md`](docs/home-assistant.md) en [`docs/home-assistant-weather.md`](docs/home-assistant-weather.md). HACS installeert de lokale integratie; ieder display wordt via IP als afzonderlijk HA-device toegevoegd.
 
 ## Portal naar LittleFS
 

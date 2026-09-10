@@ -12,6 +12,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { DisplayPage } from './pages/DisplayPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { SystemPage } from './pages/SystemPage';
+import { deriveDeviceFaults } from './status/health';
 
 const fallbackStatus: DeviceStatus = {
   online: false, mode: 'BOOT', brightness: 0, wifiRssi: 0, uptime: 0, timeSynced: false,
@@ -32,6 +33,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' | 'info' }>();
+  const displayStatus: DeviceStatus = { ...status, faults: deriveDeviceFaults(status, error) };
 
   const refresh = useCallback(async () => {
     try {
@@ -71,19 +73,18 @@ export default function App() {
   const body = !config ? <div className="loading-panel"><div className="spinner" /><span>{loading ? 'Device laden…' : 'Geen configuratie beschikbaar'}</span></div> : (
     <>
       {error && <div className="error-banner"><span>!</span><div><strong>Verbinding niet beschikbaar</strong><p>{error}. De laatst bekende portalstaat blijft zichtbaar.</p></div><button onClick={() => void refresh()}>Opnieuw</button></div>}
-      {page === 'dashboard' && <DashboardPage status={status} config={config} onNavigate={navigate} onClear={clearMessage} onSendMessage={sendMessage} />}
-      {page === 'display' && <DisplayPage status={status} config={config} onUpdate={updateConfig} />}
-      {page === 'clock' && <ClockPage status={status} config={config} onUpdate={updateConfig} />}
-      {page === 'messages' && <MessagesPage status={status} config={config} onSend={sendMessage} onClear={clearMessage} />}
-      {page === 'api' && <ApiPage api={api} status={status} config={config} onNotify={notify} />}
-      {page === 'system' && <SystemPage status={status} logs={logs} onReboot={reboot} onNotify={notify} />}
+      {page === 'dashboard' && <DashboardPage status={displayStatus} config={config} onNavigate={navigate} onClear={clearMessage} onSendMessage={sendMessage} />}
+      {page === 'display' && <DisplayPage status={displayStatus} config={config} onUpdate={updateConfig} />}
+      {page === 'clock' && <ClockPage status={displayStatus} config={config} onUpdate={updateConfig} />}
+      {page === 'messages' && <MessagesPage status={displayStatus} config={config} onSend={sendMessage} onClear={clearMessage} />}
+      {page === 'api' && <ApiPage api={api} status={displayStatus} config={config} onNotify={notify} />}
+      {page === 'system' && <SystemPage status={displayStatus} logs={logs} onReboot={reboot} onNotify={notify} />}
     </>
   );
 
   return <>
-    <Layout page={page} onNavigate={navigate} status={status} isMock={isMockMode}>{body}</Layout>
+    <Layout page={page} onNavigate={navigate} status={displayStatus} isMock={isMockMode}>{body}</Layout>
     {isMockMode && isMockDeviceApi(api) && <DevToolbar api={api} />}
     {toast && <Toast message={toast.message} kind={toast.kind} />}
   </>;
 }
-

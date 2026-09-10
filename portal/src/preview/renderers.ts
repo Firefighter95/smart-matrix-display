@@ -1,4 +1,6 @@
 import type { ClockConfig, DeviceStatus, Message } from '../../../shared/schemas/models';
+import { createDefaultClockElements } from '../../../shared/schemas/models';
+import { faultColor } from '../status/health';
 
 export const MATRIX_WIDTH = 128;
 export const MATRIX_HEIGHT = 64;
@@ -80,10 +82,51 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat('nl-NL', {
   timeZone: 'Europe/Amsterdam', weekday: 'short', day: 'numeric', month: 'long',
 }).format(date).replace(',', '').toUpperCase();
 
+const drawHealthOverlay = (ctx: CanvasRenderingContext2D, config: ClockConfig, status: DeviceStatus) => {
+  const primaryFault = status.faults?.[0];
+  if (config.showStatusIndicator) {
+    ctx.fillStyle = faultColor(primaryFault?.code);
+    ctx.fillRect(122, 2, 4, 4);
+  }
+  if (status.faults?.length) {
+    const faultText = status.faults.map((item) => item.shortLabel).join(' · ').slice(0, 21);
+    drawText(ctx, faultText, centeredX(faultText, 1), 57, 1, faultColor(primaryFault?.code));
+  }
+};
+
+const drawBuilderClock = (ctx: CanvasRenderingContext2D, config: ClockConfig, status: DeviceStatus, now: Date) => {
+  const elements = config.elements?.length ? config.elements : createDefaultClockElements();
+  const time = formatTime(now, config);
+  const date = formatDate(now);
+  elements.filter((element) => element.enabled).forEach((element) => {
+    if (element.id === 'status') {
+      if (config.showStatusIndicator) {
+        ctx.fillStyle = faultColor(status.faults?.[0]?.code);
+        ctx.fillRect(element.x, element.y, 4, 4);
+      }
+      return;
+    }
+    if (element.id === 'fault') {
+      if (status.faults?.length) drawText(ctx, status.faults.map((item) => item.shortLabel).join(' · ').slice(0, 21), element.x, element.y, element.scale, faultColor(status.faults[0]?.code));
+      return;
+    }
+    const value = element.id === 'time' ? time
+      : element.id === 'date' ? date
+      : element.id === 'temperature' ? (Number.isFinite(status.weather?.temperatureC) ? `${status.weather!.temperatureC.toFixed(1)}°C` : '--°C')
+      : (Number.isFinite(status.weather?.windSpeedKph) ? `${(status.weather!.windSpeedKph! / 3.6).toFixed(1)}M/S` : '--.-M/S');
+    const color = element.id === 'time' ? config.timeColor : config.dateColor;
+    drawText(ctx, value, element.x, element.y, element.scale, color);
+  });
+};
+
 export const drawClock = (ctx: CanvasRenderingContext2D, config: ClockConfig, status: DeviceStatus, now = new Date()) => {
   ctx.fillStyle = config.backgroundColor;
   ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
   const time = formatTime(now, config);
+  if (config.layout === 'builder') {
+    drawBuilderClock(ctx, config, status, now);
+    return;
+  }
   if (config.layout === 'weather') {
     const scale = config.showSeconds ? 2 : 3;
     const timeY = config.showSeconds ? 4 : 1;
@@ -104,15 +147,14 @@ export const drawClock = (ctx: CanvasRenderingContext2D, config: ClockConfig, st
     drawText(ctx, time, centeredX(time, scale), timeY, scale, config.timeColor);
   }
   if (config.layout !== 'compact' && config.layout !== 'weather' && config.showDate) {
+    const dateY = status.faults?.length ? 43 : 53;
+    const dividerY = status.faults?.length ? 39 : 47;
     ctx.fillStyle = config.dividerColor;
-    ctx.fillRect(8, 47, 112, 1);
+    ctx.fillRect(8, dividerY, 112, 1);
     const date = formatDate(now);
-    drawText(ctx, date, centeredX(date, 1), 53, 1, config.dateColor);
+    drawText(ctx, date, centeredX(date, 1), dateY, 1, config.dateColor);
   }
-  if (config.showStatusIndicator) {
-    ctx.fillStyle = status.timeSynced && status.online ? '#72e6a8' : '#f2b866';
-    ctx.fillRect(122, 2, 4, 4);
-  }
+  drawHealthOverlay(ctx, config, status);
 };
 
 export const drawMessage = (ctx: CanvasRenderingContext2D, message: Message, backgroundColor: string) => {
@@ -158,6 +200,7 @@ export const drawMatrix = (
     ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
   } else if (status.mode === 'MESSAGE' && message) {
     drawMessage(ctx, message, config.backgroundColor);
+    drawHealthOverlay(ctx, config, status);
   } else {
     drawClock(ctx, config, status, now);
   }

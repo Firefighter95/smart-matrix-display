@@ -1,7 +1,24 @@
 export type DisplayMode = 'BOOT' | 'TEST' | 'CLOCK' | 'MESSAGE' | 'WEATHER' | 'OFF';
-export type ClockLayout = 'minimal' | 'classic' | 'compact' | 'weather';
+export type ClockLayout = 'minimal' | 'classic' | 'compact' | 'weather' | 'builder';
+export type ClockElementId = 'time' | 'date' | 'temperature' | 'wind' | 'status' | 'fault';
 export type MessageAlignment = 'left' | 'center' | 'right';
 export type LogCategory = 'SYSTEM' | 'WIFI' | 'TIME' | 'DISPLAY' | 'API' | 'OTA' | 'CONFIG';
+export type DeviceFaultCode = 'WIFI_OFFLINE' | 'NTP_UNSYNCED' | 'DISPLAY_OFFLINE' | 'API_UNAVAILABLE';
+
+export interface ClockElement {
+  id: ClockElementId;
+  enabled: boolean;
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export interface DeviceFault {
+  code: DeviceFaultCode;
+  label: string;
+  shortLabel: string;
+  severity: 'warning' | 'error';
+}
 
 export interface DeviceStatus {
   online: boolean;
@@ -20,6 +37,7 @@ export interface DeviceStatus {
   displayEnabled: boolean;
   activeMessage?: Message;
   weather?: WeatherSnapshot;
+  faults?: DeviceFault[];
 }
 
 export interface ClockConfig {
@@ -33,7 +51,17 @@ export interface ClockConfig {
   backgroundColor: string;
   showStatusIndicator: boolean;
   timezone: 'Europe/Amsterdam';
+  elements?: ClockElement[];
 }
+
+export const createDefaultClockElements = (): ClockElement[] => [
+  { id: 'time', enabled: true, x: 32, y: 4, scale: 3 },
+  { id: 'date', enabled: true, x: 4, y: 29, scale: 1 },
+  { id: 'temperature', enabled: true, x: 4, y: 45, scale: 1 },
+  { id: 'wind', enabled: true, x: 61, y: 45, scale: 1 },
+  { id: 'status', enabled: true, x: 122, y: 2, scale: 1 },
+  { id: 'fault', enabled: true, x: 3, y: 57, scale: 1 },
+];
 
 export interface BrightnessScheduleEntry {
   id: string;

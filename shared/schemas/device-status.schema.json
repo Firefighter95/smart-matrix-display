@@ -18,6 +18,19 @@
     "hostname": { "type": "string" },
     "heapFree": { "type": "integer", "minimum": 0 },
     "psramFree": { "type": "integer", "minimum": 0 },
-    "displayEnabled": { "type": "boolean" }
+    "displayEnabled": { "type": "boolean" },
+    "faults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "label", "shortLabel", "severity"],
+        "properties": {
+          "code": { "enum": ["WIFI_OFFLINE", "NTP_UNSYNCED", "DISPLAY_OFFLINE", "API_UNAVAILABLE"] },
+          "label": { "type": "string" },
+          "shortLabel": { "type": "string" },
+          "severity": { "enum": ["warning", "error"] }
+        }
+      }
+    }
   }
 }

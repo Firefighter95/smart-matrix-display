@@ -5,6 +5,7 @@ import type {
   LogEntry,
   Message,
 } from '../../../shared/schemas/models';
+import { createDefaultClockElements } from '../../../shared/schemas/models';
 import type { DeviceApi, MockDeviceApi, MockScenario } from './deviceApi';
 
 const initialClock: ClockConfig = {
@@ -18,6 +19,7 @@ const initialClock: ClockConfig = {
   backgroundColor: '#050915',
   showStatusIndicator: true,
   timezone: 'Europe/Amsterdam',
+  elements: createDefaultClockElements(),
 };
 
 const initialConfig: DeviceConfig = {
