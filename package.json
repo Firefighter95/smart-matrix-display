@@ -8,6 +8,8 @@
     "portal:dev": "npm --workspace portal run dev --",
     "portal:build": "npm --workspace portal run build",
     "portal:esp32": "npm --workspace portal run build:esp32",
+    "test": "npm --workspace portal run test",
+    "portal:test": "npm --workspace portal run test",
     "portal:typecheck": "npm --workspace portal run typecheck",
     "portal:lint": "npm --workspace portal run lint"
   }

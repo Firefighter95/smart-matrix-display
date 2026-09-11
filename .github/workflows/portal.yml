@@ -17,4 +17,5 @@ jobs:
       - run: npm ci
       - run: npm run portal:lint
       - run: npm run portal:typecheck
+      - run: npm run portal:test
       - run: npm run portal:build
