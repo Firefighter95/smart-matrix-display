@@ -14,6 +14,7 @@ import { MessagesPage } from './pages/MessagesPage';
 import { SystemPage } from './pages/SystemPage';
 import { EventsPage } from './pages/EventsPage';
 import { LayoutsPage } from './pages/LayoutsPage';
+import { LayoutBuilderPage } from './pages/LayoutBuilderPage';
 import { deriveDeviceFaults } from './status/health';
 
 const fallbackStatus: DeviceStatus = {
@@ -22,9 +23,11 @@ const fallbackStatus: DeviceStatus = {
 };
 
 const getPage = (): Page => {
-  const value = window.location.hash.replace('#/', '') as Page;
-  return ['dashboard', 'display', 'clock', 'messages', 'layouts', 'events', 'api', 'system'].includes(value) ? value : 'dashboard';
+  const value = window.location.hash.replace('#/', '').split('/')[0] as Page;
+  return ['dashboard', 'display', 'clock', 'messages', 'layouts', 'builder', 'events', 'api', 'system'].includes(value) ? value : 'dashboard';
 };
+
+const getBuilderLayoutId = () => window.location.hash.replace('#/builder/', '').split('/')[0] || undefined;
 
 export default function App() {
   const api = useMemo<DeviceApi>(() => createDeviceApi(), []);
@@ -80,6 +83,7 @@ export default function App() {
       {page === 'clock' && <ClockPage status={displayStatus} config={config} onUpdate={updateConfig} />}
       {page === 'messages' && <MessagesPage status={displayStatus} config={config} onSend={sendMessage} onClear={clearMessage} />}
       {page === 'layouts' && <LayoutsPage api={api} status={displayStatus} config={config} onUpdate={updateConfig} onNotify={notify} />}
+      {page === 'builder' && <LayoutBuilderPage api={api} status={displayStatus} config={config} layoutId={getBuilderLayoutId()} onNotify={notify} />}
       {page === 'events' && <EventsPage api={api} status={displayStatus} config={config} onNotify={notify} />}
       {page === 'api' && <ApiPage api={api} status={displayStatus} config={config} onNotify={notify} />}
       {page === 'system' && <SystemPage status={displayStatus} logs={logs} onReboot={reboot} onNotify={notify} />}
