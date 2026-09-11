@@ -1,19 +1,8 @@
 #include "display_manager.h"
 
 bool DisplayManager::begin() {
-  HUB75_I2S_CFG config(HardwareConfig::MATRIX_WIDTH, HardwareConfig::MATRIX_HEIGHT, HardwareConfig::PANEL_CHAIN, HardwareConfig::pinMap());
-  config.driver = HardwareConfig::SHIFT_DRIVER;
-  config.i2sspeed = HardwareConfig::CLOCK_SPEED;
-  config.double_buff = HardwareConfig::DOUBLE_BUFFER;
-  config.clkphase = HardwareConfig::CLOCK_PHASE;
-  panel_ = new MatrixPanel_I2S_DMA(config);
-  if (!panel_ || !panel_->begin()) {
-    delete panel_;
-    panel_ = nullptr;
-    return false;
-  }
-  panel_->setBrightness8(64);
-  panel_->clearScreen();
+  output_ = &hub75Output_;
+  if (!output_->begin()) { output_ = nullptr; return false; }
   mode_ = DisplayMode::TEST;
   lastPatternAt_ = millis();
   renderTestPattern(testIndex_);
@@ -21,12 +10,12 @@ bool DisplayManager::begin() {
 }
 
 uint16_t DisplayManager::color(uint8_t red, uint8_t green, uint8_t blue) const {
-  return panel_ ? panel_->color565(red, green, blue) : 0;
+  return output_ ? output_->color565(red, green, blue) : 0;
 }
 
 void DisplayManager::setBrightness(uint8_t percentage) {
   brightness_ = constrain(percentage, 0, 100);
-  if (panel_) panel_->setBrightness8(static_cast<uint8_t>(brightness_ * 255 / 100));
+  if (output_) output_->setBrightness(brightness_);
 }
 
 String DisplayManager::modeName() const {
@@ -35,45 +24,48 @@ String DisplayManager::modeName() const {
     case DisplayMode::CLOCK: return "CLOCK";
     case DisplayMode::MESSAGE: return "MESSAGE";
     case DisplayMode::WEATHER: return "WEATHER";
+    case DisplayMode::ALERT: return "ALERT";
+    case DisplayMode::TIMER: return "TIMER";
     case DisplayMode::OFF: return "OFF";
+    case DisplayMode::SLEEP: return "SLEEP";
     default: return "BOOT";
   }
 }
 
 void DisplayManager::setMode(DisplayMode mode) {
   mode_ = mode;
-  if (panel_ && mode_ == DisplayMode::OFF) panel_->clearScreen();
+  if (output_ && (mode_ == DisplayMode::OFF || mode_ == DisplayMode::SLEEP)) output_->clearScreen();
 }
 
 void DisplayManager::renderTestPattern(uint8_t index) {
-  if (!panel_) return;
-  panel_->clearScreen();
+  if (!output_) return;
+  output_->clearScreen();
   switch (index) {
-    case 0: panel_->fillScreen(color(255, 0, 0)); break;
-    case 1: panel_->fillScreen(color(0, 255, 0)); break;
-    case 2: panel_->fillScreen(color(0, 0, 255)); break;
-    case 3: panel_->fillScreen(color(255, 255, 255)); break;
+    case 0: output_->fillScreen(color(255, 0, 0)); break;
+    case 1: output_->fillScreen(color(0, 255, 0)); break;
+    case 2: output_->fillScreen(color(0, 0, 255)); break;
+    case 3: output_->fillScreen(color(255, 255, 255)); break;
     case 4: break;
     case 5:
-      for (int y = 0; y < HardwareConfig::MATRIX_HEIGHT; y += 4) panel_->drawFastHLine(0, y, HardwareConfig::MATRIX_WIDTH, color(255, 255, 255));
+      for (int y = 0; y < HardwareConfig::MATRIX_HEIGHT; y += 4) output_->drawFastHLine(0, y, HardwareConfig::MATRIX_WIDTH, color(255, 255, 255));
       break;
     case 6:
-      for (int x = 0; x < HardwareConfig::MATRIX_WIDTH; x += 4) panel_->drawFastVLine(x, 0, HardwareConfig::MATRIX_HEIGHT, color(255, 255, 255));
+      for (int x = 0; x < HardwareConfig::MATRIX_WIDTH; x += 4) output_->drawFastVLine(x, 0, HardwareConfig::MATRIX_HEIGHT, color(255, 255, 255));
       break;
     case 7:
-      for (int y = 0; y < HardwareConfig::MATRIX_HEIGHT; y += 4) for (int x = 0; x < HardwareConfig::MATRIX_WIDTH; x += 4) if (((x / 4) + (y / 4)) % 2 == 0) panel_->fillRect(x, y, 4, 4, color(255, 255, 255));
+      for (int y = 0; y < HardwareConfig::MATRIX_HEIGHT; y += 4) for (int x = 0; x < HardwareConfig::MATRIX_WIDTH; x += 4) if (((x / 4) + (y / 4)) % 2 == 0) output_->fillRect(x, y, 4, 4, color(255, 255, 255));
       break;
     case 8:
-      for (int y = 0; y < HardwareConfig::MATRIX_HEIGHT; y += 8) for (int x = 0; x < HardwareConfig::MATRIX_WIDTH; x += 8) panel_->drawPixel(x, y, color(255, 120, 0));
+      for (int y = 0; y < HardwareConfig::MATRIX_HEIGHT; y += 8) for (int x = 0; x < HardwareConfig::MATRIX_WIDTH; x += 8) output_->drawPixel(x, y, color(255, 120, 0));
       break;
     case 9:
-      panel_->setTextSize(2); panel_->setTextColor(color(0, 255, 150)); panel_->setCursor(6, 20); panel_->print("SMART"); panel_->setCursor(12, 42); panel_->print("MATRIX");
+      output_->setTextSize(2); output_->setTextColor(color(0, 255, 150)); output_->setCursor(6, 20); output_->print("SMART"); output_->setCursor(12, 42); output_->print("MATRIX");
       break;
     case 10:
-      panel_->setTextSize(2); panel_->setTextColor(color(255, 255, 255)); panel_->setCursor(12, 28); panel_->print("128 x 64");
+      output_->setTextSize(2); output_->setTextColor(color(255, 255, 255)); output_->setCursor(12, 28); output_->print("128 x 64");
       break;
     case 11:
-      panel_->fillRect(0, 0, 42, 64, color(255, 0, 0)); panel_->fillRect(43, 0, 42, 64, color(0, 255, 0)); panel_->fillRect(86, 0, 42, 64, color(0, 0, 255));
+      output_->fillRect(0, 0, 42, 64, color(255, 0, 0)); output_->fillRect(43, 0, 42, 64, color(0, 255, 0)); output_->fillRect(86, 0, 42, 64, color(0, 0, 255));
       break;
     case 12: renderMovingBlock(); break;
     default: break;
@@ -81,14 +73,14 @@ void DisplayManager::renderTestPattern(uint8_t index) {
 }
 
 void DisplayManager::renderMovingBlock() {
-  if (!panel_) return;
-  panel_->clearScreen();
-  panel_->fillRect(movingX_, 24, 16, 16, color(255, 120, 0));
+  if (!output_) return;
+  output_->clearScreen();
+  output_->fillRect(movingX_, 24, 16, 16, color(255, 120, 0));
   movingX_ = (movingX_ + 2) % (HardwareConfig::MATRIX_WIDTH - 15);
 }
 
 void DisplayManager::update() {
-  if (!panel_ || mode_ != DisplayMode::TEST) return;
+  if (!output_ || mode_ != DisplayMode::TEST) return;
   const uint32_t now = millis();
   if (now - lastPatternAt_ >= 2500) {
     lastPatternAt_ = now;

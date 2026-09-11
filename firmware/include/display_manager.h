@@ -1,23 +1,24 @@
 #pragma once
 
 #include <Arduino.h>
-#include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 #include "hardware_config.h"
+#include "display_output.h"
 
-enum class DisplayMode : uint8_t { BOOT, TEST, CLOCK, MESSAGE, WEATHER, OFF };
+enum class DisplayMode : uint8_t { BOOT, TEST, CLOCK, MESSAGE, WEATHER, ALERT, TIMER, OFF, SLEEP };
 
 class DisplayManager {
 public:
   bool begin();
   void update();
-  bool ready() const { return panel_ != nullptr; }
+  bool ready() const { return output_ != nullptr; }
   DisplayMode mode() const { return mode_; }
   String modeName() const;
   void setMode(DisplayMode mode);
   void setBrightness(uint8_t percentage);
 
 private:
-  MatrixPanel_I2S_DMA* panel_ = nullptr;
+  Hub75DisplayOutput hub75Output_;
+  IDisplayOutput* output_ = nullptr;
   DisplayMode mode_ = DisplayMode::BOOT;
   uint8_t brightness_ = 25;
   uint8_t testIndex_ = 0;

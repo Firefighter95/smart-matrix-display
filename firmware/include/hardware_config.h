@@ -19,6 +19,12 @@
 
 namespace HardwareConfig {
 
+enum class HardwareProfile : uint8_t { WAVESHARE_ESP32_S3_RGB_MATRIX, CUSTOM_HUB75 };
+constexpr HardwareProfile PROFILE = HardwareProfile::WAVESHARE_ESP32_S3_RGB_MATRIX;
+constexpr char PROFILE_NAME[] = "WAVESHARE_ESP32_S3_RGB_MATRIX";
+constexpr char PANEL_PROFILE_NAME[] = "P2_5_128X64_1_32";
+constexpr char PIN_MAPPING_STATUS[] = "UNCONFIRMED_WAVESHARE_DEFAULT";
+
 constexpr uint16_t MATRIX_WIDTH = 128;
 constexpr uint16_t MATRIX_HEIGHT = 64;
 constexpr uint8_t PANEL_CHAIN = 1;
