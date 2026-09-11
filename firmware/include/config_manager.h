@@ -5,7 +5,7 @@
 
 class ConfigManager {
 public:
-  static constexpr uint8_t CURRENT_SCHEMA_VERSION = 1;
+  static constexpr uint8_t CURRENT_SCHEMA_VERSION = 2;
 
   void begin();
   String json() const;
@@ -16,4 +16,3 @@ private:
   Preferences preferences_;
   String configJson_;
 };
-

@@ -20,9 +20,18 @@ const char* LogManager::categoryName(LogCategory category) const {
     case LogCategory::WIFI: return "WIFI";
     case LogCategory::TIME: return "TIME";
     case LogCategory::DISPLAY_LOG: return "DISPLAY";
+    case LogCategory::RENDER: return "RENDER";
+    case LogCategory::EVENT: return "EVENT";
+    case LogCategory::QUEUE: return "QUEUE";
+    case LogCategory::RULE: return "RULE";
+    case LogCategory::PROFILE: return "PROFILE";
     case LogCategory::API: return "API";
+    case LogCategory::HOME_ASSISTANT: return "HOME_ASSISTANT";
+    case LogCategory::P2000: return "P2000";
+    case LogCategory::WEATHER: return "WEATHER";
     case LogCategory::OTA: return "OTA";
     case LogCategory::CONFIG: return "CONFIG";
+    case LogCategory::BUILDER: return "BUILDER";
     default: return "SYSTEM";
   }
 }

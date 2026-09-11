@@ -32,5 +32,17 @@
       "cannot_connect": "The display could not be configured.",
       "reconfigure_successful": "The display connection was updated."
     }
+  },
+  "entity": {
+    "number": {
+      "brightness_control": {"name": "Brightness control"}
+    },
+    "select": {
+      "active_layout": {"name": "Active layout"},
+      "active_profile": {"name": "Active profile"}
+    },
+    "switch": {
+      "display_power": {"name": "Display power"}
+    }
   }
 }

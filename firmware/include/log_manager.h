@@ -2,7 +2,24 @@
 
 #include <Arduino.h>
 
-enum class LogCategory : uint8_t { SYSTEM, WIFI, TIME, DISPLAY_LOG, API, OTA, CONFIG };
+enum class LogCategory : uint8_t {
+  SYSTEM,
+  WIFI,
+  TIME,
+  DISPLAY_LOG,
+  RENDER,
+  EVENT,
+  QUEUE,
+  RULE,
+  PROFILE,
+  API,
+  HOME_ASSISTANT,
+  P2000,
+  WEATHER,
+  OTA,
+  CONFIG,
+  BUILDER,
+};
 enum class LogLevel : uint8_t { INFO, WARN, ERROR };
 
 class LogManager {

@@ -22,7 +22,7 @@ Statussen:
 | Weerklok | DONE | Weather layout + HA snapshot | Forecasts/alerts later |
 | Brightness schedule | PARTIAL | `DisplayPage`, `profiles.ts` | Profile UI en firmwarecontrol |
 | Shared schemas | DONE | `shared/schemas/models.ts` + JSON schemas | C++ parser volgt later |
-| Config migratie | PARTIAL | `migrateClockToLayout()` | ESP32 Preferences-migraties uitbreiden |
+| Config migratie | PARTIAL | browser migration + ESP32 schema v2 normalisatie | Volledige layout/profile migratie |
 | Hardware test firmware | DONE | `display_manager.cpp` | Paneel fysiek bevestigen |
 | Display output HAL | DONE | `display_output.h/.cpp` | Mock niet aan fysieke firmwareloop gekoppeld |
 | Production HUB75 renderer | BLOCKED_HARDWARE | HAL is aanwezig, testpatterns actief | Pin/scan/RGB/timing en fysieke framecontrole |
@@ -78,13 +78,13 @@ Statussen:
 | Structured P2000 model | DONE | Events presets, `docs/p2000.md` | PagerMon-adapter |
 | P2000 discipline layouts | DONE | default layouts FIRE/AMBULANCE/POLICE/MMT | KNRM/OTHER templates |
 | P2000 simulator/burst | DONE | Events page | History replay |
-| Logging ringbuffer | PARTIAL | firmware/mock logs | Categorieën uitbreiden in firmware |
+| Logging ringbuffer | PARTIAL | firmware/mock logs, uitgebreide categorieën | Persistente/eventgerichte firmwarelogs |
 | Diagnostics page | PARTIAL | System page + mock diagnostics API | Volledige portalweergave |
 | OTA UI | PARTIAL | System page/mock upload state | Firmware validation/rollback |
 | Persistence abstraction | PARTIAL | mock localStorage, firmware Preferences | Gedeelde IConfigStore-contracten |
 | API token/rate limiting | PARTIAL | HACS tokenheader | Firmware enforcement |
 | WiFi reconnect/NTP fallback | PARTIAL | bestaande firmware managers | Fallback AP/mDNS configureren |
-| REST API v1 | PARTIAL | bestaande legacy routes + nieuwe clientcontracten | Nieuwe firmware body handlers |
+| REST API v1 | PARTIAL | legacy routes + JSON body handlers + statusdiagnostics | Embedded event/layout/profile persistence |
 
 ## Enige toegestane hardware-blockers
 
@@ -101,4 +101,3 @@ Statussen:
 2. Profile/rule/editor en event replay in portal uitbreiden.
 3. Golden-frame, malformed-input en accelerated soak tests toevoegen.
 4. RC-artifacts en `v1.0.0-rc.1` workflow voorbereiden.
-

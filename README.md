@@ -1,6 +1,6 @@
 # Smart Matrix Display
 
-Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. Release `V1.4.0` richt zich op één P2.5 indoorpaneel van 128×64 pixels, met HA-routing voor weer en P2000 als uitbreidingscontract.
+Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. Release `V1.4.0` richt zich op één P2.5 indoorpaneel van 128×64 pixels, met HA-routing voor weer en P2000 als uitbreidingscontract. De software-RC bevat al de layout-, event- en mocklagen; fysieke HUB75-output blijft expliciet geblokkeerd tot het paneel is bevestigd.
 
 ## Eerste milestone
 
@@ -68,7 +68,7 @@ Alle HUB75-pinnen staan centraal in [`firmware/include/hardware_config.h`](firmw
 
 ## API
 
-De versioned basis is `/api/v1/`: status, config, message, clear, logs en restart. Het volledige contract staat in [`docs/api.md`](docs/api.md). De portalcomponenten doen geen verspreide `fetch()`-calls; ze gebruiken `DeviceApi`, met `MockDeviceApi` of `Esp32DeviceApi` als adapter.
+De versioned basis is `/api/v1/`: status, config, message, events, weer, brightness, power, clear, logs, diagnostics en restart. Het volledige contract staat in [`docs/api.md`](docs/api.md). De portalcomponenten doen geen verspreide `fetch()`-calls; ze gebruiken `DeviceApi`, met `MockDeviceApi` of `Esp32DeviceApi` als adapter.
 
 ## Repositorystructuur
 
@@ -93,6 +93,6 @@ Na de eerste lokale review kunnen desktop- en mobiele screenshots onder `docs/sc
 ## Bekende beperkingen van V1
 
 - de exacte HUB75 pinmapping en scanmode zijn nog niet fysiek bevestigd;
-- firmware production renderer, WiFi provisioning, volledige JSON-body parsing, OTA-uploadhandler en config-import/export volgen na hardwarebevestiging;
+- firmware production renderer, WiFi provisioning, OTA-uploadhandler, volledige embedded event/layout/profile-opslag en config-import/export volgen na hardwarebevestiging;
 - de HACS-integratie en HA-services zijn toegevoegd, maar vereisen de toekomstige productie message-endpoint in de firmware om fysieke berichten te tonen;
 - de lokale portal/mock mode is volledig bruikbaar voor UI- en UX-review zonder ESP32.

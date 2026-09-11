@@ -32,5 +32,33 @@
       "cannot_connect": "Het display kon niet worden geconfigureerd.",
       "reconfigure_successful": "De displayverbinding is bijgewerkt."
     }
+  },
+  "entity": {
+    "sensor": {
+      "mode": {"name": "Modus"},
+      "brightness": {"name": "Helderheid"},
+      "wifi_signal": {"name": "Wi-Fi-signaal"},
+      "uptime": {"name": "Uptime"},
+      "firmware": {"name": "Firmware"},
+      "resolution": {"name": "Resolutie"}
+    },
+    "binary_sensor": {
+      "online": {"name": "Online"},
+      "time_synced": {"name": "Tijd gesynchroniseerd"}
+    },
+    "button": {
+      "clear_display": {"name": "Display wissen"},
+      "restart": {"name": "Herstarten"}
+    },
+    "number": {
+      "brightness_control": {"name": "Helderheidsregeling"}
+    },
+    "select": {
+      "active_layout": {"name": "Actieve layout"},
+      "active_profile": {"name": "Actief profiel"}
+    },
+    "switch": {
+      "display_power": {"name": "Display aan/uit"}
+    }
   }
 }

@@ -37,6 +37,8 @@ Per display worden status-entiteiten aangemaakt voor:
 
 Daarnaast zijn knoppen beschikbaar voor **Clear display** en **Restart**.
 
+Voor bediening vanuit het dashboard zijn ook beschikbaar: een brightness-number, een power-switch en select-entiteiten voor het actieve layout en profiel. De layout/profile-selecties gebruiken het gedeelde `/api/v1/`-contract; firmwareondersteuning voor persistente layout/profile-opslag volgt nog.
+
 ## Berichten sturen
 
 Gebruik de service `smart_matrix_display.send_message`. Omdat de service een Home Assistant-device-target gebruikt, kun je één display, meerdere displays of een groep selecteren.
@@ -78,6 +80,11 @@ Ook beschikbaar:
 - `smart_matrix_display.restart`
 - `smart_matrix_display.send_weather`
 - `smart_matrix_display.send_p2000`
+- `smart_matrix_display.show_layout`
+- `smart_matrix_display.show_event`
+- `smart_matrix_display.set_brightness`
+- `smart_matrix_display.set_profile`
+- `smart_matrix_display.skip_event`
 
 ## Weer vanuit Home Assistant
 

@@ -17,6 +17,10 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
   "time_synced": true,
   "firmware": "1.4.0-dev",
   "resolution": "128x64",
+  "hardware_profile": "WAVESHARE_ESP32_S3_RGB_MATRIX",
+  "panel_profile": "P2_5_128X64_1_32",
+  "scan_rows": 32,
+  "pin_mapping": "UNCONFIRMED_WAVESHARE_DEFAULT",
   "ip": "192.168.1.82",
   "hostname": "smartmatrix",
   "heap_free": 182640,
@@ -27,7 +31,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 
 ## Configuratie
 
-`GET /api/v1/config` → volledige config. `PUT /api/v1/config` accepteert een gedeeltelijke update en hoort `200 OK` met de opgeslagen config terug te geven.
+`GET /api/v1/config` → volledige config. `PUT /api/v1/config` accepteert een JSON-object, valideert de body en normaliseert `schemaVersion` naar `2`. De firmware migreert een opgeslagen v1-configuratie minimaal naar schema v2 zonder de overige velden te wissen.
 
 ## Bericht
 
@@ -54,7 +58,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 }
 ```
 
-De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. Tijdens de fase-A hardwaretest retourneert het firmwareendpoint nog `501 WEATHER_RENDERER_PENDING`.
+De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. De firmware accepteert het snapshot en zet de displaymode op `WEATHER`; de uiteindelijke fysieke weather-renderer blijft hardwaregeblokkeerd.
 
 De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent `windSpeedKph` visueel om naar m/s. Het transportcontract blijft km/h; dit voorkomt providerafhankelijke eenheden in de HA-integratie.
 
@@ -68,7 +72,9 @@ De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent
 
 `faults` is een optioneel statusveld met foutcodes zoals `WIFI_OFFLINE`, `NTP_UNSYNCED`, `DISPLAY_OFFLINE` en `API_UNAVAILABLE`. De portal toont de eerste fout als gekleurd statusbolletje en gebruikt de korte labels onderin de matrix.
 
-`PUT /api/v1/weather` accepteert het genormaliseerde `WeatherSnapshot`-contract. De huidige fase-A firmware retourneert hiervoor nog `501 WEATHER_RENDERER_PENDING`; de HACS-integratie kan de bestaande Home Assistant weatherentity al volgen en pushen zodra de productie-renderer actief is.
+`PUT /api/v1/brightness` accepteert `{ "brightness": 0..100 }` en `PUT /api/v1/power` accepteert `{ "enabled": true|false }`.
+
+`POST /api/v1/events` accepteert minimaal `source` en `type`, valideert de JSON-body en zet de firmware voorlopig in message-mode. `POST /api/v1/events/skip` keert terug naar `CLOCK`. `GET /api/v1/events/history` en `GET /api/v1/diagnostics` leveren softwarecontracten; event-persistentie en volledige embedded queue blijven vervolgstappen.
 
 De portal gebruikt uitsluitend `DeviceApi`; `MockDeviceApi` en `Esp32DeviceApi` houden UI en transport los van elkaar.
 

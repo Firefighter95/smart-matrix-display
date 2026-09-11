@@ -12,6 +12,7 @@ public:
   void update();
   bool ready() const { return output_ != nullptr; }
   DisplayMode mode() const { return mode_; }
+  uint8_t brightness() const { return brightness_; }
   String modeName() const;
   void setMode(DisplayMode mode);
   void setBrightness(uint8_t percentage);
