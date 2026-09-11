@@ -1,6 +1,7 @@
-import type { ClockConfig, DeviceStatus, Message } from '../../../shared/schemas/models';
+import type { ClockConfig, DeviceStatus, DisplayEvent, LayoutElement, LayoutModel, Message } from '../../../shared/schemas/models';
 import { createDefaultClockElements } from '../../../shared/schemas/models';
 import { faultColor } from '../status/health';
+import { resolveVariables } from '../engine/variables';
 
 export const MATRIX_WIDTH = 128;
 export const MATRIX_HEIGHT = 64;
@@ -184,12 +185,118 @@ export const drawMessage = (ctx: CanvasRenderingContext2D, message: Message, bac
   });
 };
 
+const pathValue = (value: unknown, path?: string): unknown => {
+  if (!path) return value;
+  return path.split('.').reduce<unknown>((current, part) => {
+    if (current && typeof current === 'object') return (current as Record<string, unknown>)[part];
+    return undefined;
+  }, value);
+};
+
+const dataValue = (element: LayoutElement, status: DeviceStatus, event: DisplayEvent | undefined): unknown => {
+  const source = element.dataSource;
+  if (!source) return undefined;
+  if (source.type === 'event_payload' || source.type === 'p2000' || source.type === 'home_assistant') return pathValue(event?.payload, source.path);
+  if (source.type === 'weather') return pathValue({ ...status.weather, windSpeedMs: status.weather?.windSpeedKph === undefined ? undefined : (status.weather.windSpeedKph / 3.6).toFixed(1) }, source.path);
+  if (source.type === 'system') return pathValue(status, source.path);
+  if (source.type === 'timer') return pathValue(event?.payload, source.path);
+  return element.text;
+};
+
+const wrapPixelText = (text: string, scale: number, width: number): string[] => {
+  const maxChars = Math.max(1, Math.floor(width / (6 * scale)));
+  const lines: string[] = [];
+  let current = '';
+  text.split(/\s+/).filter(Boolean).forEach((word) => {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) { lines.push(current); current = word; } else current = next;
+  });
+  if (current) lines.push(current);
+  return lines.length ? lines : [''];
+};
+
+const elementText = (element: LayoutElement, status: DeviceStatus, event: DisplayEvent | undefined, now: Date): string => {
+  const context = { event, status, weather: status.weather, now, system: { faults: status.faults?.map((fault) => fault.shortLabel).join(' · ') ?? '' } };
+  const template = element.text ?? (element.type === 'message_title' ? '{{title}}' : element.type === 'message_body' ? '{{message}}' : '');
+  const resolved = resolveVariables(template, context, String(dataValue(element, status, event) ?? element.dataSource?.fallback ?? ''));
+  if (resolved) return `${element.prefix ?? ''}${resolved}${element.suffix ?? ''}`;
+  const value = dataValue(element, status, event);
+  return value === undefined || value === null ? element.dataSource?.fallback ?? '' : `${element.prefix ?? ''}${String(value)}${element.suffix ?? ''}`;
+};
+
+const drawLayoutText = (ctx: CanvasRenderingContext2D, element: LayoutElement, text: string) => {
+  const scale = Math.max(1, Math.min(4, Math.round(element.scale ?? element.fontSize ?? 1)));
+  const lines = element.overflow === 'wrap' ? wrapPixelText(text.toUpperCase(), scale, element.width) : [text.toUpperCase()];
+  const lineHeight = 8 * scale + 1;
+  lines.slice(0, Math.max(1, Math.floor(element.height / lineHeight))).forEach((line, index) => {
+    const width = textWidth(line, scale);
+    const x = element.align === 'center' ? element.x + Math.round((element.width - width) / 2) : element.align === 'right' ? element.x + element.width - width : element.x;
+    const y = element.y + index * lineHeight;
+    drawText(ctx, line.slice(0, Math.max(1, Math.floor(element.width / (6 * scale)))), x, y, scale, element.color ?? '#F4F7FF');
+  });
+};
+
+export interface LayoutRenderContext {
+  status: DeviceStatus;
+  event?: DisplayEvent;
+  now?: Date;
+  backgroundColor?: string;
+}
+
+export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, context: LayoutRenderContext) {
+  ctx.fillStyle = context.backgroundColor ?? '#050915';
+  ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
+  const now = context.now ?? new Date();
+  [...layout.elements].filter((item) => item.visible !== false).sort((a, b) => a.zIndex - b.zIndex).forEach((item) => {
+    ctx.save();
+    ctx.globalAlpha = item.opacity ?? 1;
+    ctx.beginPath();
+    ctx.rect(Math.max(0, item.x), Math.max(0, item.y), Math.max(1, item.width), Math.max(1, item.height));
+    ctx.clip();
+    if (item.type === 'rectangle') {
+      ctx.strokeStyle = item.color ?? '#F4F7FF';
+      ctx.strokeRect(item.x, item.y, item.width, item.height);
+    } else if (item.type === 'filled_rectangle') {
+      ctx.fillStyle = item.backgroundColor ?? item.color ?? '#F4F7FF';
+      ctx.fillRect(item.x, item.y, item.width, item.height);
+    } else if (item.type === 'line') {
+      ctx.fillStyle = item.color ?? '#F4F7FF';
+      ctx.fillRect(item.x, item.y, item.width, Math.max(1, item.height));
+    } else if (item.type === 'status_indicator') {
+      ctx.fillStyle = faultColor(context.status.faults?.[0]?.code);
+      ctx.fillRect(item.x, item.y, Math.min(6, item.width), Math.min(6, item.height));
+    } else if (item.type === 'icon' || item.type === 'pixel_icon') {
+      drawText(ctx, item.icon ?? '◆', item.x, item.y, item.scale ?? 1, item.color ?? '#F4F7FF');
+    } else if (item.type === 'timer') {
+      const remaining = Number(dataValue(item, context.status, context.event) ?? context.event?.duration ?? 0);
+      drawLayoutText(ctx, { ...item, text: `${Math.max(0, Math.ceil(remaining))}S` }, `${Math.max(0, Math.ceil(remaining))}S`);
+    } else if (item.type === 'progress') {
+      const progress = Math.max(0, Math.min(1, Number(dataValue(item, context.status, context.event) ?? 0)));
+      ctx.fillStyle = item.backgroundColor ?? '#1A2639';
+      ctx.fillRect(item.x, item.y, item.width, item.height);
+      ctx.fillStyle = item.color ?? '#72E6A8';
+      ctx.fillRect(item.x, item.y, Math.round(item.width * progress), item.height);
+    } else if (item.type === 'clock') {
+      const config: ClockConfig = { layout: 'minimal', use24Hour: true, showSeconds: false, showDate: false, timeColor: item.color ?? '#F4F7FF', dateColor: '#72E6A8', dividerColor: '#43506F', backgroundColor: context.backgroundColor ?? '#050915', showStatusIndicator: false, timezone: 'Europe/Amsterdam' };
+      const value = formatTime(now, config);
+      drawLayoutText(ctx, { ...item, text: value }, value);
+    } else if (item.type === 'date') {
+      const value = formatDate(now);
+      drawLayoutText(ctx, { ...item, text: value }, value);
+    } else {
+      drawLayoutText(ctx, item, elementText(item, context.status, context.event, now));
+    }
+    ctx.restore();
+  });
+}
+
 export const drawMatrix = (
   canvas: HTMLCanvasElement,
   config: ClockConfig,
   status: DeviceStatus,
   message?: Message,
   now = new Date(),
+  layout?: LayoutModel,
 ) => {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -198,6 +305,8 @@ export const drawMatrix = (
   if (!status.displayEnabled || status.mode === 'OFF') {
     ctx.fillStyle = '#02040a';
     ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
+  } else if (layout && status.mode !== 'MESSAGE') {
+    drawLayout(ctx, layout, { status, event: status.currentEvent, now, backgroundColor: config.backgroundColor });
   } else if (status.mode === 'MESSAGE' && message) {
     drawMessage(ctx, message, config.backgroundColor);
     drawHealthOverlay(ctx, config, status);

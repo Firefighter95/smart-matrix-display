@@ -1,4 +1,4 @@
-import type { DeviceConfig, DeviceFault, DeviceStatus, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
+import type { DeviceConfig, DeviceDiagnostics, DeviceFault, DeviceStatus, DisplayEvent, DisplayProfile, EventHistoryEntry, EventInput, LayoutModel, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
 import type { DeviceApi } from './deviceApi';
 
 type RawRecord = Record<string, unknown>;
@@ -49,13 +49,32 @@ export class Esp32DeviceApi implements DeviceApi {
   async sendMessage(message: Message) {
     return this.request<Message>('/api/v1/message', { method: 'POST', body: JSON.stringify(message) });
   }
+  async sendEvent(event: EventInput) {
+    return this.request<DisplayEvent>('/api/v1/events', { method: 'POST', body: JSON.stringify(event) });
+  }
   async clearDisplay() {
     await this.request('/api/v1/clear', { method: 'POST' });
+  }
+  async skipEvent() {
+    await this.request('/api/v1/events/skip', { method: 'POST' });
   }
   async reboot() {
     await this.request('/api/v1/restart', { method: 'POST' });
   }
   async getLogs() { return this.request<LogEntry[]>('/api/v1/logs'); }
+  async getLayouts() { return this.request<LayoutModel[]>('/api/v1/layouts'); }
+  async saveLayout(layout: LayoutModel) {
+    return this.request<LayoutModel>(`/api/v1/layouts/${encodeURIComponent(layout.id)}`, { method: 'PUT', body: JSON.stringify(layout) });
+  }
+  async deleteLayout(layoutId: string) {
+    await this.request(`/api/v1/layouts/${encodeURIComponent(layoutId)}`, { method: 'DELETE' });
+  }
+  async getEventHistory() { return this.request<EventHistoryEntry[]>('/api/v1/events/history'); }
+  async getProfiles() { return this.request<DisplayProfile[]>('/api/v1/profiles'); }
+  async updateProfile(profile: DisplayProfile) {
+    return this.request<DisplayProfile>(`/api/v1/profiles/${encodeURIComponent(profile.id)}`, { method: 'PUT', body: JSON.stringify(profile) });
+  }
+  async getDiagnostics() { return this.request<DeviceDiagnostics>('/api/v1/diagnostics'); }
   subscribe(listener: () => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

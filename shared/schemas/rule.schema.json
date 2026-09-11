@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smart-matrix.local/schemas/rule.schema.json",
+  "title": "Smart Matrix Display Rule",
+  "type": "object",
+  "required": ["id", "name", "enabled", "order", "conditions", "actions"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "enabled": { "type": "boolean" },
+    "order": { "type": "integer", "minimum": 0 },
+    "conditions": { "type": "array", "maxItems": 16, "items": { "type": "object", "required": ["field", "operator", "value"], "properties": { "field": { "enum": ["source", "type", "priority", "profile", "time", "payload"] }, "operator": { "enum": ["equals", "contains", "greater_than", "less_than", "between"] }, "path": { "type": "string" }, "value": {}, "secondValue": {} }, "additionalProperties": false } },
+    "actions": { "type": "array", "maxItems": 16, "items": { "type": "object", "required": ["type"], "properties": { "type": { "enum": ["select_layout", "override_priority", "override_duration", "ignore", "brightness_override", "select_profile"] }, "value": {} }, "additionalProperties": false } }
+  },
+  "additionalProperties": false
+}

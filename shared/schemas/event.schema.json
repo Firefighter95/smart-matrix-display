@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smart-matrix.local/schemas/event.schema.json",
+  "title": "Smart Matrix Display Event",
+  "type": "object",
+  "required": ["source", "type", "duration", "payload"],
+  "properties": {
+    "id": { "type": "string", "maxLength": 80 },
+    "source": { "enum": ["portal", "home_assistant", "p2000", "system", "timer", "weather", "api"] },
+    "type": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "layoutId": { "type": "string", "maxLength": 64 },
+    "duration": { "type": "integer", "minimum": 1, "maximum": 86400 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "interruptible": { "type": "boolean" },
+    "resumeAllowed": { "type": "boolean" },
+    "brightnessOverride": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "profileId": { "enum": ["normal", "night", "away", "demo", "fire"] },
+    "payload": { "type": "object", "maxProperties": 64, "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

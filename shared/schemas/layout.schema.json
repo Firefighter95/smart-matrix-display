@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smart-matrix.local/schemas/layout.schema.json",
+  "title": "Smart Matrix Layout",
+  "type": "object",
+  "required": ["schemaVersion", "id", "name", "category", "width", "height", "elements"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9._-]+$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "category": { "enum": ["idle", "clock", "generic_message", "alert", "p2000", "home_assistant", "timer", "weather", "system"] },
+    "width": { "const": 128 },
+    "height": { "const": 64 },
+    "elements": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "x", "y", "width", "height", "zIndex", "visible"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "type": { "enum": ["text", "dynamic_text", "clock", "date", "rectangle", "filled_rectangle", "line", "icon", "pixel_icon", "status_indicator", "message_title", "message_body", "timer", "progress"] },
+          "x": { "type": "integer", "minimum": 0, "maximum": 127 },
+          "y": { "type": "integer", "minimum": 0, "maximum": 63 },
+          "width": { "type": "integer", "minimum": 1, "maximum": 128 },
+          "height": { "type": "integer", "minimum": 1, "maximum": 64 },
+          "zIndex": { "type": "integer", "minimum": -100, "maximum": 100 },
+          "visible": { "type": "boolean" },
+          "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "scale": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+          "backgroundColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+          "text": { "type": "string", "maxLength": 512 },
+          "dataSource": { "type": "object", "required": ["type"], "properties": { "type": { "enum": ["static", "system", "event_payload", "home_assistant", "p2000", "weather", "timer"] }, "path": { "type": "string", "maxLength": 128 }, "entityId": { "type": "string", "maxLength": 255 }, "fallback": { "type": "string", "maxLength": 128 } }, "additionalProperties": false }
+        },
+        "additionalProperties": true
+      }
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

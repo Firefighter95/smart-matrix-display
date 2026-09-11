@@ -1,11 +1,12 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
-import type { ClockConfig, ClockElement, ClockElementId, DeviceStatus, Message } from '../../../shared/schemas/models';
+import type { ClockConfig, ClockElement, ClockElementId, DeviceStatus, LayoutModel, Message } from '../../../shared/schemas/models';
 import { drawMatrix } from '../preview/renderers';
 
 interface MatrixPreviewProps {
   config: ClockConfig;
   status: DeviceStatus;
   message?: Message;
+  layout?: LayoutModel;
   label?: string;
   className?: string;
   interactiveElements?: ClockElement[];
@@ -16,7 +17,7 @@ interface MatrixPreviewProps {
 
 const elementLabels: Record<ClockElementId, string> = { time: 'Tijd', date: 'Datum', temperature: 'Temp', wind: 'Wind', status: 'Status', fault: 'Fout' };
 
-export function MatrixPreview({ config, status, message, label = 'LIVE 128 × 64', className = '', interactiveElements, selectedElement, onElementSelect, onElementMove }: MatrixPreviewProps) {
+export function MatrixPreview({ config, status, message, layout, label = 'LIVE 128 × 64', className = '', interactiveElements, selectedElement, onElementSelect, onElementMove }: MatrixPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const dragging = useRef<ClockElementId>();
@@ -29,12 +30,12 @@ export function MatrixPreview({ config, status, message, label = 'LIVE 128 × 64
     canvas.style.imageRendering = 'pixelated';
     let animationFrame = 0;
     const render = () => {
-      drawMatrix(canvas, config, status, message);
+      drawMatrix(canvas, config, status, message, new Date(), layout);
       animationFrame = window.requestAnimationFrame(render);
     };
     render();
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [config, status, message]);
+  }, [config, status, message, layout]);
 
   const moveElement = (event: ReactPointerEvent<HTMLElement>) => {
     const id = dragging.current;
