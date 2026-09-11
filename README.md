@@ -39,6 +39,8 @@ Voor Home Assistant-berichten, meerdere displays en de weerklok zie [`docs/home-
 
 De bestaande builder- en HACS-inventarisatie staat in [`docs/existing-builder.md`](docs/existing-builder.md) en [`docs/existing-hacs.md`](docs/existing-hacs.md). Deze documenten vormen het compatibiliteitsuitgangspunt voor de volgende layout- en Event Engine-fasen.
 
+De actuele DONE/PARTIAL/MISSING/PLANNED-overzicht staat in [`docs/feature-status.md`](docs/feature-status.md).
+
 ## Portal naar LittleFS
 
 ```powershell
