@@ -137,3 +137,173 @@ send_p2000:
           min: 0
           max: 100
           mode: slider
+
+show_message:
+  name: Show message
+  description: Backwards-compatible friendly alias for send_message.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    title:
+      name: Title
+      selector:
+        text:
+    message:
+      name: Message
+      required: true
+      selector:
+        text:
+          multiline: true
+    duration:
+      name: Duration
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 86400
+          mode: box
+          unit_of_measurement: s
+    color:
+      name: Color
+      default: "#00FF00"
+      selector:
+        text:
+    alignment:
+      name: Alignment
+      default: center
+      selector:
+        select:
+          options: [left, center, right]
+    priority:
+      name: Priority
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+
+show_layout:
+  name: Show layout
+  description: Activate a saved layout with a JSON-compatible payload.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    layout_id:
+      name: Layout ID
+      required: true
+      selector:
+        text:
+    duration:
+      name: Duration
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 86400
+          mode: box
+          unit_of_measurement: s
+    priority:
+      name: Priority
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+    payload:
+      name: Payload
+      description: JSON object used to resolve layout variables.
+      selector:
+        object:
+
+show_event:
+  name: Show event
+  description: Send a structured event into the Smart Matrix Event Engine.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    source:
+      name: Source
+      required: true
+      selector:
+        select:
+          options: [portal, home_assistant, p2000, system, timer, weather, api]
+    event_type:
+      name: Event type
+      required: true
+      selector:
+        text:
+    layout_id:
+      name: Layout ID
+      selector:
+        text:
+    duration:
+      name: Duration
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 86400
+          mode: box
+          unit_of_measurement: s
+    priority:
+      name: Priority
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+    payload:
+      name: Payload
+      selector:
+        object:
+
+clear:
+  name: Clear
+  description: Alias for clear_display.
+  target:
+    device:
+      integration: smart_matrix_display
+
+skip_event:
+  name: Skip event
+  description: Skip the active event and continue with the queue.
+  target:
+    device:
+      integration: smart_matrix_display
+
+set_brightness:
+  name: Set brightness
+  description: Set the manual brightness percentage.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    brightness:
+      name: Brightness
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+          unit_of_measurement: "%"
+
+set_profile:
+  name: Set profile
+  description: Select a display behavior profile.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    profile_id:
+      name: Profile
+      required: true
+      selector:
+        select:
+          options: [normal, night, away, demo, fire]

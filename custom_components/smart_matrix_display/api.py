@@ -96,6 +96,16 @@ class SmartMatrixApiClient:
 
         return await self._request("POST", "/api/v1/message", payload)
 
+    async def async_send_event(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        """Send a structured event to the shared event engine."""
+
+        return await self._request("POST", "/api/v1/events", payload)
+
+    async def async_show_layout(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        """Activate a saved layout with an event payload."""
+
+        return await self._request("POST", "/api/v1/layouts/show", payload)
+
     async def async_send_weather(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Send a normalized Home Assistant weather snapshot."""
 
@@ -105,6 +115,26 @@ class SmartMatrixApiClient:
         """Clear the active message and return to the clock."""
 
         return await self._request("POST", "/api/v1/clear")
+
+    async def async_skip_event(self) -> dict[str, Any]:
+        """Skip the active event and continue the queue."""
+
+        return await self._request("POST", "/api/v1/events/skip")
+
+    async def async_set_brightness(self, brightness: int) -> dict[str, Any]:
+        """Set the manual display brightness."""
+
+        return await self._request("PUT", "/api/v1/brightness", {"brightness": brightness})
+
+    async def async_set_profile(self, profile_id: str) -> dict[str, Any]:
+        """Activate a display profile."""
+
+        return await self._request("PUT", "/api/v1/profile", {"profile_id": profile_id})
+
+    async def async_get_event_history(self) -> dict[str, Any]:
+        """Fetch bounded event history."""
+
+        return await self._request("GET", "/api/v1/events/history")
 
     async def async_restart(self) -> dict[str, Any]:
         """Ask the device to restart."""

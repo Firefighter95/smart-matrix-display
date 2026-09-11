@@ -26,12 +26,18 @@ from .api import SmartMatrixApiClient
 from .const import (
     ALIGNMENTS,
     ATTR_ALIGNMENT,
+    ATTR_BRIGHTNESS,
     ATTR_CAPCODE,
     ATTR_COLOR,
     ATTR_DURATION,
+    ATTR_EVENT_TYPE,
+    ATTR_LAYOUT_ID,
     ATTR_LOCATION,
     ATTR_MESSAGE,
+    ATTR_PAYLOAD,
     ATTR_PRIORITY,
+    ATTR_PROFILE_ID,
+    ATTR_SOURCE,
     ATTR_TITLE,
     ATTR_WEATHER_ENTITY,
     CONF_HOST,
@@ -40,11 +46,18 @@ from .const import (
     CONF_WEATHER_ENTITY,
     DOMAIN,
     PLATFORMS,
+    SERVICE_CLEAR,
     SERVICE_CLEAR_DISPLAY,
     SERVICE_RESTART,
     SERVICE_SEND_MESSAGE,
     SERVICE_SEND_P2000,
     SERVICE_SEND_WEATHER,
+    SERVICE_SET_BRIGHTNESS,
+    SERVICE_SET_PROFILE,
+    SERVICE_SHOW_EVENT,
+    SERVICE_SHOW_LAYOUT,
+    SERVICE_SHOW_MESSAGE,
+    SERVICE_SKIP_EVENT,
 )
 from .coordinator import SmartMatrixCoordinator
 from .weather import async_send_weather_state
@@ -88,6 +101,29 @@ P2000_SCHEMA = vol.Schema(
         ),
     }
 )
+
+EVENT_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_SOURCE): vol.In(("portal", "home_assistant", "p2000", "system", "timer", "weather", "api")),
+        vol.Required(ATTR_EVENT_TYPE): vol.All(cv.string, vol.Length(min=1, max=64)),
+        vol.Optional(ATTR_LAYOUT_ID): cv.string,
+        vol.Optional(ATTR_DURATION, default=20): vol.All(vol.Coerce(int), vol.Range(min=1, max=86400)),
+        vol.Optional(ATTR_PRIORITY, default=50): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+        vol.Optional(ATTR_PAYLOAD, default={}): vol.All(dict, vol.Length(max=64)),
+    }
+)
+
+LAYOUT_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_LAYOUT_ID): cv.string,
+        vol.Optional(ATTR_DURATION, default=20): vol.All(vol.Coerce(int), vol.Range(min=1, max=86400)),
+        vol.Optional(ATTR_PRIORITY, default=50): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+        vol.Optional(ATTR_PAYLOAD, default={}): vol.All(dict, vol.Length(max=64)),
+    }
+)
+
+BRIGHTNESS_SCHEMA = vol.Schema({vol.Required(ATTR_BRIGHTNESS): vol.All(vol.Coerce(int), vol.Range(min=0, max=100))})
+PROFILE_SCHEMA = vol.Schema({vol.Required(ATTR_PROFILE_ID): vol.All(cv.string, vol.Length(min=1, max=32))})
 
 
 def _as_list(value: Any) -> list[str]:
@@ -205,6 +241,28 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             }
             await _call_all(_target_runtimes(hass, call), "async_send_message", payload)
 
+        async def handle_show_message(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_send_message", dict(call.data))
+
+        async def handle_show_layout(call: ServiceCall) -> None:
+            payload = {key: value for key, value in call.data.items() if key != ATTR_PAYLOAD}
+            payload[ATTR_PAYLOAD] = call.data.get(ATTR_PAYLOAD, {})
+            await _call_all(_target_runtimes(hass, call), "async_show_layout", payload)
+
+        async def handle_show_event(call: ServiceCall) -> None:
+            payload = {key: value for key, value in call.data.items() if key not in {ATTR_SOURCE, ATTR_EVENT_TYPE, ATTR_PAYLOAD}}
+            payload.update({"source": call.data[ATTR_SOURCE], "type": call.data[ATTR_EVENT_TYPE], "payload": call.data.get(ATTR_PAYLOAD, {})})
+            await _call_all(_target_runtimes(hass, call), "async_send_event", payload)
+
+        async def handle_set_brightness(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_set_brightness", call.data[ATTR_BRIGHTNESS])
+
+        async def handle_set_profile(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_set_profile", call.data[ATTR_PROFILE_ID])
+
+        async def handle_skip_event(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_skip_event")
+
         hass.services.async_register(
             DOMAIN,
             SERVICE_SEND_MESSAGE,
@@ -227,6 +285,13 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             handle_send_p2000,
             schema=P2000_SCHEMA,
         )
+        hass.services.async_register(DOMAIN, SERVICE_SHOW_MESSAGE, handle_show_message, schema=MESSAGE_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_SHOW_LAYOUT, handle_show_layout, schema=LAYOUT_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_SHOW_EVENT, handle_show_event, schema=EVENT_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_CLEAR, handle_clear_display)
+        hass.services.async_register(DOMAIN, SERVICE_SET_BRIGHTNESS, handle_set_brightness, schema=BRIGHTNESS_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_SET_PROFILE, handle_set_profile, schema=PROFILE_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_SKIP_EVENT, handle_skip_event)
     return True
 
 
