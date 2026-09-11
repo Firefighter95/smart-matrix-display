@@ -131,6 +131,16 @@ class SmartMatrixApiClient:
 
         return await self._request("PUT", "/api/v1/profile", {"profile_id": profile_id})
 
+    async def async_set_layout(self, layout_id: str) -> dict[str, Any]:
+        """Select the idle layout."""
+
+        return await self._request("PUT", "/api/v1/layout", {"layout_id": layout_id})
+
+    async def async_set_power(self, enabled: bool) -> dict[str, Any]:
+        """Turn the display output on or off."""
+
+        return await self._request("PUT", "/api/v1/power", {"enabled": enabled})
+
     async def async_get_event_history(self) -> dict[str, Any]:
         """Fetch bounded event history."""
 

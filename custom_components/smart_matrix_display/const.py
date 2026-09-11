@@ -3,7 +3,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "smart_matrix_display"
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH]
 
 CONF_HOST = "host"
 CONF_PORT = "port"
