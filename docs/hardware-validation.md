@@ -95,7 +95,7 @@ python -m platformio run -e hardware-validation -t erase --upload-port COM3
 python -m platformio run -e hardware-validation -t upload --upload-port COM3
 ```
 
-De verwachte eerste regel uit de applicatie is `Smart Matrix Hardware Validation`. Verschijnt die niet, rapporteer dan de eerste volledige bootcyclus vanaf `ESP-ROM` tot en met de foutregel.
+De ingebouwde USB-Serial/JTAG-console is voor deze boardconfiguratie ingeschakeld met USB-CDC. De verwachte eerste applicatieregel is `Smart Matrix Hardware Validation`. Verschijnt die niet, rapporteer dan de eerste volledige bootcyclus vanaf `ESP-ROM` tot en met de foutregel.
 
 ## Verwachte seriële start
 
