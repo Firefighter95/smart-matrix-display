@@ -137,7 +137,8 @@ void ApiServer::begin() {
     const String configJson = config_.json();
     const bool builderLayout = configJson.indexOf("\"layout\":\"builder\"") >= 0;
     if (!builderLayout) display_.setMode(DisplayMode::WEATHER);
-    logs_.add(LogCategory::WEATHER, LogLevel::INFO, "Weather snapshot ontvangen");
+    logs_.add(LogCategory::WEATHER, LogLevel::INFO,
+              builderLayout ? "Weather snapshot voor builder opgeslagen" : "Weather snapshot ontvangen");
     request->send(200, "application/json", weatherBody);
   }, nullptr, collectJsonBody);
   server_.on("/api/v1/weather", HTTP_GET, [this](AsyncWebServerRequest* request) {
