@@ -96,7 +96,13 @@ python -m platformio run -e waveshare-esp32-s3-rgb-matrix -t uploadfs --upload-p
 python -m platformio device monitor --port COM3 --baud 115200
 ```
 
-Na deze eerste USB-flash kunnen volgende updates via het thuisnetwerk. De wrapper bouwt de juiste image en uploadt deze via de LAN-OTA-endpoint. Voor firmware:
+Na de eenmalige dual-slot OTA-migratie via USB kunnen volgende updates via het thuisnetwerk. Sluit de controller nog eenmaal aan en voer uit:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\migrate-ota-partitions.ps1 -Port COM3
+```
+
+Daarna bouwt de wrapper de juiste image en uploadt deze via de LAN-OTA-endpoint. Voor firmware:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\upload-network.ps1

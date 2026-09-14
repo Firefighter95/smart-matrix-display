@@ -1,6 +1,16 @@
 # OTA-updates via WiFi
 
-De eerste firmware-installatie gebeurt via USB. Daarna kan de normale firmware en het LittleFS-portal via het netwerk worden bijgewerkt. De update gaat via de lokale HTTP-server op de ingestelde hostname, standaard `smartmatrix.local`.
+De eerste firmware-installatie gebeurt via USB. De huidige hardwaretest-image gebruikte oorspronkelijk een single-slot partitionering; voor echte rollback-veilige netwerkupdates moet de controller éénmalig worden gemigreerd naar de dual-slot partitionering (`ota_0` + `ota_1`). Daarna kunnen de normale firmware en het LittleFS-portal via het netwerk worden bijgewerkt. De update gaat via de lokale HTTP-server op de ingestelde hostname, standaard `smartmatrix.local`.
+
+## Eenmalige OTA-migratie
+
+Sluit de ESP32 nog één keer aan via USB (standaard `COM3`) en voer vanuit de repository-root uit:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\migrate-ota-partitions.ps1 -Port COM3
+```
+
+Dit flash’t de nieuwe partition table, firmware en portalbestanden. Preferences/NVS blijft op dezelfde offset staan. Na deze stap hoeft USB alleen nog als recoverymethode te worden gebruikt.
 
 ## Firmware uploaden
 
@@ -28,7 +38,7 @@ Dit is het netwerkequivalent van de twee USB-uploadstappen. De firmware ontvangt
 
 ## Voorwaarden en herstel
 
-- De controller moet al één keer via USB met de productiefirmware zijn geflasht.
+- De controller moet één keer met `migrate-ota-partitions.ps1` naar de dual-slot productiefirmware zijn geflasht.
 - De controller moet verbonden zijn met hetzelfde LAN als de computer.
 - Controleer eerst `http://smartmatrix.local/api/v1/status` of het IP-adres.
 - Tijdens een OTA-update reboot de ESP32 automatisch; geef hem daarna ongeveer 10–20 seconden om WiFi en mDNS opnieuw op te starten.
