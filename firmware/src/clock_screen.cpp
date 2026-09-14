@@ -1,5 +1,102 @@
 #include "clock_screen.h"
 
-void ClockScreen::begin() {}
-void ClockScreen::update() {}
+#include <ArduinoJson.h>
+#include <cstdlib>
+#include <cstring>
+#include <time.h>
 
+namespace {
+const char* WEEKDAYS[] = {"ZO", "MA", "DI", "WO", "DO", "VR", "ZA"};
+const char* MONTHS[] = {"JANUARI", "FEBRUARI", "MAART", "APRIL", "MEI", "JUNI",
+                        "JULI", "AUGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DECEMBER"};
+}
+
+uint16_t ClockScreen::colorFromHex(const String& value, uint16_t fallback) const {
+  if (value.length() != 7 || value[0] != '#') return fallback;
+  const long parsed = strtol(value.substring(1).c_str(), nullptr, 16);
+  if (parsed < 0) return fallback;
+  return display_.output()->color565((parsed >> 16) & 0xFF, (parsed >> 8) & 0xFF, parsed & 0xFF);
+}
+
+void ClockScreen::dateText(const struct tm& local, char* buffer, size_t length) const {
+  snprintf(buffer, length, "%s %02d %s", WEEKDAYS[local.tm_wday], local.tm_mday, MONTHS[local.tm_mon]);
+}
+
+void ClockScreen::begin() {
+  lastSecond_ = -1;
+  render();
+}
+
+void ClockScreen::update() {
+  if (display_.mode() != DisplayMode::CLOCK || !display_.output()) return;
+  struct tm local;
+  if (!time_.localTime(local)) {
+    if (millis() % 2000 < 40) render();
+    return;
+  }
+  if (local.tm_sec != lastSecond_) render();
+}
+
+void ClockScreen::render() {
+  if (!display_.output()) return;
+  JsonDocument document;
+  deserializeJson(document, config_.json());
+  JsonObject clock = document["clock"].as<JsonObject>();
+  const bool use24Hour = clock["use24Hour"] | true;
+  const bool showSeconds = clock["showSeconds"] | false;
+  const bool showDate = clock["showDate"] | true;
+  const String layout = clock["layout"] | "minimal";
+  const uint16_t background = colorFromHex(clock["backgroundColor"] | "#050915", 0x0000);
+  const uint16_t timeColor = colorFromHex(clock["timeColor"] | "#F4F7FF", 0xFFFF);
+  const uint16_t dateColor = colorFromHex(clock["dateColor"] | "#72E6A8", 0x07E0);
+  const uint16_t dividerColor = colorFromHex(clock["dividerColor"] | "#43506F", 0x431D);
+  display_.output()->fillScreen(background);
+
+  struct tm local;
+  if (!time_.localTime(local)) {
+    display_.output()->setTextSize(2);
+    display_.output()->setTextColor(timeColor);
+    display_.output()->setCursor(31, 24);
+    display_.output()->print("--:--");
+    display_.output()->setTextSize(1);
+    display_.output()->setTextColor(dateColor);
+    display_.output()->setCursor(45, 52);
+    display_.output()->print("NTP");
+    return;
+  }
+
+  char timeText[12];
+  if (use24Hour) {
+    snprintf(timeText, sizeof(timeText), showSeconds ? "%02d:%02d:%02d" : "%02d:%02d", local.tm_hour, local.tm_min, local.tm_sec);
+  } else {
+    int hour = local.tm_hour % 12;
+    if (hour == 0) hour = 12;
+    snprintf(timeText, sizeof(timeText), showSeconds ? "%2d:%02d:%02d" : "%2d:%02d", hour, local.tm_min, local.tm_sec);
+  }
+
+  const uint8_t size = showSeconds ? 2 : (layout == "compact" ? 2 : 3);
+  const int16_t width = static_cast<int16_t>(strlen(timeText) * 6 * size);
+  const int16_t x = max<int16_t>(0, (HardwareConfig::MATRIX_WIDTH - width) / 2);
+  const int16_t y = layout == "compact" ? 5 : (layout == "classic" ? 10 : 7);
+  display_.output()->setTextSize(size);
+  display_.output()->setTextColor(timeColor);
+  display_.output()->setCursor(x, y);
+  display_.output()->print(timeText);
+
+  if (layout != "compact") display_.output()->drawFastHLine(12, 42, 104, dividerColor);
+  if (showDate) {
+    char date[24];
+    dateText(local, date, sizeof(date));
+    display_.output()->setTextSize(1);
+    display_.output()->setTextColor(dateColor);
+    const int16_t dateWidth = static_cast<int16_t>(strlen(date) * 6);
+    display_.output()->setCursor(max<int16_t>(0, (HardwareConfig::MATRIX_WIDTH - dateWidth) / 2), 49);
+    display_.output()->print(date);
+  }
+
+  const uint16_t statusColor = !wifi_.networkReady() ? display_.output()->color565(255, 60, 60)
+                              : !time_.synced() ? display_.output()->color565(255, 180, 0)
+                                                : display_.output()->color565(80, 255, 120);
+  display_.output()->fillRect(124, 1, 3, 3, statusColor);
+  lastSecond_ = local.tm_sec;
+}

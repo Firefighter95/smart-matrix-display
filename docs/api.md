@@ -20,7 +20,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
   "hardware_profile": "WAVESHARE_ESP32_S3_RGB_MATRIX",
   "panel_profile": "P2_5_128X64_1_32",
   "scan_rows": 32,
-  "pin_mapping": "UNCONFIRMED_WAVESHARE_DEFAULT",
+  "pin_mapping": "VALIDATED_WITH_MUEN_MZ_I_P2_5_128X64_PANEL",
   "ip": "192.168.1.82",
   "hostname": "smartmatrix",
   "heap_free": 182640,
@@ -31,7 +31,19 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 
 ## Configuratie
 
-`GET /api/v1/config` → volledige config. `PUT /api/v1/config` accepteert een JSON-object, valideert de body en normaliseert `schemaVersion` naar `2`. De firmware migreert een opgeslagen v1-configuratie minimaal naar schema v2 zonder de overige velden te wissen.
+`GET /api/v1/config` → volledige displayconfig. `PUT /api/v1/config` accepteert een JSON-object, valideert de body en normaliseert `schemaVersion` naar `3`. WiFi-credentials worden apart in NVS opgeslagen en niet via deze config-export teruggegeven.
+
+## WiFi en provisioning
+
+`GET /api/v1/wifi` geeft netwerkstatus, AP-status, AP-SSID, IP en hostname terug; het wachtwoord wordt nooit teruggegeven.
+
+`PUT /api/v1/wifi` slaat credentials op en start een achtergrondreconnect:
+
+```json
+{"ssid":"MijnWifi","password":"voorbeeld-wachtwoord","hostname":"smartmatrix"}
+```
+
+Bij ontbrekende credentials start de ESP32 een fallback access point met een SSID zoals `SmartMatrix-99E4`. Na een succesvolle stationverbinding wordt mDNS geadverteerd als `smartmatrix.local`.
 
 ## Bericht
 

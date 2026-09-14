@@ -1,6 +1,6 @@
 # Smart Matrix Display
 
-Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. Release `V1.4.0` richt zich op één P2.5 indoorpaneel van 128×64 pixels, met HA-routing voor weer en P2000 als uitbreidingscontract. De software-RC bevat al de layout-, event- en mocklagen; fysieke HUB75-output blijft expliciet geblokkeerd tot het paneel is bevestigd.
+Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en optionele Home Assistant-integratie. De hardwarebasis voor één P2.5 indoorpaneel van 128×64 pixels is gevalideerd. De productiefase bevat nu een echte klokrenderer, WiFi-provisioning, fallback access point en mDNS; HA, weer en P2000 worden daarop gefaseerd aangesloten.
 
 ## Eerste milestone
 
@@ -85,9 +85,22 @@ pio device monitor --baud 115200
 
 Deze test is onafhankelijk van portal, LittleFS, WiFi, HA en NTP. De cyclus start met zwart en draait daarna RGB, wit, lijnen, checkerboard, row/column tests, color bars, tekst en bewegende pixel/blok op 15% helderheid. Controleer vóór verdere hardwareafhankelijke firmwareontwikkeling het volledige 128×64 paneel fysiek. Zie [`docs/hardware-validation.md`](docs/hardware-validation.md).
 
+## Productiefirmware flashen
+
+Na de hardwarevalidatie kan de normale firmware plus het portal naar de controller worden geschreven:
+
+```powershell
+cd firmware
+python -m platformio run -e waveshare-esp32-s3-rgb-matrix -t upload --upload-port COM3
+python -m platformio run -e waveshare-esp32-s3-rgb-matrix -t uploadfs --upload-port COM3
+python -m platformio device monitor --port COM3 --baud 115200
+```
+
+Zonder opgeslagen WiFi-credentials start de controller een tijdelijk access point met een naam zoals `SmartMatrix-99E4`. WiFi-credentials kunnen via `PUT /api/v1/wifi` worden opgeslagen. Na verbinding is de controller bereikbaar via `http://smartmatrix.local` wanneer mDNS door het netwerk wordt ondersteund.
+
 ## Hardware
 
-Alle HUB75-pinnen staan centraal in [`firmware/include/hardware_config.h`](firmware/include/hardware_config.h). De defaults volgen de Waveshare ESP32-S3 RGB Matrix voorbeeldpinout, maar moeten tegen jouw exacte controllerrevisie worden gecontroleerd. Zie [`docs/hardware.md`](docs/hardware.md) voor voeding, wiring, 1/32 scan, testcyclus en het hardware-stoppunt.
+Alle HUB75-pinnen staan centraal in [`firmware/include/hardware_config.h`](firmware/include/hardware_config.h). De defaults volgen de Waveshare ESP32-S3 RGB Matrix voorbeeldpinout en zijn met het MUEN-paneel fysiek gevalideerd. Zie [`docs/hardware.md`](docs/hardware.md) voor voeding, wiring, 1/32 scan en testcyclus.
 
 ## API
 
@@ -115,7 +128,7 @@ Na de eerste lokale review kunnen desktop- en mobiele screenshots onder `docs/sc
 
 ## Bekende beperkingen van V1
 
-- de exacte HUB75 pinmapping en scanmode zijn nog niet fysiek bevestigd;
-- firmware production renderer, WiFi provisioning, OTA-uploadhandler, volledige embedded event/layout/profile-opslag en config-import/export volgen na hardwarebevestiging;
+- de production clock is actief; message-, weather- en event-renderers worden nog verder gekoppeld aan de layout/event-engine;
+- de firmware gebruikt voorlopig single buffering; dubbele buffering volgt met een expliciete frame-presentatiestap;
 - de HACS-integratie en HA-services zijn toegevoegd, maar vereisen de toekomstige productie message-endpoint in de firmware om fysieke berichten te tonen;
 - de lokale portal/mock mode is volledig bruikbaar voor UI- en UX-review zonder ESP32.

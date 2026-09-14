@@ -38,8 +38,37 @@ ApiServer::ApiServer(ConfigManager& config, DisplayManager& display, LogManager&
 void ApiServer::begin() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   server_.on("/api/v1/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
-    request->send(200, "application/json", status_.json(wifi_.connected(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname(), display_.brightness()));
+    request->send(200, "application/json", status_.json(wifi_.networkReady(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname(), display_.brightness()));
   });
+  server_.on("/api/v1/wifi", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    JsonDocument response;
+    response["connected"] = wifi_.connected();
+    response["ap_mode"] = wifi_.apMode();
+    response["ap_ssid"] = wifi_.apSsid();
+    response["ssid"] = config_.wifiSsid();
+    response["ip"] = wifi_.ip();
+    response["hostname"] = wifi_.hostname();
+    String body;
+    serializeJson(response, body);
+    request->send(200, "application/json", body);
+  });
+  server_.on("/api/v1/wifi", HTTP_PUT, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (!parseJsonBody(request, document) || !document["ssid"].is<const char*>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_WIFI\",\"message\":\"ssid is verplicht.\"}}");
+      return;
+    }
+    const String ssid = document["ssid"].as<String>();
+    const String password = document["password"] | "";
+    const String hostname = document["hostname"] | "smartmatrix";
+    if (!config_.saveWifi(ssid, password, hostname)) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_WIFI\",\"message\":\"WiFi-velden zijn te lang.\"}}");
+      return;
+    }
+    wifi_.configure(ssid, password, hostname);
+    logs_.add(LogCategory::WIFI, LogLevel::INFO, "WiFi-configuratie opgeslagen");
+    request->send(202, "application/json", "{\"ok\":true,\"reconnecting\":true}");
+  }, nullptr, collectJsonBody);
   server_.on("/api/v1/config", HTTP_GET, [this](AsyncWebServerRequest* request) { request->send(200, "application/json", config_.json()); });
   server_.on("/api/v1/config", HTTP_PUT, [this](AsyncWebServerRequest* request) {
     JsonDocument document;

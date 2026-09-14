@@ -24,7 +24,7 @@ DisplayManager displayManager;
 WifiManager wifiManager;
 TimeManager timeManager;
 BrightnessManager brightnessManager;
-ClockScreen clockScreen;
+ClockScreen clockScreen(displayManager, timeManager, wifiManager, configManager);
 MessageScreen messageScreen;
 OtaManager otaManager;
 ApiServer apiServer(configManager, displayManager, logManager, wifiManager, timeManager);
@@ -51,13 +51,13 @@ void setup() {
   }
   return;
 #else
-  wifiManager.begin();
+  wifiManager.begin(configManager);
   timeManager.begin();
   brightnessManager.begin();
-  clockScreen.begin();
   messageScreen.begin();
-  if (displayManager.begin()) logManager.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "HUB75 DMA test gestart");
+  if (displayManager.begin()) logManager.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "HUB75 productieklok gestart");
   else logManager.add(LogCategory::DISPLAY_LOG, LogLevel::ERROR, "HUB75 DMA initialisatie mislukt");
+  clockScreen.begin();
   // Web/API and OTA are intentionally available as scaffolding, but the physical test does not depend on them.
   otaManager.begin();
   apiServer.begin();

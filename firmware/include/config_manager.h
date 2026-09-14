@@ -5,11 +5,15 @@
 
 class ConfigManager {
 public:
-  static constexpr uint8_t CURRENT_SCHEMA_VERSION = 2;
+  static constexpr uint8_t CURRENT_SCHEMA_VERSION = 3;
 
   void begin();
   String json() const;
   bool saveJson(const String& json);
+  bool saveWifi(const String& ssid, const String& password, const String& hostname);
+  String wifiSsid();
+  String wifiPassword();
+  String hostname();
   bool reset();
 
 private:

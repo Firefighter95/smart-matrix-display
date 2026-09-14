@@ -39,8 +39,23 @@ bool ConfigManager::saveJson(const String& json) {
   return true;
 }
 
+bool ConfigManager::saveWifi(const String& ssid, const String& password, const String& hostname) {
+  if (ssid.length() > 32 || password.length() > 63 || hostname.length() > 32) return false;
+  preferences_.putString("wifi_ssid", ssid);
+  preferences_.putString("wifi_pass", password);
+  preferences_.putString("hostname", hostname.isEmpty() ? "smartmatrix" : hostname);
+  return true;
+}
+
+String ConfigManager::wifiSsid() { return preferences_.getString("wifi_ssid", ""); }
+String ConfigManager::wifiPassword() { return preferences_.getString("wifi_pass", ""); }
+String ConfigManager::hostname() { return preferences_.getString("hostname", "smartmatrix"); }
+
 bool ConfigManager::reset() {
   preferences_.remove("config");
+  preferences_.remove("wifi_ssid");
+  preferences_.remove("wifi_pass");
+  preferences_.remove("hostname");
   configJson_ = DEFAULT_CONFIG;
   return true;
 }

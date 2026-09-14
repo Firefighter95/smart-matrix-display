@@ -3,9 +3,9 @@
 bool DisplayManager::begin() {
   output_ = &hub75Output_;
   if (!output_->begin()) { output_ = nullptr; return false; }
-  mode_ = DisplayMode::TEST;
+  mode_ = DisplayMode::CLOCK;
   lastPatternAt_ = millis();
-  renderTestPattern(testIndex_);
+  output_->clearScreen();
   return true;
 }
 
