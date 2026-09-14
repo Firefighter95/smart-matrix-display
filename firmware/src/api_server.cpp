@@ -133,8 +133,9 @@ void ApiServer::begin() {
     // mode; keep that mode available for installations that explicitly use it.
     JsonDocument configDocument;
     deserializeJson(configDocument, config_.json());
-    const String clockLayout = configDocument["clock"]["layout"] | "minimal";
-    if (clockLayout != "builder") display_.setMode(DisplayMode::WEATHER);
+    const char* clockLayout = configDocument["clock"]["layout"] | "minimal";
+    const bool builderLayout = clockLayout != nullptr && strcmp(clockLayout, "builder") == 0;
+    if (!builderLayout) display_.setMode(DisplayMode::WEATHER);
     logs_.add(LogCategory::WEATHER, LogLevel::INFO, "Weather snapshot ontvangen");
     request->send(200, "application/json", weatherBody);
   }, nullptr, collectJsonBody);
