@@ -2,6 +2,24 @@
 
 Deze ronde valideert uitsluitend de fysieke HUB75-keten. De validation firmware gebruikt geen WiFi, portal, Home Assistant, P2000 of NTP. De normale firmwareomgeving blijft daarnaast beschikbaar en wordt niet door de validation-build vervangen.
 
+## Eenmalige installatie PlatformIO Core
+
+Controleer eerst:
+
+```powershell
+python --version
+python -m platformio --version
+```
+
+Geeft de tweede opdracht `No module named platformio`, installeer PlatformIO Core dan voor deze Python:
+
+```powershell
+python -m pip install --user -U platformio
+python -m platformio --version
+```
+
+Daarna hoeft `pio` niet in PATH te staan; gebruik de `python -m platformio`-commando’s hieronder.
+
 ## Hardwareprofiel
 
 - Controller: Waveshare ESP32-S3-RGB-Matrix

@@ -52,6 +52,17 @@ De tweede opdracht bouwt de productieportal en zet de statische output veilig in
 
 ## Firmware
 
+### PlatformIO installeren op Windows
+
+Als `pio` of `python -m platformio` niet werkt, installeer PlatformIO Core eenmalig voor dezelfde Python die je in PowerShell gebruikt:
+
+```powershell
+python -m pip install --user -U platformio
+python -m platformio --version
+```
+
+Gebruik daarna de Python-aanroep hieronder. Het losse `pio`-commando is optioneel en vereist een PATH-instelling. Alternatief kun je PlatformIO IDE voor VS Code gebruiken; daarin is PlatformIO Core ingebouwd.
+
 ```powershell
 cd firmware
 python -m platformio run -e waveshare-esp32-s3-rgb-matrix

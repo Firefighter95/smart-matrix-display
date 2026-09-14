@@ -13,6 +13,10 @@ if ($Upload) { $arguments += @('-t', 'upload') }
 if (Get-Command pio -ErrorAction SilentlyContinue) {
   & pio @arguments
 } else {
+  & python -c "import platformio" 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    throw 'PlatformIO Core ontbreekt voor deze Python-installatie. Installeer met: python -m pip install --user -U platformio'
+  }
   & python -m platformio @arguments
 }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
