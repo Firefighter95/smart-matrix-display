@@ -96,6 +96,26 @@ python -m platformio run -e waveshare-esp32-s3-rgb-matrix -t uploadfs --upload-p
 python -m platformio device monitor --port COM3 --baud 115200
 ```
 
+Na deze eerste USB-flash kunnen volgende updates via het thuisnetwerk. Voor firmware:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\upload-network.ps1
+```
+
+Als mDNS niet werkt, geef het IP-adres mee:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\upload-network.ps1 -Host 192.168.0.169
+```
+
+Voor een nieuwe portalbuild plus LittleFS-image:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\upload-network.ps1 -Host smartmatrix.local -Filesystem
+```
+
+Zie [`docs/ota.md`](docs/ota.md) voor voorwaarden en recovery.
+
 Zonder opgeslagen WiFi-credentials start de controller een tijdelijk access point met een naam zoals `SmartMatrix-99E4`. WiFi-credentials kunnen via `PUT /api/v1/wifi` worden opgeslagen. Na verbinding wordt het configuratie-AP automatisch uitgeschakeld; het komt alleen terug wanneer het thuisnetwerk langere tijd niet bereikbaar is. Na verbinding is de controller bereikbaar via `http://smartmatrix.local` wanneer mDNS door het netwerk wordt ondersteund.
 
 ## Hardware

@@ -77,7 +77,7 @@ void setup() {
   else logManager.add(LogCategory::DISPLAY_LOG, LogLevel::ERROR, "HUB75 DMA initialisatie mislukt");
   clockScreen.begin();
   // Web/API and OTA are intentionally available as scaffolding, but the physical test does not depend on them.
-  otaManager.begin();
+  otaManager.begin(wifiManager.hostname());
   apiServer.begin();
 #endif
 }
