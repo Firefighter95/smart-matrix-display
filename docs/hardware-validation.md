@@ -64,6 +64,8 @@ python -m platformio run -e hardware-validation-20mhz -t upload --upload-port CO
 
 De bestaande `hardware-validation` blijft de standaard `FM6126A`-test. Wijzig tijdens deze A/B-test geen bekabeling en flash steeds slechts één omgeving tegelijk. Een zichtbaar rood, groen, blauw of wit beeld is al voldoende om een profiel als werkend te markeren.
 
+De V1-DMA-test gebruikt voorlopig single buffering. De gebruikte DMA-library vereist een expliciete `flipDMABuffer()` nadat een back-buffer is gevuld; de huidige hardwaretest tekent meerdere bewerkingen per patroon en heeft nog geen centrale frame-presentatie. Dubbele buffering wordt daarom pas ingeschakeld zodra de renderer een expliciete `present`-stap heeft.
+
 ## Low-level signaaltest zonder DMA of mock
 
 Als alle DMA-profielen zwart blijven, gebruik dan de volledig zelfstandige raw signal probe. Deze firmware gebruikt geen `DisplayManager`, geen mock-output, geen portal en geen DMA-refresh. De HUB75-pinnen worden rechtstreeks met GPIO aangestuurd; de FM6124-familie-initialisatie wordt eveneens rechtstreeks verstuurd.

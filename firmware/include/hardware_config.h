@@ -78,7 +78,10 @@ constexpr HUB75_I2S_CFG::clk_speed CLOCK_SPEED = HUB75_I2S_CFG::HZ_20M;
 #else
 constexpr HUB75_I2S_CFG::clk_speed CLOCK_SPEED = HUB75_I2S_CFG::HZ_10M;
 #endif
-constexpr bool DOUBLE_BUFFER = true;
+// Keep single buffering until the renderer has an explicit frame-present
+// operation. The DMA library requires flipDMABuffer() when double buffering
+// is enabled; without that call newly drawn frames remain invisible.
+constexpr bool DOUBLE_BUFFER = false;
 constexpr bool CLOCK_PHASE = false;
 
 inline HUB75_I2S_CFG::i2s_pins pinMap() {
