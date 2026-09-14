@@ -41,6 +41,18 @@
       "uptime": {"name": "Uptime"},
       "firmware": {"name": "Firmware"},
       "resolution": {"name": "Resolutie"}
+      ,"active_layout": {"name": "Actieve layout"}
+      ,"active_profile": {"name": "Actief profiel"}
+      ,"queue_length": {"name": "Wachtrijlengte"}
+      ,"heap_free": {"name": "Vrije heap"}
+      ,"psram_free": {"name": "Vrije PSRAM"}
+      ,"hardware_profile": {"name": "Hardwareprofiel"}
+      ,"panel_profile": {"name": "Paneelprofiel"}
+      ,"scan_rows": {"name": "Scanrijen"}
+      ,"pin_mapping": {"name": "Pinmapping"}
+      ,"ip_address": {"name": "IP-adres"}
+      ,"hostname": {"name": "Hostnaam"}
+      ,"weather_condition": {"name": "Weerconditie"}
     },
     "binary_sensor": {
       "online": {"name": "Online"},
@@ -59,6 +71,7 @@
     },
     "switch": {
       "display_power": {"name": "Display aan/uit"}
+      ,"display_enabled": {"name": "Display actief"}
     }
   }
 }

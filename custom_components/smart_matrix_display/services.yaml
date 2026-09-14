@@ -138,6 +138,55 @@ send_p2000:
           max: 100
           mode: slider
 
+send_alert:
+  name: Send alert
+  description: Send a high-priority Home Assistant alert through the display event pipeline.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    title:
+      name: Title
+      default: ALERT
+      selector:
+        text:
+    message:
+      name: Alert message
+      required: true
+      selector:
+        text:
+          multiline: true
+    layout_id:
+      name: Layout ID
+      selector:
+        text:
+    duration:
+      name: Duration
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 86400
+          mode: box
+          unit_of_measurement: s
+    color:
+      name: Color
+      default: "#FF3B30"
+      selector:
+        text:
+    priority:
+      name: Priority
+      default: 75
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+    payload:
+      name: Payload
+      selector:
+        object:
+
 show_message:
   name: Show message
   description: Backwards-compatible friendly alias for send_message.
@@ -293,6 +342,32 @@ set_brightness:
           max: 100
           mode: slider
           unit_of_measurement: "%"
+
+set_power:
+  name: Set display power
+  description: Turn the matrix output on or off.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    enabled:
+      name: Enabled
+      required: true
+      selector:
+        boolean:
+
+set_layout:
+  name: Select idle layout
+  description: Select the saved layout used by the display when idle.
+  target:
+    device:
+      integration: smart_matrix_display
+  fields:
+    layout_id:
+      name: Layout ID
+      required: true
+      selector:
+        text:
 
 set_profile:
   name: Set profile

@@ -32,6 +32,25 @@ class SmartMatrixCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
-            return await self.api.async_get_status()
+            status = await self.api.async_get_status()
+            # Keep configuration-backed controls readable even on firmware
+            # versions that do not yet expose the richer runtime status.
+            try:
+                config = await self.api.async_get_config()
+            except SmartMatrixApiError:
+                config = {}
+            layouts = config.get("layouts", [])
+            profiles = config.get("profiles", [])
+            status.setdefault(
+                "layouts",
+                [item.get("id") for item in layouts if isinstance(item, dict) and item.get("id")],
+            )
+            status.setdefault("active_layout", config.get("activeLayoutId") or config.get("clock", {}).get("layout"))
+            status.setdefault(
+                "profiles",
+                [item.get("id") for item in profiles if isinstance(item, dict) and item.get("id")],
+            )
+            status.setdefault("profile", config.get("activeProfileId", "normal"))
+            return status
         except SmartMatrixApiError as err:
             raise UpdateFailed(str(err)) from err

@@ -41,6 +41,18 @@
       "uptime": {"name": "Uptime"},
       "firmware": {"name": "Firmware"},
       "resolution": {"name": "Resolution"}
+      ,"active_layout": {"name": "Active layout"}
+      ,"active_profile": {"name": "Active profile"}
+      ,"queue_length": {"name": "Queue length"}
+      ,"heap_free": {"name": "Free heap"}
+      ,"psram_free": {"name": "Free PSRAM"}
+      ,"hardware_profile": {"name": "Hardware profile"}
+      ,"panel_profile": {"name": "Panel profile"}
+      ,"scan_rows": {"name": "Scan rows"}
+      ,"pin_mapping": {"name": "Pin mapping"}
+      ,"ip_address": {"name": "IP address"}
+      ,"hostname": {"name": "Hostname"}
+      ,"weather_condition": {"name": "Weather condition"}
       ,"weather_temperature": {"name": "Weather temperature"}
       ,"weather_wind": {"name": "Weather wind speed"}
     },
@@ -61,6 +73,7 @@
     },
     "switch": {
       "display_power": {"name": "Display power"}
+      ,"display_enabled": {"name": "Display enabled"}
     }
   }
 }

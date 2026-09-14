@@ -65,11 +65,11 @@ Statussen:
 |---|---|---|---|
 | HACS-installatie/config flow | DONE | `custom_components/smart_matrix_display/` | Geen breaking domainwijziging |
 | Meerdere displays | DONE | één config entry/device per display | End-to-end echte devices |
-| Status/binary/button entities | DONE | `sensor.py`, `binary_sensor.py`, `button.py` | Extra event sensors |
-| Brightness/power/layout/profile controls | DONE | `number.py`, `switch.py`, `select.py` | Firmwarecontrolroutes |
-| Existing message/weather/P2000 services | DONE | `services.yaml`, `__init__.py` | Structured P2000 uitbreiden |
-| `show_layout` / `show_event` | DONE | API-client + services | Firmwareroutes |
-| HA event → mock Event Engine | PARTIAL | contract en mock API aanwezig | HACS runtime testomgeving toevoegen |
+| Status/binary/button entities | DONE | `sensor.py`, `binary_sensor.py`, `button.py` | Runtime event sensors |
+| Brightness/power/layout/profile controls | PARTIAL | `number.py`, `switch.py`, `select.py`, services | Firmwarepersistente runtime-selectie |
+| Existing message/weather/P2000 services | DONE | `services.yaml`, `__init__.py`, structured event payload | PagerMon-adapter |
+| `show_layout` / `show_event` | PARTIAL | API-client + services + shared contract | Firmware layout persistence/runtime |
+| HA event → mock Event Engine | DONE | contract, HACS services en mock API | Embedded queue/render parity |
 
 ## P2000, diagnostics en operations
 

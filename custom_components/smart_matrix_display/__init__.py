@@ -31,12 +31,19 @@ from .const import (
     ATTR_COLOR,
     ATTR_DURATION,
     ATTR_EVENT_TYPE,
+    ATTR_DISCIPLINE,
+    ATTR_INCIDENT_ID,
     ATTR_LAYOUT_ID,
     ATTR_LOCATION,
     ATTR_MESSAGE,
     ATTR_PAYLOAD,
     ATTR_PRIORITY,
     ATTR_PROFILE_ID,
+    ATTR_ENABLED,
+    ATTR_PLACE,
+    ATTR_REGION,
+    ATTR_STREET,
+    ATTR_UNITS,
     ATTR_SOURCE,
     ATTR_TITLE,
     ATTR_WEATHER_ENTITY,
@@ -51,8 +58,11 @@ from .const import (
     SERVICE_RESTART,
     SERVICE_SEND_MESSAGE,
     SERVICE_SEND_P2000,
+    SERVICE_SEND_ALERT,
     SERVICE_SEND_WEATHER,
     SERVICE_SET_BRIGHTNESS,
+    SERVICE_SET_LAYOUT,
+    SERVICE_SET_POWER,
     SERVICE_SET_PROFILE,
     SERVICE_SHOW_EVENT,
     SERVICE_SHOW_LAYOUT,
@@ -91,6 +101,12 @@ P2000_SCHEMA = vol.Schema(
         vol.Optional(ATTR_TITLE, default="P2000"): cv.string,
         vol.Optional(ATTR_LOCATION, default=""): cv.string,
         vol.Optional(ATTR_CAPCODE, default=""): cv.string,
+        vol.Optional(ATTR_DISCIPLINE, default=""): cv.string,
+        vol.Optional(ATTR_STREET, default=""): cv.string,
+        vol.Optional(ATTR_PLACE, default=""): cv.string,
+        vol.Optional(ATTR_REGION, default=""): cv.string,
+        vol.Optional(ATTR_UNITS, default=""): cv.string,
+        vol.Optional(ATTR_INCIDENT_ID, default=""): cv.string,
         vol.Optional(ATTR_DURATION, default=30): vol.All(
             vol.Coerce(int), vol.Range(min=1, max=86400)
         ),
@@ -99,6 +115,18 @@ P2000_SCHEMA = vol.Schema(
         vol.Optional(ATTR_PRIORITY, default=90): vol.All(
             vol.Coerce(int), vol.Range(min=0, max=100)
         ),
+    }
+)
+
+ALERT_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_MESSAGE): cv.string,
+        vol.Optional(ATTR_TITLE, default="ALERT"): cv.string,
+        vol.Optional(ATTR_LAYOUT_ID): cv.string,
+        vol.Optional(ATTR_DURATION, default=20): vol.All(vol.Coerce(int), vol.Range(min=1, max=86400)),
+        vol.Optional(ATTR_COLOR, default="#FF3B30"): cv.string,
+        vol.Optional(ATTR_PRIORITY, default=75): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+        vol.Optional(ATTR_PAYLOAD, default={}): vol.All(dict, vol.Length(max=64)),
     }
 )
 
@@ -124,6 +152,8 @@ LAYOUT_SCHEMA = vol.Schema(
 
 BRIGHTNESS_SCHEMA = vol.Schema({vol.Required(ATTR_BRIGHTNESS): vol.All(vol.Coerce(int), vol.Range(min=0, max=100))})
 PROFILE_SCHEMA = vol.Schema({vol.Required(ATTR_PROFILE_ID): vol.All(cv.string, vol.Length(min=1, max=32))})
+POWER_SCHEMA = vol.Schema({vol.Required(ATTR_ENABLED): cv.boolean})
+LAYOUT_SELECT_SCHEMA = vol.Schema({vol.Required(ATTR_LAYOUT_ID): vol.All(cv.string, vol.Length(min=1, max=64))})
 
 
 def _as_list(value: Any) -> list[str]:
@@ -231,15 +261,29 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             message = call.data[ATTR_MESSAGE].strip()
             if location:
                 message = f"{location}\n{message}"
-            payload = {
-                ATTR_TITLE: call.data.get(ATTR_TITLE, "P2000"),
-                ATTR_MESSAGE: message,
-                ATTR_DURATION: call.data.get(ATTR_DURATION, 30),
-                ATTR_COLOR: call.data.get(ATTR_COLOR, "#FF3B30"),
-                ATTR_ALIGNMENT: call.data.get(ATTR_ALIGNMENT, "left"),
-                ATTR_PRIORITY: call.data.get(ATTR_PRIORITY, 90),
+            payload = dict(call.data)
+            payload[ATTR_MESSAGE] = message
+            event = {
+                "source": "p2000",
+                "type": "dispatch",
+                "layoutId": payload.pop(ATTR_LAYOUT_ID, None),
+                "duration": payload.pop(ATTR_DURATION, 30),
+                "priority": payload.pop(ATTR_PRIORITY, 90),
+                "payload": payload,
             }
-            await _call_all(_target_runtimes(hass, call), "async_send_message", payload)
+            await _call_all(_target_runtimes(hass, call), "async_send_event", event)
+
+        async def handle_send_alert(call: ServiceCall) -> None:
+            payload = dict(call.data)
+            event = {
+                "source": "home_assistant",
+                "type": "alert",
+                "layoutId": payload.pop(ATTR_LAYOUT_ID, None),
+                "duration": payload.pop(ATTR_DURATION, 20),
+                "priority": payload.pop(ATTR_PRIORITY, 75),
+                "payload": {**payload, **payload.pop(ATTR_PAYLOAD, {})},
+            }
+            await _call_all(_target_runtimes(hass, call), "async_send_event", event)
 
         async def handle_show_message(call: ServiceCall) -> None:
             await _call_all(_target_runtimes(hass, call), "async_send_message", dict(call.data))
@@ -256,6 +300,12 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
         async def handle_set_brightness(call: ServiceCall) -> None:
             await _call_all(_target_runtimes(hass, call), "async_set_brightness", call.data[ATTR_BRIGHTNESS])
+
+        async def handle_set_power(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_set_power", call.data[ATTR_ENABLED])
+
+        async def handle_set_layout(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_set_layout", call.data[ATTR_LAYOUT_ID])
 
         async def handle_set_profile(call: ServiceCall) -> None:
             await _call_all(_target_runtimes(hass, call), "async_set_profile", call.data[ATTR_PROFILE_ID])
@@ -285,11 +335,14 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             handle_send_p2000,
             schema=P2000_SCHEMA,
         )
+        hass.services.async_register(DOMAIN, SERVICE_SEND_ALERT, handle_send_alert, schema=ALERT_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SHOW_MESSAGE, handle_show_message, schema=MESSAGE_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SHOW_LAYOUT, handle_show_layout, schema=LAYOUT_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SHOW_EVENT, handle_show_event, schema=EVENT_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_CLEAR, handle_clear_display)
         hass.services.async_register(DOMAIN, SERVICE_SET_BRIGHTNESS, handle_set_brightness, schema=BRIGHTNESS_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_SET_POWER, handle_set_power, schema=POWER_SCHEMA)
+        hass.services.async_register(DOMAIN, SERVICE_SET_LAYOUT, handle_set_layout, schema=LAYOUT_SELECT_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SET_PROFILE, handle_set_profile, schema=PROFILE_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SKIP_EVENT, handle_skip_event)
     return True

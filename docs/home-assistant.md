@@ -33,7 +33,10 @@ Per display worden status-entiteiten aangemaakt voor:
 - WiFi RSSI;
 - uptime;
 - firmwareversie;
-- resolutie.
+- resolutie;
+- actieve layout en profiel;
+- queue-lengte, heap, PSRAM, hardware-/paneelprofiel, scanrijen en pinmapping;
+- IP-adres, hostnaam en display-enabled status;
 - actuele weerdata: conditie, temperatuur en windsnelheid in m/s wanneer een `weather.*`-entity is gekoppeld.
 
 Daarnaast zijn knoppen beschikbaar voor **Clear display** en **Restart**.
@@ -81,11 +84,16 @@ Ook beschikbaar:
 - `smart_matrix_display.restart`
 - `smart_matrix_display.send_weather`
 - `smart_matrix_display.send_p2000`
+- `smart_matrix_display.send_alert`
 - `smart_matrix_display.show_layout`
 - `smart_matrix_display.show_event`
 - `smart_matrix_display.set_brightness`
+- `smart_matrix_display.set_power`
+- `smart_matrix_display.set_layout`
 - `smart_matrix_display.set_profile`
 - `smart_matrix_display.skip_event`
+
+`send_p2000` wordt als structured event met bron `p2000` en type `dispatch` verstuurd. Daardoor blijven discipline-, straat-, plaats-, regio-, capcode-, units- en incidentgegevens beschikbaar voor regels en layouts. `send_alert` gebruikt dezelfde event-engine met bron `home_assistant` en type `alert`.
 
 ## Weer vanuit Home Assistant
 

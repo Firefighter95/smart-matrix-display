@@ -31,6 +31,7 @@ BINARY_SENSORS = (
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
     _BinarySensorSpec(key="time_synced", translation_key="time_synced"),
+    _BinarySensorSpec(key="display_enabled", translation_key="display_enabled"),
 )
 
 
