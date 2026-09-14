@@ -14,6 +14,9 @@
 #ifdef SMART_MATRIX_HARDWARE_VALIDATION
 #include "hardware_validation.h"
 #endif
+#ifdef SMART_MATRIX_RAW_SIGNAL_TEST
+#include "raw_signal_test.h"
+#endif
 
 ConfigManager configManager;
 LogManager logManager;
@@ -32,6 +35,10 @@ HardwareValidation hardwareValidation;
 void setup() {
   Serial.begin(115200);
   delay(200);
+#ifdef SMART_MATRIX_RAW_SIGNAL_TEST
+  rawSignalTestSetup();
+  return;
+#endif
   logManager.begin();
   logManager.add(LogCategory::SYSTEM, LogLevel::INFO, "Smart Matrix Display boot");
   configManager.begin();
@@ -58,7 +65,9 @@ void setup() {
 }
 
 void loop() {
-#ifdef SMART_MATRIX_HARDWARE_VALIDATION
+#ifdef SMART_MATRIX_RAW_SIGNAL_TEST
+  rawSignalTestLoop();
+#elif defined(SMART_MATRIX_HARDWARE_VALIDATION)
   hardwareValidation.update();
 #else
   displayManager.update();

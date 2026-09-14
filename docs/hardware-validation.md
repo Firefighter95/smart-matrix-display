@@ -64,6 +64,27 @@ python -m platformio run -e hardware-validation-20mhz -t upload --upload-port CO
 
 De bestaande `hardware-validation` blijft de standaard `FM6126A`-test. Wijzig tijdens deze A/B-test geen bekabeling en flash steeds slechts één omgeving tegelijk. Een zichtbaar rood, groen, blauw of wit beeld is al voldoende om een profiel als werkend te markeren.
 
+## Low-level signaaltest zonder DMA of mock
+
+Als alle DMA-profielen zwart blijven, gebruik dan de volledig zelfstandige raw signal probe. Deze firmware gebruikt geen `DisplayManager`, geen mock-output, geen portal en geen DMA-refresh. De HUB75-pinnen worden rechtstreeks met GPIO aangestuurd; de FM6124-familie-initialisatie wordt eveneens rechtstreeks verstuurd.
+
+```powershell
+cd firmware
+python -m platformio run -e hardware-signal-probe -t upload --upload-port COM3
+python -m platformio device monitor --port COM3 --baud 115200
+```
+
+Verwachte seriële tekst:
+
+```text
+Smart Matrix Raw HUB75 Signal Probe
+DMA: bypassed
+Mock display: bypassed
+[RAW TEST] RED | direct GPIO
+```
+
+Het beeld hoort iedere drie seconden rood, groen, blauw en wit te tonen. Als dit profiel wel beeld geeft, zit het probleem in DMA/configuratie. Als ook dit profiel volledig zwart blijft, is de volgende stap een elektrische controle van `CLK`, `LAT`, `OE` en de RGB-data met een logic analyzer of oscilloscoop; de voeding en connector alleen bewijzen dan nog niet dat de signalen op de juiste fysieke HUB75-pinnen aankomen.
+
 ## Build en flash op Windows
 
 ```powershell
