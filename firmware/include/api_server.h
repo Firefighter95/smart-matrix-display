@@ -25,4 +25,5 @@ private:
   TimeManager& time_;
   WeatherScreen& weather_;
   SystemStatus status_;
+  uint32_t otaRestartAt_ = 0;
 };

@@ -1,6 +1,7 @@
 #include "api_server.h"
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <Update.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -178,9 +179,47 @@ void ApiServer::begin() {
   });
   server_.on("/api/v1/logs", HTTP_GET, [this](AsyncWebServerRequest* request) { request->send(200, "application/json", logs_.toJson()); });
   server_.on("/api/v1/restart", HTTP_POST, [this](AsyncWebServerRequest* request) { request->send(202, "application/json", "{\"ok\":true,\"restarting\":true}"); });
+  server_.on("/api/v1/ota/firmware", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    if (Update.hasError()) {
+      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"OTA_FAILED\",\"message\":\"Firmware-update mislukt.\"}}");
+      return;
+    }
+    request->send(200, "application/json", "{\"ok\":true,\"restarting\":true,\"target\":\"firmware\"}");
+    otaRestartAt_ = millis() + 1000;
+  }, [](AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final) {
+    if (index == 0) {
+      const uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+      if (!Update.begin(maxSketchSpace, U_FLASH)) Update.printError(Serial);
+    }
+    if (len && Update.write(data, len) != len) Update.printError(Serial);
+    if (final && !Update.end(true)) Update.printError(Serial);
+    (void)request;
+    (void)filename;
+  });
+  server_.on("/api/v1/ota/filesystem", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    if (Update.hasError()) {
+      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"OTA_FAILED\",\"message\":\"LittleFS-update mislukt.\"}}");
+      return;
+    }
+    request->send(200, "application/json", "{\"ok\":true,\"restarting\":true,\"target\":\"filesystem\"}");
+    otaRestartAt_ = millis() + 1000;
+  }, [](AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final) {
+    if (index == 0) {
+      if (!Update.begin(LittleFS.totalBytes(), U_SPIFFS)) Update.printError(Serial);
+    }
+    if (len && Update.write(data, len) != len) Update.printError(Serial);
+    if (final && !Update.end(true)) Update.printError(Serial);
+    (void)request;
+    (void)filename;
+  });
   if (LittleFS.begin(false)) server_.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
   else server_.on("/", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(503, "text/plain", "LittleFS portal niet beschikbaar"); });
   server_.begin();
 }
 
-void ApiServer::update() {}
+void ApiServer::update() {
+  if (otaRestartAt_ != 0 && static_cast<int32_t>(millis() - otaRestartAt_) >= 0) {
+    otaRestartAt_ = 0;
+    ESP.restart();
+  }
+}

@@ -96,7 +96,7 @@ python -m platformio run -e waveshare-esp32-s3-rgb-matrix -t uploadfs --upload-p
 python -m platformio device monitor --port COM3 --baud 115200
 ```
 
-Na deze eerste USB-flash kunnen volgende updates via het thuisnetwerk. Voor firmware:
+Na deze eerste USB-flash kunnen volgende updates via het thuisnetwerk. De wrapper bouwt de juiste image en uploadt deze via de LAN-OTA-endpoint. Voor firmware:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\upload-network.ps1
