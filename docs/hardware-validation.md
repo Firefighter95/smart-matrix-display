@@ -29,25 +29,32 @@ De actuele softwarekeuzes zijn `SCAN_MODE=ONE_THIRTY_SECOND_STANDARD`, `SHIFT_DR
 
 ```powershell
 cd firmware
-pio run -e hardware-validation
-pio run -e hardware-validation -t upload
-pio device monitor
-```
-
-Als `pio` niet als commando beschikbaar is:
-
-```powershell
 python -m platformio run -e hardware-validation
 python -m platformio run -e hardware-validation -t upload
 python -m platformio device monitor
 ```
 
+Het losse `pio`-commando is optioneel. Als PlatformIO aan PATH is toegevoegd, zijn deze verkorte commando’s equivalent:
+
+```powershell
+pio run -e hardware-validation
+pio run -e hardware-validation -t upload
+pio device monitor
+```
+
+Of gebruik vanuit de repository-root het PATH-onafhankelijke script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-firmware.ps1 -Validation
+powershell -ExecutionPolicy Bypass -File .\scripts\build-firmware.ps1 -Validation -Upload
+```
+
 Controleer de poort met:
 
 ```powershell
-pio device list
-pio run -e hardware-validation -t upload --upload-port COMx
-pio device monitor --port COMx --baud 115200
+python -m platformio device list
+python -m platformio run -e hardware-validation -t upload --upload-port COMx
+python -m platformio device monitor --port COMx --baud 115200
 ```
 
 Wordt de controller niet herkend, volg dan de officiële bootprocedure: houd BOOT ingedrukt, sluit USB aan, laat BOOT los en druk na upload op RESET.

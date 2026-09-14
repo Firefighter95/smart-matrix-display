@@ -54,12 +54,14 @@ De tweede opdracht bouwt de productieportal en zet de statische output veilig in
 
 ```powershell
 cd firmware
-pio run
-pio run -e hardware-validation
-pio run -t upload
-pio run -t uploadfs
-pio device monitor
+python -m platformio run -e waveshare-esp32-s3-rgb-matrix
+python -m platformio run -e hardware-validation
+python -m platformio run -t upload
+python -m platformio run -t uploadfs
+python -m platformio device monitor
 ```
+
+Het losse `pio`-commando werkt alleen als PlatformIO Core aan de Windows PATH is toegevoegd. De Python-module-aanroep hierboven werkt ook zonder die PATH-instelling. Vanuit de repository-root kan het normale buildscript ook worden gebruikt met `powershell -ExecutionPolicy Bypass -File .\scripts\build-firmware.ps1`.
 
 Voor de eerste fysieke test gebruik je de aparte validation-build:
 
