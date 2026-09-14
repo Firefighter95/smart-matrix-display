@@ -20,16 +20,24 @@
 namespace HardwareConfig {
 
 enum class HardwareProfile : uint8_t { WAVESHARE_ESP32_S3_RGB_MATRIX, CUSTOM_HUB75 };
+enum class ScanMode : uint8_t { ONE_THIRTY_SECOND_STANDARD, ONE_THIRTY_SECOND_NO_E_EXPERIMENTAL };
 constexpr HardwareProfile PROFILE = HardwareProfile::WAVESHARE_ESP32_S3_RGB_MATRIX;
 constexpr char PROFILE_NAME[] = "WAVESHARE_ESP32_S3_RGB_MATRIX";
 constexpr char PANEL_PROFILE_NAME[] = "P2_5_128X64_1_32";
-constexpr char PIN_MAPPING_STATUS[] = "UNCONFIRMED_WAVESHARE_DEFAULT";
+constexpr char PIN_MAPPING_STATUS[] = "OFFICIAL_WAVESHARE_ARDUINO_EXAMPLE_UNCONFIRMED_PANEL";
 
 constexpr uint16_t MATRIX_WIDTH = 128;
 constexpr uint16_t MATRIX_HEIGHT = 64;
 constexpr uint8_t PANEL_CHAIN = 1;
 constexpr uint8_t SCAN_ROWS = 32;
-constexpr bool HAS_E_ADDRESS_LINE = true;
+constexpr ScanMode SCAN_MODE = ScanMode::ONE_THIRTY_SECOND_STANDARD;
+constexpr char SCAN_MODE_NAME[] = "1/32_STANDARD_WITH_E";
+constexpr bool HAS_E_ADDRESS_LINE = SCAN_MODE == ScanMode::ONE_THIRTY_SECOND_STANDARD;
+constexpr uint8_t VALIDATION_BRIGHTNESS = 15;
+constexpr uint32_t VALIDATION_STATIC_STEP_MS = 1800;
+constexpr uint32_t VALIDATION_ROW_STEP_MS = 100;
+constexpr uint32_t VALIDATION_COLUMN_STEP_MS = 35;
+constexpr uint16_t DISPLAY_ROTATION = 0;
 
 // RGB data lines, upper and lower half of the HUB75 panel.
 constexpr int8_t R1_PIN = 4;
@@ -52,16 +60,19 @@ constexpr int8_t LAT_PIN = 40;
 constexpr int8_t OE_PIN = 2;
 
 // Change this if the panel has a known shift-driver IC that needs initialization.
-constexpr HUB75_I2S_CFG::shift_driver SHIFT_DRIVER = HUB75_I2S_CFG::SHIFTREG;
+// Waveshare's official Arduino example selects FM6126A. The installed DMA
+// library shares its FM6124-family initialization path for FM6124/FM6126A.
+constexpr HUB75_I2S_CFG::shift_driver SHIFT_DRIVER = HUB75_I2S_CFG::FM6126A;
+constexpr char SHIFT_DRIVER_NAME[] = "FM6126A_FM6124_FAMILY";
 constexpr HUB75_I2S_CFG::clk_speed CLOCK_SPEED = HUB75_I2S_CFG::HZ_10M;
 constexpr bool DOUBLE_BUFFER = true;
-constexpr bool CLOCK_PHASE = true;
+constexpr bool CLOCK_PHASE = false;
 
 inline HUB75_I2S_CFG::i2s_pins pinMap() {
   return {
     R1_PIN, G1_PIN, B1_PIN,
     R2_PIN, G2_PIN, B2_PIN,
-    A_PIN, B_PIN, C_PIN, D_PIN, E_PIN,
+    A_PIN, B_PIN, C_PIN, D_PIN, HAS_E_ADDRESS_LINE ? E_PIN : -1,
     LAT_PIN, OE_PIN, CLK_PIN,
   };
 }

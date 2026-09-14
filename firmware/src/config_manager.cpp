@@ -10,7 +10,7 @@ void ConfigManager::begin() {
   configJson_ = preferences_.getString("config", DEFAULT_CONFIG);
   if (configJson_.isEmpty()) configJson_ = DEFAULT_CONFIG;
 
-  DynamicJsonDocument document(4096);
+  JsonDocument document;
   if (deserializeJson(document, configJson_) != DeserializationError::Ok || !document.is<JsonObject>()) {
     configJson_ = DEFAULT_CONFIG;
     preferences_.putString("config", configJson_);
@@ -29,7 +29,7 @@ void ConfigManager::begin() {
 String ConfigManager::json() const { return configJson_; }
 
 bool ConfigManager::saveJson(const String& json) {
-  DynamicJsonDocument document(8192);
+  JsonDocument document;
   if (deserializeJson(document, json) != DeserializationError::Ok || !document.is<JsonObject>()) return false;
   document["schemaVersion"] = CURRENT_SCHEMA_VERSION;
   String normalized;

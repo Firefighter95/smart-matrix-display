@@ -11,6 +11,7 @@ public:
   bool begin();
   void update();
   bool ready() const { return output_ != nullptr; }
+  IDisplayOutput* output() const { return output_; }
   DisplayMode mode() const { return mode_; }
   uint8_t brightness() const { return brightness_; }
   String modeName() const;

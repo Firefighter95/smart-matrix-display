@@ -23,9 +23,9 @@ Statussen:
 | Brightness schedule | PARTIAL | `DisplayPage`, `profiles.ts` | Profile UI en firmwarecontrol |
 | Shared schemas | DONE | `shared/schemas/models.ts` + JSON schemas | C++ parser volgt later |
 | Config migratie | PARTIAL | browser migration + ESP32 schema v2 normalisatie | Volledige layout/profile migratie |
-| Hardware test firmware | DONE | `display_manager.cpp` | Paneel fysiek bevestigen |
+| Hardware test firmware | DONE | `hardware-validation` environment + `hardware_validation.cpp` | Paneel fysiek bevestigen |
 | Display output HAL | DONE | `display_output.h/.cpp` | Mock niet aan fysieke firmwareloop gekoppeld |
-| Production HUB75 renderer | BLOCKED_HARDWARE | HAL is aanwezig, testpatterns actief | Pin/scan/RGB/timing en fysieke framecontrole |
+| Production HUB75 renderer | BLOCKED_HARDWARE | HAL is aanwezig; validation patterns actief | Pin/scan/RGB/timing en fysieke framecontrole |
 
 ## Builder en layouts
 
@@ -95,9 +95,11 @@ Statussen:
 - fysieke brightness/ghosting/framevalidatie;
 - echte OTA flash- en langdurige ESP32/WiFi-soaktest.
 
+De controller-GPIO-defaults zijn inmiddels officieel geverifieerd tegen de Waveshare Arduino-bron. De resterende blokkade gaat uitsluitend over paneelgedrag: scan/addressing, RGB-order, FM6124-family gedrag, E-line en fysieke framekwaliteit.
+
 ## Volgende softwarefase
 
-1. Firmware API body handlers en config/layout/event persistence toevoegen.
+1. Hardware validation firmware op het echte paneel uitvoeren.
 2. Profile/rule/editor en event replay in portal uitbreiden.
 3. Golden-frame, malformed-input en accelerated soak tests toevoegen.
 4. RC-artifacts en `v1.0.0-rc.1` workflow voorbereiden.

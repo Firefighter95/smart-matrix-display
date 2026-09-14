@@ -55,12 +55,22 @@ De tweede opdracht bouwt de productieportal en zet de statische output veilig in
 ```powershell
 cd firmware
 pio run
+pio run -e hardware-validation
 pio run -t upload
 pio run -t uploadfs
 pio device monitor
 ```
 
-De hardwaretest is onafhankelijk van portal en LittleFS. Na flashen verschijnt iedere 2,5 seconden een nieuw testpatroon. Controleer vóór verdere hardwareafhankelijke firmwareontwikkeling het volledige 128×64 paneel fysiek.
+Voor de eerste fysieke test gebruik je de aparte validation-build:
+
+```powershell
+cd firmware
+pio run -e hardware-validation
+pio run -e hardware-validation -t upload
+pio device monitor --baud 115200
+```
+
+Deze test is onafhankelijk van portal, LittleFS, WiFi, HA en NTP. De cyclus start met zwart en draait daarna RGB, wit, lijnen, checkerboard, row/column tests, color bars, tekst en bewegende pixel/blok op 15% helderheid. Controleer vóór verdere hardwareafhankelijke firmwareontwikkeling het volledige 128×64 paneel fysiek. Zie [`docs/hardware-validation.md`](docs/hardware-validation.md).
 
 ## Hardware
 

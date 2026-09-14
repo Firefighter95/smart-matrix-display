@@ -11,6 +11,9 @@
 #include "ota_manager.h"
 #include "time_manager.h"
 #include "wifi_manager.h"
+#ifdef SMART_MATRIX_HARDWARE_VALIDATION
+#include "hardware_validation.h"
+#endif
 
 ConfigManager configManager;
 LogManager logManager;
@@ -22,6 +25,9 @@ ClockScreen clockScreen;
 MessageScreen messageScreen;
 OtaManager otaManager;
 ApiServer apiServer(configManager, displayManager, logManager, wifiManager, timeManager);
+#ifdef SMART_MATRIX_HARDWARE_VALIDATION
+HardwareValidation hardwareValidation;
+#endif
 
 void setup() {
   Serial.begin(115200);
@@ -29,6 +35,15 @@ void setup() {
   logManager.begin();
   logManager.add(LogCategory::SYSTEM, LogLevel::INFO, "Smart Matrix Display boot");
   configManager.begin();
+#ifdef SMART_MATRIX_HARDWARE_VALIDATION
+  if (displayManager.begin()) {
+    displayManager.setBrightness(HardwareConfig::VALIDATION_BRIGHTNESS);
+    hardwareValidation.begin(displayManager.output());
+  } else {
+    Serial.println("[ERROR] HUB75 initialization failed; validation stopped safely.");
+  }
+  return;
+#else
   wifiManager.begin();
   timeManager.begin();
   brightnessManager.begin();
@@ -39,9 +54,13 @@ void setup() {
   // Web/API and OTA are intentionally available as scaffolding, but the physical test does not depend on them.
   otaManager.begin();
   apiServer.begin();
+#endif
 }
 
 void loop() {
+#ifdef SMART_MATRIX_HARDWARE_VALIDATION
+  hardwareValidation.update();
+#else
   displayManager.update();
   wifiManager.update();
   timeManager.update();
@@ -51,4 +70,5 @@ void loop() {
   otaManager.update();
   apiServer.update();
   delay(1);
+#endif
 }
