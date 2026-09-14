@@ -43,7 +43,7 @@ Base path: `/api/v1/`. JSON-velden blijven backward compatible; nieuwe velden zi
 {"ssid":"MijnWifi","password":"voorbeeld-wachtwoord","hostname":"smartmatrix"}
 ```
 
-Bij ontbrekende credentials start de ESP32 een fallback access point met een SSID zoals `SmartMatrix-99E4`. Na een succesvolle stationverbinding wordt mDNS geadverteerd als `smartmatrix.local`.
+Bij ontbrekende credentials start de ESP32 een fallback access point met een SSID zoals `SmartMatrix-99E4`. Als het opgeslagen thuisnetwerk tijdelijk niet bereikbaar is, wordt dit AP na de reconnect-wachttijd ook tijdelijk gestart. Zodra de stationverbinding succesvol is, wordt het AP automatisch uitgeschakeld en blijft alleen de thuis-WiFi actief. Na een succesvolle stationverbinding wordt mDNS geadverteerd als `smartmatrix.local`.
 
 ## Bericht
 

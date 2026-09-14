@@ -15,6 +15,14 @@ void WifiManager::begin(ConfigManager& config) {
 
 void WifiManager::update() {
   if (connected()) {
+    // The fallback AP is only needed while the configured station network is
+    // unavailable.  Once STA reconnects, explicitly tear it down; otherwise
+    // WIFI_AP_STA keeps the provisioning network visible indefinitely.
+    if (apMode_) {
+      WiFi.softAPdisconnect(true);
+      WiFi.mode(WIFI_STA);
+      apMode_ = false;
+    }
     ensureMdns();
     return;
   }

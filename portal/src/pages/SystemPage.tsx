@@ -11,6 +11,20 @@ interface Props {
   onNotify: (message: string, kind?: 'success' | 'error' | 'info') => void;
 }
 
+function formatLogTime(log: LogEntry) {
+  if (typeof log.uptime === 'number') {
+    const totalSeconds = Math.floor(log.uptime / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `+${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  const date = new Date(log.timestamp);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 export function SystemPage({ api, status, logs, onReboot, onNotify }: Props) {
   const [updating, setUpdating] = useState(false);
   const [wifi, setWifi] = useState<WifiInfo>();
@@ -89,7 +103,7 @@ export function SystemPage({ api, status, logs, onReboot, onNotify }: Props) {
     </section>
     <section className="panel">
       <div className="panel-heading"><div><span className="eyebrow">RINGBUFFER · 100 ITEMS</span><h2>Logs</h2></div><Button onClick={() => onNotify('Logs ververst')}>Verversen</Button></div>
-      <div className="log-list">{logs.slice(0, 12).map((log) => <div className="log-row" key={log.id}><time>{new Date(log.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time><span className={`log-level log-level--${log.level.toLowerCase()}`}>{log.level}</span><code>{log.category}</code><p>{log.message}</p></div>)}</div>
+      <div className="log-list">{logs.slice(0, 12).map((log) => <div className="log-row" key={log.id}><time>{formatLogTime(log)}</time><span className={`log-level log-level--${log.level.toLowerCase()}`}>{log.level}</span><code>{log.category}</code><p>{log.message}</p></div>)}</div>
     </section>
     <section className="panel danger-zone"><div><span className="eyebrow">MAINTENANCE</span><h2>Backup & reset</h2><p>Exporteer de huidige JSON-configuratie of maak de controller klaar voor een nieuwe installatie.</p></div><div className="danger-actions"><Button onClick={() => onNotify('Configuratie-export klaar', 'info')}>Config exporteren</Button><Button onClick={() => onNotify('Importeer een JSON-bestand via de ESP32 API', 'info')}>Config importeren</Button><Button variant="danger" onClick={() => onNotify('Factory reset vereist nog een fysieke bevestiging', 'info')}>Factory reset</Button></div></section>
   </div>;

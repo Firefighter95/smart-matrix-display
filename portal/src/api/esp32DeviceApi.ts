@@ -74,7 +74,17 @@ export class Esp32DeviceApi implements DeviceApi {
   async reboot() {
     await this.request('/api/v1/restart', { method: 'POST' });
   }
-  async getLogs() { return this.request<LogEntry[]>('/api/v1/logs'); }
+  async getLogs() {
+    const raw = await this.request<Array<RawRecord>>('/api/v1/logs');
+    return raw.map((entry, index) => ({
+      id: String(entry.id ?? `${entry.uptime ?? 'log'}-${index}`),
+      timestamp: typeof entry.timestamp === 'string' ? entry.timestamp : '',
+      uptime: typeof entry.uptime === 'number' ? entry.uptime : undefined,
+      category: String(entry.category ?? 'SYSTEM') as LogEntry['category'],
+      level: String(entry.level ?? 'INFO') as LogEntry['level'],
+      message: String(entry.message ?? ''),
+    }));
+  }
   async getLayouts() { return this.request<LayoutModel[]>('/api/v1/layouts'); }
   async saveLayout(layout: LayoutModel) {
     return this.request<LayoutModel>(`/api/v1/layouts/${encodeURIComponent(layout.id)}`, { method: 'PUT', body: JSON.stringify(layout) });

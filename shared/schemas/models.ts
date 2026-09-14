@@ -296,6 +296,8 @@ export interface DeviceConfig {
 export interface LogEntry {
   id: string;
   timestamp: string;
+  /** Firmware logs use uptime instead of wall-clock time before NTP sync. */
+  uptime?: number;
   category: LogCategory;
   level: 'INFO' | 'WARN' | 'ERROR';
   message: string;
