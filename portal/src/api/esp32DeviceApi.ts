@@ -1,5 +1,8 @@
-import type { DeviceConfig, DeviceDiagnostics, DeviceFault, DeviceStatus, DisplayEvent, DisplayProfile, EventHistoryEntry, EventInput, LayoutModel, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
+import type { ClockConfig, DeviceConfig, DeviceDiagnostics, DeviceFault, DeviceStatus, DisplayConfig, DisplayEvent, DisplayProfile, EventHistoryEntry, EventInput, LayoutModel, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
+import { createDefaultClockElements } from '../../../shared/schemas/models';
 import type { DeviceApi, WifiInfo, WifiUpdate } from './deviceApi';
+import { createDefaultLayouts } from '../engine/layouts';
+import { createDefaultProfiles } from '../engine/profiles';
 
 type RawRecord = Record<string, unknown>;
 
@@ -37,6 +40,54 @@ const normalizeWifi = (raw: RawRecord): WifiInfo => ({
   hostname: pick(raw, 'hostname', 'hostname', ''),
 });
 
+const defaultDisplay: DisplayConfig = {
+  enabled: true,
+  brightness: 25,
+  maxBrightness: 100,
+  nightMode: true,
+  scheduleEnabled: true,
+  brightnessSchedule: [
+    { id: 'morning', time: '07:00', brightness: 45 },
+    { id: 'evening', time: '18:00', brightness: 25 },
+    { id: 'late', time: '22:00', brightness: 8 },
+    { id: 'midnight', time: '00:00', brightness: 2 },
+  ],
+};
+
+const defaultClock: ClockConfig = {
+  layout: 'minimal',
+  use24Hour: true,
+  showSeconds: false,
+  showDate: true,
+  timeColor: '#f4f7ff',
+  dateColor: '#72e6a8',
+  dividerColor: '#43506f',
+  backgroundColor: '#000000',
+  showStatusIndicator: true,
+  timezone: 'Europe/Amsterdam',
+  elements: createDefaultClockElements(),
+};
+
+const normalizeConfig = (raw: Partial<DeviceConfig>): DeviceConfig => ({
+  schemaVersion: raw.schemaVersion ?? 4,
+  display: {
+    ...defaultDisplay,
+    ...(raw.display ?? {}),
+    brightnessSchedule: raw.display?.brightnessSchedule ?? defaultDisplay.brightnessSchedule,
+  },
+  clock: {
+    ...defaultClock,
+    ...(raw.clock ?? {}),
+    elements: raw.clock?.elements ?? defaultClock.elements,
+  },
+  layouts: Array.isArray(raw.layouts) ? raw.layouts : createDefaultLayouts(),
+  rules: Array.isArray(raw.rules) ? raw.rules : [],
+  profiles: Array.isArray(raw.profiles) ? raw.profiles : createDefaultProfiles(),
+  activeLayoutId: raw.activeLayoutId ?? 'clock-classic',
+  activeProfileId: raw.activeProfileId ?? 'normal',
+  idleRotation: raw.idleRotation ?? [],
+});
+
 export class Esp32DeviceApi implements DeviceApi {
   private listeners = new Set<() => void>();
 
@@ -55,9 +106,9 @@ export class Esp32DeviceApi implements DeviceApi {
   async updateWifi(input: WifiUpdate) {
     await this.request('/api/v1/wifi', { method: 'PUT', body: JSON.stringify(input) });
   }
-  async getConfig() { return this.request<DeviceConfig>('/api/v1/config'); }
+  async getConfig() { return normalizeConfig(await this.request<Partial<DeviceConfig>>('/api/v1/config')); }
   async updateConfig(patch: Partial<DeviceConfig>) {
-    return this.request<DeviceConfig>('/api/v1/config', { method: 'PUT', body: JSON.stringify(patch) });
+    return normalizeConfig(await this.request<Partial<DeviceConfig>>('/api/v1/config', { method: 'PUT', body: JSON.stringify(patch) }));
   }
   async sendMessage(message: Message) {
     return this.request<Message>('/api/v1/message', { method: 'POST', body: JSON.stringify(message) });

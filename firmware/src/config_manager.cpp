@@ -16,8 +16,34 @@ void ConfigManager::begin() {
     preferences_.putString("config", configJson_);
     return;
   }
+  // Older production builds could persist a partial top-level config when a
+  // portal update arrived before the full schema was present. Restore missing
+  // objects from the current defaults without overwriting user values.
+  JsonDocument defaults;
+  deserializeJson(defaults, DEFAULT_CONFIG);
+  bool repaired = false;
+  if (!document["display"].is<JsonObject>()) {
+    document["display"] = defaults["display"];
+    repaired = true;
+  }
+  if (!document["clock"].is<JsonObject>()) {
+    document["clock"] = defaults["clock"];
+    repaired = true;
+  }
+  if (!document["layouts"].is<JsonArray>()) {
+    document["layouts"] = defaults["layouts"];
+    repaired = true;
+  }
+  if (!document["rules"].is<JsonArray>()) {
+    document["rules"] = defaults["rules"];
+    repaired = true;
+  }
+  if (!document["profiles"].is<JsonArray>()) {
+    document["profiles"] = defaults["profiles"];
+    repaired = true;
+  }
   const uint8_t storedVersion = document["schemaVersion"] | 1;
-  if (storedVersion < CURRENT_SCHEMA_VERSION) {
+  if (storedVersion < CURRENT_SCHEMA_VERSION || repaired) {
     if (storedVersion < 4) {
       String background = document["clock"]["backgroundColor"] | "";
       background.toLowerCase();
