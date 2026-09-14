@@ -79,7 +79,7 @@ Wordt de controller niet herkend, volg dan de officiële bootprocedure: houd BOO
 
 ### Herstel bij `do_core_init` / flash-bootloop
 
-De Waveshare N32R16 gebruikt QIO-flash met OPI-PSRAM. De custom boarddefinitie bouwt daarom expliciet de OPI-bootloader. Na een oudere build moet de nieuwe bootloader opnieuw worden geflasht:
+Deze controller rapporteert via eFuse 32 MB OPI-flash en 16 MB OPI-PSRAM. De custom boarddefinitie gebruikt daarom het `opi_opi`-geheugenprofiel en bouwt expliciet de OPI-bootloader. Na een oudere build moet de nieuwe bootloader opnieuw worden geflasht:
 
 ```powershell
 cd firmware
