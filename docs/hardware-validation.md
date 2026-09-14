@@ -24,10 +24,12 @@ Daarna hoeft `pio` niet in PATH te staan; gebruik de `python -m platformio`-comm
 
 - Controller: Waveshare ESP32-S3-RGB-Matrix
 - MCU: ESP32-S3-WROOM-2 / ESP32-S3-N32R16
-- Panel: AGSP2.5-260706-5000
+- Panel: MUEN LED MZ-I-P2.5-320x160mm-32S-M
+- LED/type: indoor P2.5, SMD2121, full color
 - Resolutie: 128×64
-- Advertised scan: 1/32
-- Driver markings: FM6124HJ-family
+- Data-interface: HUB75, 16-pin
+- Scan/drive: 1/32 scan, constant current
+- Opgegeven paneelvermogen: 25 W bij DC 5 V
 - Voeding: YU-0510, 5 V / 10 A / 50 W
 - Validation brightness: 15%
 - Rotatie: 0°
