@@ -43,26 +43,29 @@ void WeatherScreen::render() {
   JsonDocument weather;
   deserializeJson(weather, snapshotJson_);
   const float temperature = weather["temperatureC"] | 0.0f;
+  const bool hasWind = !weather["windSpeedKph"].isNull();
   const float windKph = weather["windSpeedKph"] | 0.0f;
   const float windMs = windKph / 3.6f;
   const String condition = weather["condition"] | "WEER";
 
   display_.output()->fillScreen(background);
   display_.output()->setTextColor(primary);
-  display_.output()->setTextSize(3);
+  // Keep the two top values in separate pixel-safe columns. At size 3 the
+  // default 6px font width made temperature and wind overlap on 128x64.
+  display_.output()->setTextSize(2);
   display_.output()->setCursor(4, 2);
   display_.output()->print(String(temperature, 1));
   display_.output()->print("C");
 
   display_.output()->setTextColor(secondary);
-  display_.output()->setTextSize(2);
-  display_.output()->setCursor(74, 8);
-  display_.output()->print(String(windMs, 1));
+  display_.output()->setTextSize(1);
+  display_.output()->setCursor(86, 6);
+  display_.output()->print(hasWind ? String(windMs, 1) : "--.-");
   display_.output()->print("M/S");
-  display_.output()->drawFastHLine(4, 32, 120, divider);
+  display_.output()->drawFastHLine(4, 26, 120, divider);
 
   display_.output()->setTextSize(1);
-  display_.output()->setCursor(4, 40);
+  display_.output()->setCursor(4, 34);
   display_.output()->print(condition.substring(0, 20));
 
   struct tm local;
@@ -70,7 +73,7 @@ void WeatherScreen::render() {
     char timeText[6];
     snprintf(timeText, sizeof(timeText), "%02d:%02d", local.tm_hour, local.tm_min);
     display_.output()->setTextColor(primary);
-    display_.output()->setCursor(91, 40);
+    display_.output()->setCursor(92, 34);
     display_.output()->print(timeText);
   }
   display_.output()->present();

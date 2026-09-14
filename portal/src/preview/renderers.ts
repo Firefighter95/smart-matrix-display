@@ -129,19 +129,17 @@ export const drawClock = (ctx: CanvasRenderingContext2D, config: ClockConfig, st
     return;
   }
   if (config.layout === 'weather') {
-    const scale = config.showSeconds ? 2 : 3;
-    const timeY = config.showSeconds ? 4 : 1;
-    drawText(ctx, time, centeredX(time, scale), timeY, scale, config.timeColor);
-    const date = formatDate(now);
-    const dateY = config.showSeconds ? 25 : 28;
-    const dividerY = config.showSeconds ? 38 : 40;
-    if (config.showDate) drawText(ctx, date, centeredX(date, 1), dateY, 1, config.dateColor);
-    ctx.fillStyle = config.dividerColor;
-    ctx.fillRect(8, dividerY, 112, 1);
-    const temperature = Number.isFinite(status.weather?.temperatureC) ? `${status.weather!.temperatureC.toFixed(1)}°C` : '--°C';
+    // Match the firmware weather renderer: two separate top columns avoid
+    // overlapping values on the physical 128x64 matrix.
+    const temperature = Number.isFinite(status.weather?.temperatureC) ? `${status.weather!.temperatureC.toFixed(1)}C` : '--.-C';
     const windMs = Number.isFinite(status.weather?.windSpeedKph) ? (status.weather!.windSpeedKph! / 3.6).toFixed(1) : '--.-';
-    const weatherLine = `${temperature} ${windMs}M/S`;
-    drawText(ctx, weatherLine, centeredX(weatherLine, 1), dividerY + 5, 1, config.dateColor);
+    const condition = (status.weather?.condition || 'WEER').slice(0, 20);
+    drawText(ctx, temperature, 4, 2, 2, config.timeColor);
+    drawText(ctx, `${windMs}M/S`, 86, 6, 1, config.dateColor);
+    ctx.fillStyle = config.dividerColor;
+    ctx.fillRect(4, 26, 120, 1);
+    drawText(ctx, condition, 4, 34, 1, config.dateColor);
+    drawText(ctx, formatTime(now, { ...config, showSeconds: false }), 92, 34, 1, config.timeColor);
   } else {
     const scale = config.layout === 'minimal' ? 4 : config.layout === 'classic' ? 3 : 2;
     const timeY = config.layout === 'compact' ? 16 : 8;
