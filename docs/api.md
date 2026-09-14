@@ -70,7 +70,7 @@ Bij ontbrekende credentials start de ESP32 een fallback access point met een SSI
 }
 ```
 
-De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. De firmware valideert het snapshot, bewaart het als actuele runtime-weerdata, zet de displaymode op `WEATHER` en rendert temperatuur en windsnelheid op het paneel. De snapshot blijft in RAM beschikbaar tot een reboot; de HACS-listener pusht na een herverbinding of herstart opnieuw de actuele waarde.
+De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. De firmware valideert het snapshot en bewaart het als actuele runtime-weerdata. Bij een `builder`-kloklayout blijft de kloklayout actief en kunnen builder-elementen `temperature` en `wind` deze waarden direct tonen. Bij andere kloklayouts wordt de zelfstandige displaymode `WEATHER` gebruikt. De snapshot blijft in RAM beschikbaar tot een reboot; de HACS-listener pusht na een herverbinding of herstart opnieuw de actuele waarde.
 
 `GET /api/v1/weather` geeft de laatst ontvangen snapshot terug. Dezelfde data staat optioneel genest onder `weather` in `GET /api/v1/status`. Daarmee kun je controleren of Home Assistant werkelijk de verwachte waarden aanlevert:
 

@@ -128,7 +128,13 @@ void ApiServer::begin() {
       request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_WEATHER\",\"message\":\"Weather snapshot is ongeldig.\"}}");
       return;
     }
-    display_.setMode(DisplayMode::WEATHER);
+    // A builder clock consumes the same snapshot as live weather data. Do not
+    // replace the selected builder layout with the legacy full-screen weather
+    // mode; keep that mode available for installations that explicitly use it.
+    JsonDocument configDocument;
+    deserializeJson(configDocument, config_.json());
+    const String clockLayout = configDocument["clock"]["layout"] | "minimal";
+    if (clockLayout != "builder") display_.setMode(DisplayMode::WEATHER);
     logs_.add(LogCategory::WEATHER, LogLevel::INFO, "Weather snapshot ontvangen");
     request->send(200, "application/json", weatherBody);
   }, nullptr, collectJsonBody);

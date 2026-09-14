@@ -27,7 +27,7 @@ WifiManager wifiManager;
 TimeManager timeManager;
 WeatherScreen weatherScreen(displayManager, timeManager, configManager);
 BrightnessManager brightnessManager;
-ClockScreen clockScreen(displayManager, timeManager, wifiManager, configManager);
+ClockScreen clockScreen(displayManager, timeManager, wifiManager, configManager, weatherScreen);
 MessageScreen messageScreen;
 OtaManager otaManager;
 ApiServer apiServer(configManager, displayManager, logManager, wifiManager, timeManager, weatherScreen);

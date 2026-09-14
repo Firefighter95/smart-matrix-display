@@ -53,7 +53,85 @@ void ClockScreen::render() {
   display_.output()->fillScreen(background);
 
   struct tm local;
-  if (!time_.localTime(local)) {
+  const bool hasLocalTime = time_.localTime(local);
+
+  char timeText[12] = "--:--";
+  if (hasLocalTime) {
+    if (use24Hour) {
+      snprintf(timeText, sizeof(timeText), showSeconds ? "%02d:%02d:%02d" : "%02d:%02d", local.tm_hour, local.tm_min, local.tm_sec);
+    } else {
+      int hour = local.tm_hour % 12;
+      if (hour == 0) hour = 12;
+      snprintf(timeText, sizeof(timeText), showSeconds ? "%2d:%02d:%02d" : "%2d:%02d", hour, local.tm_min, local.tm_sec);
+    }
+  }
+
+  if (layout == "builder") {
+    JsonArray elements = clock["elements"].as<JsonArray>();
+    JsonDocument weatherDocument;
+    if (weather_.hasSnapshot()) deserializeJson(weatherDocument, weather_.snapshotJson());
+
+    const bool hasTemperature = weatherDocument["temperatureC"].is<float>();
+    const bool hasWind = weatherDocument["windSpeedKph"].is<float>();
+    const float temperature = weatherDocument["temperatureC"] | 0.0f;
+    const float windMs = (weatherDocument["windSpeedKph"] | 0.0f) / 3.6f;
+
+    String date = "--";
+    if (hasLocalTime && showDate) {
+      char dateBuffer[24];
+      dateText(local, dateBuffer, sizeof(dateBuffer));
+      date = dateBuffer;
+    }
+
+    const uint16_t statusColor = !wifi_.networkReady() ? display_.output()->color565(255, 60, 60)
+                                : !time_.synced() ? display_.output()->color565(255, 180, 0)
+                                                  : display_.output()->color565(80, 255, 120);
+    String fault;
+    if (!wifi_.networkReady()) fault = "WIFI UIT";
+    if (!time_.synced()) {
+      if (!fault.isEmpty()) fault += " ";
+      fault += "NTP FOUT";
+    }
+
+    for (JsonObject element : elements) {
+      if (!(element["enabled"] | true)) continue;
+      const String id = element["id"] | "";
+      const int16_t x = constrain(element["x"] | 0, 0, HardwareConfig::MATRIX_WIDTH - 1);
+      const int16_t y = constrain(element["y"] | 0, 0, HardwareConfig::MATRIX_HEIGHT - 1);
+      const uint8_t scale = constrain(element["scale"] | 1, 1, 4);
+
+      if (id == "status") {
+        if (clock["showStatusIndicator"] | true) display_.output()->fillRect(x, y, 3, 3, statusColor);
+        continue;
+      }
+      if (id == "fault") {
+        if (!fault.isEmpty()) {
+          display_.output()->setTextSize(scale);
+          display_.output()->setTextColor(statusColor);
+          display_.output()->setCursor(x, y);
+          display_.output()->print(fault.substring(0, 21));
+        }
+        continue;
+      }
+
+      String value;
+      if (id == "time") value = timeText;
+      else if (id == "date") value = date;
+      else if (id == "temperature") value = hasTemperature ? String(temperature, 1) + "C" : "--.-C";
+      else if (id == "wind") value = hasWind ? String(windMs, 1) + "M/S" : "--.-M/S";
+      else continue;
+
+      display_.output()->setTextSize(scale);
+      display_.output()->setTextColor(id == "time" ? timeColor : dateColor);
+      display_.output()->setCursor(x, y);
+      display_.output()->print(value);
+    }
+    display_.output()->present();
+    if (hasLocalTime) lastSecond_ = local.tm_sec;
+    return;
+  }
+
+  if (!hasLocalTime) {
     display_.output()->setTextSize(2);
     display_.output()->setTextColor(timeColor);
     display_.output()->setCursor(31, 24);
@@ -64,15 +142,6 @@ void ClockScreen::render() {
     display_.output()->print("NTP");
     display_.output()->present();
     return;
-  }
-
-  char timeText[12];
-  if (use24Hour) {
-    snprintf(timeText, sizeof(timeText), showSeconds ? "%02d:%02d:%02d" : "%02d:%02d", local.tm_hour, local.tm_min, local.tm_sec);
-  } else {
-    int hour = local.tm_hour % 12;
-    if (hour == 0) hour = 12;
-    snprintf(timeText, sizeof(timeText), showSeconds ? "%2d:%02d:%02d" : "%2d:%02d", hour, local.tm_min, local.tm_sec);
   }
 
   const uint8_t size = showSeconds ? 2 : (layout == "compact" ? 2 : 3);
