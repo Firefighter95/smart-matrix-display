@@ -41,6 +41,8 @@
       "uptime": {"name": "Uptime"},
       "firmware": {"name": "Firmware"},
       "resolution": {"name": "Resolution"}
+      ,"weather_temperature": {"name": "Weather temperature"}
+      ,"weather_wind": {"name": "Weather wind speed"}
     },
     "binary_sensor": {
       "online": {"name": "Online"},

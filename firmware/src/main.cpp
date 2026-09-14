@@ -12,6 +12,7 @@
 #include "ota_manager.h"
 #include "time_manager.h"
 #include "wifi_manager.h"
+#include "weather_screen.h"
 #ifdef SMART_MATRIX_HARDWARE_VALIDATION
 #include "hardware_validation.h"
 #endif
@@ -24,11 +25,12 @@ LogManager logManager;
 DisplayManager displayManager;
 WifiManager wifiManager;
 TimeManager timeManager;
+WeatherScreen weatherScreen(displayManager, timeManager, configManager);
 BrightnessManager brightnessManager;
 ClockScreen clockScreen(displayManager, timeManager, wifiManager, configManager);
 MessageScreen messageScreen;
 OtaManager otaManager;
-ApiServer apiServer(configManager, displayManager, logManager, wifiManager, timeManager);
+ApiServer apiServer(configManager, displayManager, logManager, wifiManager, timeManager, weatherScreen);
 #ifdef SMART_MATRIX_HARDWARE_VALIDATION
 HardwareValidation hardwareValidation;
 #endif
@@ -65,6 +67,7 @@ void setup() {
 #else
   wifiManager.begin(configManager);
   timeManager.begin();
+  weatherScreen.begin();
   brightnessManager.begin();
   messageScreen.begin();
   if (displayManager.begin()) {
@@ -90,6 +93,7 @@ void loop() {
   timeManager.update();
   brightnessManager.update();
   clockScreen.update();
+  weatherScreen.update();
   messageScreen.update();
   otaManager.update();
   apiServer.update();

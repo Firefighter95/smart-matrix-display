@@ -7,7 +7,7 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTime
+from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -35,6 +35,8 @@ SENSORS = (
     ),
     _SensorSpec(key="firmware", translation_key="firmware", diagnostic=True),
     _SensorSpec(key="resolution", translation_key="resolution", diagnostic=True),
+    _SensorSpec(key="weather_temperature", translation_key="weather_temperature", unit=UnitOfTemperature.CELSIUS),
+    _SensorSpec(key="weather_wind", translation_key="weather_wind", unit="m/s"),
 )
 
 
@@ -71,4 +73,10 @@ class SmartMatrixSensor(SmartMatrixEntity, SensorEntity):
 
     @property
     def native_value(self) -> Any:
-        return (self.coordinator.data or {}).get(self.entity_description.key)
+        data = self.coordinator.data or {}
+        if self.entity_description.key == "weather_temperature":
+            return (data.get("weather") or {}).get("temperatureC")
+        if self.entity_description.key == "weather_wind":
+            wind_kph = (data.get("weather") or {}).get("windSpeedKph")
+            return round(wind_kph / 3.6, 1) if isinstance(wind_kph, (int, float)) else None
+        return data.get(self.entity_description.key)

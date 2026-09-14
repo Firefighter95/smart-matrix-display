@@ -310,6 +310,8 @@ export const drawMatrix = (
   } else if (status.mode === 'MESSAGE' && message) {
     drawMessage(ctx, message, config.backgroundColor);
     drawHealthOverlay(ctx, config, status);
+  } else if (status.mode === 'WEATHER') {
+    drawClock(ctx, { ...config, layout: 'weather' }, status, now);
   } else {
     drawClock(ctx, config, status, now);
   }

@@ -70,9 +70,16 @@ Bij ontbrekende credentials start de ESP32 een fallback access point met een SSI
 }
 ```
 
-De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. De firmware accepteert het snapshot en zet de displaymode op `WEATHER`; de uiteindelijke fysieke weather-renderer blijft hardwaregeblokkeerd.
+De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. De firmware valideert het snapshot, bewaart het als actuele runtime-weerdata, zet de displaymode op `WEATHER` en rendert temperatuur en windsnelheid op het paneel. De snapshot blijft in RAM beschikbaar tot een reboot; de HACS-listener pusht na een herverbinding of herstart opnieuw de actuele waarde.
 
-De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent `windSpeedKph` visueel om naar m/s. Het transportcontract blijft km/h; dit voorkomt providerafhankelijke eenheden in de HA-integratie.
+`GET /api/v1/weather` geeft de laatst ontvangen snapshot terug. Dezelfde data staat optioneel genest onder `weather` in `GET /api/v1/status`. Daarmee kun je controleren of Home Assistant werkelijk de verwachte waarden aanlevert:
+
+```powershell
+Invoke-RestMethod http://smartmatrix.local/api/v1/weather
+Invoke-RestMethod http://smartmatrix.local/api/v1/status | ConvertTo-Json -Depth 5
+```
+
+De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent `windSpeedKph` visueel om naar m/s. Het transportcontract blijft km/h; dit voorkomt providerafhankelijke eenheden in de HA-integratie. Op het dashboard zie je de laatste ontvangen conditie, temperatuur, windsnelheid, bron en timestamp.
 
 ## Overige endpoints
 

@@ -25,9 +25,9 @@ De HACS-integratie gebruikt `PUT /api/v1/weather`. Home Assistant stuurt bij een
 }
 ```
 
-De ESP32 toont bij verlies van HA de laatst geldige snapshot met een stale-indicator en valt daarna gecontroleerd terug naar CLOCK. Dit blijft niet-blocking en past naast P2000, MQTT en HOME_ASSISTANT als toekomstige providers.
+De ESP32 bewaart de laatst ontvangen snapshot tijdens runtime en toont deze in de weerweergave. Na een reboot is de snapshot tijdelijk leeg; de HACS-listener pusht de actuele waarde opnieuw zodra de integratie de weather entity initialiseert. Controleer de ontvangst via `GET /api/v1/weather` of via het dashboard: daar staan conditie, temperatuur, windsnelheid, bron en timestamp.
 
-De huidige fase-A firmware accepteert dit endpoint nog niet en retourneert `501 WEATHER_RENDERER_PENDING`. De API-integratie en HA-koppeling zijn wel al versioned voorbereid.
+De firmware gebruikt `WEATHER` als displaymodus en tekent temperatuur en wind in m/s. Een ontbrekende of ongeldige snapshot wordt met `400 Bad Request` geweigerd, zodat fouten in de payload zichtbaar blijven.
 
 ## Weerklok
 

@@ -8,10 +8,11 @@
 #include "system_status.h"
 #include "wifi_manager.h"
 #include "time_manager.h"
+#include "weather_screen.h"
 
 class ApiServer {
 public:
-  ApiServer(ConfigManager& config, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time);
+  ApiServer(ConfigManager& config, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather);
   void begin();
   void update();
 
@@ -22,6 +23,6 @@ private:
   LogManager& logs_;
   WifiManager& wifi_;
   TimeManager& time_;
+  WeatherScreen& weather_;
   SystemStatus status_;
 };
-

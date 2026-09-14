@@ -32,13 +32,13 @@ bool parseJsonBody(AsyncWebServerRequest* request, JsonDocument& document) {
 }
 } // namespace
 
-ApiServer::ApiServer(ConfigManager& config, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time)
-  : config_(config), display_(display), logs_(logs), wifi_(wifi), time_(time) {}
+ApiServer::ApiServer(ConfigManager& config, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather)
+  : config_(config), display_(display), logs_(logs), wifi_(wifi), time_(time), weather_(weather) {}
 
 void ApiServer::begin() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   server_.on("/api/v1/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
-    request->send(200, "application/json", status_.json(wifi_.networkReady(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname(), display_.brightness()));
+    request->send(200, "application/json", status_.json(wifi_.networkReady(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname(), display_.brightness(), weather_.snapshotJson()));
   });
   server_.on("/api/v1/wifi", HTTP_GET, [this](AsyncWebServerRequest* request) {
     JsonDocument response;
@@ -121,12 +121,19 @@ void ApiServer::begin() {
       request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_WEATHER\",\"message\":\"temperatureC is verplicht.\"}}");
       return;
     }
+    String weatherBody;
+    serializeJson(document, weatherBody);
+    if (!weather_.setSnapshot(weatherBody)) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_WEATHER\",\"message\":\"Weather snapshot is ongeldig.\"}}");
+      return;
+    }
     display_.setMode(DisplayMode::WEATHER);
     logs_.add(LogCategory::WEATHER, LogLevel::INFO, "Weather snapshot ontvangen");
-    String body;
-    serializeJson(document, body);
-    request->send(200, "application/json", body);
+    request->send(200, "application/json", weatherBody);
   }, nullptr, collectJsonBody);
+  server_.on("/api/v1/weather", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    request->send(200, "application/json", weather_.hasSnapshot() ? weather_.snapshotJson() : "{\"available\":false}");
+  });
   server_.on("/api/v1/brightness", HTTP_PUT, [this](AsyncWebServerRequest* request) {
     JsonDocument document;
     if (!parseJsonBody(request, document)) {

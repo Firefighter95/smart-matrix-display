@@ -34,6 +34,7 @@ Per display worden status-entiteiten aangemaakt voor:
 - uptime;
 - firmwareversie;
 - resolutie.
+- actuele weerdata: conditie, temperatuur en windsnelheid in m/s wanneer een `weather.*`-entity is gekoppeld.
 
 Daarnaast zijn knoppen beschikbaar voor **Clear display** en **Restart**.
 
@@ -105,6 +106,16 @@ action:
 
 Weerforecasten worden in Home Assistant via `weather.get_forecasts` opgehaald en zijn geen gewone state-attributen. De eerste Smart Matrix weather-layout gebruikt daarom de actuele snapshot; forecast-layouts kunnen later worden toegevoegd. [Home Assistant weather forecasts](https://www.home-assistant.io/integrations/weather)
 
+### Controleren welke weerdata aankomt
+
+Open in de browser `http://smartmatrix.local/api/v1/weather` of gebruik in PowerShell:
+
+```powershell
+Invoke-RestMethod http://smartmatrix.local/api/v1/weather | ConvertTo-Json
+```
+
+Een geslaagde snapshot bevat minimaal `temperatureC` en `condition`, bijvoorbeeld `18.4` en `partlycloudy`; `windSpeedKph` wordt op het display en in Home Assistant als m/s gepresenteerd. In het portal-dashboard verschijnt de kaart **Ontvangen weerdata** met de laatst ontvangen waarden. Zie je `available: false` of `Geen data`, controleer dan de gekozen `weather.*`-entity en voer `smart_matrix_display.send_weather` eenmalig handmatig uit.
+
 ## P2000 via Home Assistant
 
 De integratie hoeft niet afhankelijk te zijn van één specifieke P2000/HACS-integratie. Je bestaande P2000-integratie kan een state- of event-trigger gebruiken en daarna `smart_matrix_display.send_p2000` aanroepen.
@@ -149,4 +160,4 @@ De integratie gebruikt één config entry per fysieke display. De stabiele devic
 
 ## Versie-status
 
-De HACS-integratie en de HA-services staan in GitHub. De huidige hardwaretestfirmware bevat nog niet de definitieve message/weather-renderers en WiFi-provisioning. Zodra de HUB75-panelconfiguratie fysiek is bevestigd, worden de firmware endpoints en productie-renderers geactiveerd zonder de Home Assistant-configuratie te wijzigen.
+De HACS-integratie en de HA-services staan in GitHub. De actuele firmware ondersteunt de weather-snapshot, weerweergave en controle via `/api/v1/weather`; verdere forecast- en alert-layouts kunnen later via hetzelfde contract worden toegevoegd.

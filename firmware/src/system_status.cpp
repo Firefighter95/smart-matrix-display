@@ -1,6 +1,6 @@
 #include "system_status.h"
 
-String SystemStatus::json(bool online, int32_t rssi, bool synced, bool displayEnabled, const String& mode, const String& ip, const String& hostname, uint8_t brightness) const {
+String SystemStatus::json(bool online, int32_t rssi, bool synced, bool displayEnabled, const String& mode, const String& ip, const String& hostname, uint8_t brightness, const String& weatherJson) const {
   char deviceId[17];
   snprintf(deviceId, sizeof(deviceId), "%llX", static_cast<unsigned long long>(ESP.getEfuseMac()));
   String result = "{\"online\":" + String(online ? "true" : "false");
@@ -19,5 +19,6 @@ String SystemStatus::json(bool online, int32_t rssi, bool synced, bool displayEn
   result += ",\"heap_free\":" + String(ESP.getFreeHeap());
   result += ",\"psram_free\":" + String(ESP.getFreePsram());
   result += ",\"display_enabled\":" + String(displayEnabled ? "true" : "false") + "}";
+  if (!weatherJson.isEmpty()) result = result.substring(0, result.length() - 1) + ",\"weather\":" + weatherJson + "}";
   return result;
 }
