@@ -45,6 +45,25 @@ LAT=40 OE=2  CLK=41
 
 De actuele softwarekeuzes zijn `SCAN_MODE=ONE_THIRTY_SECOND_STANDARD`, `SHIFT_DRIVER=FM6126A` en `CLOCK_PHASE=false`, overeenkomstig het officiële Waveshare Arduino-demo. Het paneelgedrag moet nog fysiek worden bevestigd.
 
+## Driverdiagnose
+
+Omdat de paneelspecificatie geen exacte shift-driver-IC vermeldt, zijn gecontroleerde A/B-builds beschikbaar. De GPIO-, resolutie- en 1/32-scaninstellingen blijven gelijk; alleen de genoemde driver/timing wijzigt. Flash één profiel tegelijk en noteer het profiel uit de seriële banner.
+
+```powershell
+cd firmware
+python -m platformio run -e hardware-validation-fm6124 -t upload --upload-port COM3
+python -m platformio device monitor --port COM3 --baud 115200
+```
+
+Als `FM6124_DIAGNOSTIC` niets toont, test daarna:
+
+```powershell
+python -m platformio run -e hardware-validation-shiftreg -t upload --upload-port COM3
+python -m platformio run -e hardware-validation-20mhz -t upload --upload-port COM3
+```
+
+De bestaande `hardware-validation` blijft de standaard `FM6126A`-test. Wijzig tijdens deze A/B-test geen bekabeling en flash steeds slechts één omgeving tegelijk. Een zichtbaar rood, groen, blauw of wit beeld is al voldoende om een profiel als werkend te markeren.
+
 ## Build en flash op Windows
 
 ```powershell

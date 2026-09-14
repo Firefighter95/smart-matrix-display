@@ -43,7 +43,7 @@ void HardwareValidation::printDiagnostics() const {
   Serial.println("Firmware: 1.4.0-hwtest");
   Serial.println("Board: Waveshare ESP32-S3-RGB-Matrix");
   Serial.println("MCU: ESP32-S3-WROOM-2 / ESP32-S3-N32R16");
-  Serial.println("Panel: AGSP2.5-260706-5000");
+  Serial.println("Panel: MUEN LED MZ-I-P2.5-320x160mm-32S-M");
   Serial.println("Resolution: 128x64");
   Serial.println("Advertised scan: 1/32");
   Serial.printf("Driver: %s\n", HardwareConfig::SHIFT_DRIVER_NAME);

@@ -59,12 +59,25 @@ constexpr int8_t CLK_PIN = 41;
 constexpr int8_t LAT_PIN = 40;
 constexpr int8_t OE_PIN = 2;
 
-// Change this if the panel has a known shift-driver IC that needs initialization.
-// Waveshare's official Arduino example selects FM6126A. The installed DMA
-// library shares its FM6124-family initialization path for FM6124/FM6126A.
+// The panel listing does not expose the exact shift-driver IC. The default
+// follows Waveshare's official example; the diagnostic environments can
+// select FM6124, generic shift-register mode, or a faster clock.
+#if defined(SMART_MATRIX_DIAGNOSTIC_FM6124)
+constexpr HUB75_I2S_CFG::shift_driver SHIFT_DRIVER = HUB75_I2S_CFG::FM6124;
+constexpr char SHIFT_DRIVER_NAME[] = "FM6124_DIAGNOSTIC";
+#elif defined(SMART_MATRIX_DIAGNOSTIC_SHIFTREG)
+constexpr HUB75_I2S_CFG::shift_driver SHIFT_DRIVER = HUB75_I2S_CFG::SHIFTREG;
+constexpr char SHIFT_DRIVER_NAME[] = "SHIFTREG_NO_DRIVER_INIT_DIAGNOSTIC";
+#else
 constexpr HUB75_I2S_CFG::shift_driver SHIFT_DRIVER = HUB75_I2S_CFG::FM6126A;
-constexpr char SHIFT_DRIVER_NAME[] = "FM6126A_FM6124_FAMILY";
+constexpr char SHIFT_DRIVER_NAME[] = "FM6126A_DEFAULT";
+#endif
+
+#if defined(SMART_MATRIX_DIAGNOSTIC_20MHZ)
+constexpr HUB75_I2S_CFG::clk_speed CLOCK_SPEED = HUB75_I2S_CFG::HZ_20M;
+#else
 constexpr HUB75_I2S_CFG::clk_speed CLOCK_SPEED = HUB75_I2S_CFG::HZ_10M;
+#endif
 constexpr bool DOUBLE_BUFFER = true;
 constexpr bool CLOCK_PHASE = false;
 
