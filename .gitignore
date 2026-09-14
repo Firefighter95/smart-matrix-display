@@ -10,6 +10,7 @@ firmware/data/**/*.gz
 .env
 .env.*
 !.env.example
+!portal/.env.esp32
 *.log
 __pycache__/
 *.pyc

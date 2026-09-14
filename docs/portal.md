@@ -23,6 +23,8 @@ VITE_API_MODE=esp32
 VITE_API_BASE_URL=http://smartmatrix.local
 ```
 
+De ESP32-productieportal wordt met `npm run build:esp32` gebouwd in Vite mode `esp32`. Daardoor gebruikt de portal automatisch `Esp32DeviceApi` en dezelfde-origin requests; de geflashte portal blijft dus niet per ongeluk in mock mode staan. De WiFi-instellingen staan onder **Systeem → WiFi instellen**. Vul SSID, wachtwoord en eventueel een hostname in en klik op **WiFi opslaan**. Bij een nog niet geconfigureerd apparaat is de portal bereikbaar via het tijdelijke access point (bijvoorbeeld `SmartMatrix-99E4`); daarna verhuist de verbinding naar het ingestelde netwerk.
+
 ## Interactieve klokbuilder
 
 Ga naar **Klok → Builder** om datablokken aan of uit te zetten. Beschikbare blokken zijn tijd, datum, temperatuur, wind, statusbolletje en foutmelding. Selecteer een blok in de lijst en sleep het in de 128×64-preview; de positie wordt in logische integercoördinaten opgeslagen. De windwaarde komt uit het gedeelde Home Assistant-weathercontract en wordt op het display in m/s getoond.

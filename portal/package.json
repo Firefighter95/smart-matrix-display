@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
-    "build:esp32": "npm run build && node scripts/build-esp32.mjs",
+    "build:esp32": "tsc --noEmit && vite build --mode esp32 && node scripts/build-esp32.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

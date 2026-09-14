@@ -12,7 +12,7 @@ import type {
   Message,
 } from '../../../shared/schemas/models';
 import { createDefaultClockElements } from '../../../shared/schemas/models';
-import type { DeviceApi, MockDeviceApi, MockScenario } from './deviceApi';
+import type { DeviceApi, MockDeviceApi, MockScenario, WifiInfo, WifiUpdate } from './deviceApi';
 import { EventEngine } from '../engine/eventEngine';
 import { createDefaultLayouts } from '../engine/layouts';
 import { migrateConfigToV2 } from '../engine/migrations';
@@ -99,6 +99,14 @@ export class MockDeviceApiImpl implements MockDeviceApi {
   readonly mode = 'mock' as const;
   private config = readInitialConfig();
   private status = clone(initialStatus);
+  private wifi: WifiInfo = {
+    connected: true,
+    apMode: false,
+    apSsid: 'SmartMatrix-DEV',
+    ssid: 'SmartMatrix-Dev',
+    ip: initialStatus.ip,
+    hostname: initialStatus.hostname,
+  };
   private logs: LogEntry[] = [
     this.log('SYSTEM', 'INFO', 'Mock device simulator gestart'),
     this.log('DISPLAY', 'INFO', 'CLOCK layout actief op 128x64'),
@@ -144,6 +152,8 @@ export class MockDeviceApiImpl implements MockDeviceApi {
     const drift = Math.round(Math.sin(Date.now() / 12000) * 3);
     this.status.wifiRssi = this.scenarios.has('wifiOffline') ? -92 : -52 + drift;
     this.status.online = !this.scenarios.has('wifiOffline');
+    this.wifi.connected = this.status.online;
+    this.wifi.ip = this.status.online ? this.status.ip : '0.0.0.0';
     this.status.timeSynced = !this.scenarios.has('ntpError');
     if (this.scenarios.has('displayOffline')) {
       this.status.displayEnabled = false;
@@ -188,6 +198,27 @@ export class MockDeviceApiImpl implements MockDeviceApi {
       brightness: Math.min(this.config.display.brightness, this.config.display.maxBrightness),
       displayEnabled: this.status.displayEnabled && this.config.display.enabled,
     });
+  }
+
+  async getWifi(): Promise<WifiInfo> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    return clone(this.wifi);
+  }
+
+  async updateWifi(input: WifiUpdate): Promise<void> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    this.wifi = {
+      ...this.wifi,
+      ssid: input.ssid.trim(),
+      hostname: input.hostname.trim() || 'smartmatrix',
+      connected: true,
+      ip: this.status.ip,
+    };
+    this.status.hostname = this.wifi.hostname;
+    this.status.online = true;
+    this.addLog('WIFI', 'INFO', `WiFi-configuratie opgeslagen voor ${this.wifi.ssid || 'open netwerk'}`);
   }
 
   async getConfig(): Promise<DeviceConfig> {
@@ -347,6 +378,14 @@ export class MockDeviceApiImpl implements MockDeviceApi {
     this.config = clone(initialConfig);
     try { window.localStorage.removeItem(MOCK_CONFIG_KEY); } catch { /* ignore unavailable storage */ }
     this.status = clone(initialStatus);
+    this.wifi = {
+      connected: true,
+      apMode: false,
+      apSsid: 'SmartMatrix-DEV',
+      ssid: 'SmartMatrix-Dev',
+      ip: initialStatus.ip,
+      hostname: initialStatus.hostname,
+    };
     this.status.activeMessage = undefined;
     this.status.currentEvent = undefined;
     this.status.queueLength = 0;

@@ -13,8 +13,25 @@ import type {
 
 export type MockScenario = 'wifiOffline' | 'ntpError' | 'displayOffline' | 'apiError';
 
+export interface WifiInfo {
+  connected: boolean;
+  apMode: boolean;
+  apSsid: string;
+  ssid: string;
+  ip: string;
+  hostname: string;
+}
+
+export interface WifiUpdate {
+  ssid: string;
+  password: string;
+  hostname: string;
+}
+
 export interface DeviceApi {
   getStatus(): Promise<DeviceStatus>;
+  getWifi(): Promise<WifiInfo>;
+  updateWifi(input: WifiUpdate): Promise<void>;
   getConfig(): Promise<DeviceConfig>;
   updateConfig(patch: Partial<DeviceConfig>): Promise<DeviceConfig>;
   sendMessage(message: Message): Promise<Message>;

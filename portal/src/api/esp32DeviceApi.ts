@@ -1,5 +1,5 @@
 import type { DeviceConfig, DeviceDiagnostics, DeviceFault, DeviceStatus, DisplayEvent, DisplayProfile, EventHistoryEntry, EventInput, LayoutModel, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
-import type { DeviceApi } from './deviceApi';
+import type { DeviceApi, WifiInfo, WifiUpdate } from './deviceApi';
 
 type RawRecord = Record<string, unknown>;
 
@@ -28,6 +28,15 @@ const normalizeStatus = (raw: RawRecord): DeviceStatus => ({
   faults: raw.faults as DeviceFault[] | undefined,
 });
 
+const normalizeWifi = (raw: RawRecord): WifiInfo => ({
+  connected: pick(raw, 'connected', 'connected', false),
+  apMode: pick(raw, 'apMode', 'ap_mode', false),
+  apSsid: pick(raw, 'apSsid', 'ap_ssid', ''),
+  ssid: pick(raw, 'ssid', 'ssid', ''),
+  ip: pick(raw, 'ip', 'ip', ''),
+  hostname: pick(raw, 'hostname', 'hostname', ''),
+});
+
 export class Esp32DeviceApi implements DeviceApi {
   private listeners = new Set<() => void>();
 
@@ -42,6 +51,10 @@ export class Esp32DeviceApi implements DeviceApi {
   }
 
   async getStatus() { return normalizeStatus(await this.request<RawRecord>('/api/v1/status')); }
+  async getWifi() { return normalizeWifi(await this.request<RawRecord>('/api/v1/wifi')); }
+  async updateWifi(input: WifiUpdate) {
+    await this.request('/api/v1/wifi', { method: 'PUT', body: JSON.stringify(input) });
+  }
   async getConfig() { return this.request<DeviceConfig>('/api/v1/config'); }
   async updateConfig(patch: Partial<DeviceConfig>) {
     return this.request<DeviceConfig>('/api/v1/config', { method: 'PUT', body: JSON.stringify(patch) });

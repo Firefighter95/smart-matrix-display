@@ -127,3 +127,5 @@ button:disabled { cursor: wait; opacity: .58; }
 .builder-position { padding: 11px; border: 1px solid var(--border-soft); border-radius: 8px; background: #0b1220; }
 .builder-position .panel-heading { align-items: center; margin-bottom: 12px; }
 .builder-position h3 { margin: 4px 0 0; font-size: 12px; }
+
+.wifi-details { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px 18px; align-content: start; margin-top: 18px; padding: 13px; border: 1px solid var(--border-soft); border-radius: 9px; background: #0d1524; color: var(--muted); font-size: 11px; }.wifi-details strong { color: var(--text); font-size: 11px; overflow-wrap: anywhere; }.form-hint { align-self: center; color: var(--muted); font-size: 10px; }

@@ -86,7 +86,7 @@ export default function App() {
       {page === 'builder' && <LayoutBuilderPage api={api} status={displayStatus} config={config} layoutId={getBuilderLayoutId()} onNotify={notify} />}
       {page === 'events' && <EventsPage api={api} status={displayStatus} config={config} onNotify={notify} />}
       {page === 'api' && <ApiPage api={api} status={displayStatus} config={config} onNotify={notify} />}
-      {page === 'system' && <SystemPage status={displayStatus} logs={logs} onReboot={reboot} onNotify={notify} />}
+      {page === 'system' && <SystemPage api={api} status={displayStatus} logs={logs} onReboot={reboot} onNotify={notify} />}
     </>
   );
 
