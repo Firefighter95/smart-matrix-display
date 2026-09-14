@@ -1,6 +1,6 @@
 # Hardware & HUB75
 
-V1 gebruikt de ontvangen Waveshare ESP32-S3-RGB-Matrix (ESP32-S3-N32R16 / 32 MB Flash / 16 MB PSRAM) met een MUEN LED-paneel, model `MZ-I-P2.5-320x160mm-32S-M`. Het paneel is een indoor P2.5 SMD2121 RGB-paneel met 128×64 pixels, HUB75-interface en 1/32-scan constant-current driver. Gebruik een aparte, voldoende gedimensioneerde 5 V voeding en verbind de GND van de controller met GND van het paneel. Voed het paneel niet via USB of de 5 V-pin van de ESP32.
+V1 gebruikt de ontvangen Waveshare ESP32-S3-RGB-Matrix (ESP32-S3-N32R16 / 32 MB Flash / 16 MB PSRAM) met een MUEN LED-paneel, model `MZ-I-P2.5-320x160mm-32S-M`. Het paneel is een indoor P2.5 SMD2121 RGB-paneel met 128×64 pixels, HUB75-interface en 1/32-scan constant-current driver. De Fase-A hardwaretest is fysiek geslaagd met deze combinatie. Gebruik een aparte, voldoende gedimensioneerde 5 V voeding en verbind de GND van de controller met GND van het paneel. Voed het paneel niet via USB of de 5 V-pin van de ESP32.
 
 De opgegeven paneelbelasting is 25 W bij 5 V (ongeveer 5 A). De eerder gebruikte 5 V / 10 A voeding heeft daarvoor voldoende marge. De advertentie vermeldt ook 200 W voor vijf panelen; dat is niet nodig voor deze V1-opstelling met één paneel.
 

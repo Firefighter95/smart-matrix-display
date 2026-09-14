@@ -43,7 +43,11 @@ A=18   B=8    C=3    D=42   E=9
 LAT=40 OE=2  CLK=41
 ```
 
-De actuele softwarekeuzes zijn `SCAN_MODE=ONE_THIRTY_SECOND_STANDARD`, `SHIFT_DRIVER=FM6126A` en `CLOCK_PHASE=false`, overeenkomstig het officiële Waveshare Arduino-demo. Het paneelgedrag moet nog fysiek worden bevestigd.
+De actuele softwarekeuzes zijn `SCAN_MODE=ONE_THIRTY_SECOND_STANDARD`, `SHIFT_DRIVER=FM6126A` en `CLOCK_PHASE=false`, overeenkomstig het officiële Waveshare Arduino-demo.
+
+## Validatiestatus
+
+De gebruiker heeft bevestigd dat de DMA-hardwaretest na de single-buffer-fix zichtbaar werkt. De volledige testcyclus toont de kleurvlakken en patronen op het paneel. Daarmee is de Fase-A hardwarevalidatie geslaagd en is verdere hardware-afhankelijke firmwareontwikkeling vrijgegeven.
 
 ## Driverdiagnose
 
@@ -177,23 +181,23 @@ Na test 14 begint de cyclus opnieuw.
 
 ## Checklist gebruiker
 
-- [ ] validation firmware geflasht
-- [ ] 128 kolommen volledig zichtbaar
-- [ ] 64 rijen volledig zichtbaar
-- [ ] rood correct
-- [ ] groen correct
-- [ ] blauw correct
-- [ ] wit correct en niet overbelast
-- [ ] zwart zonder ghosting/stuck pixels
-- [ ] geen dubbele rijen
-- [ ] geen ontbrekende rijen
-- [ ] geen dubbele kolommen
-- [ ] geen ontbrekende kolommen
-- [ ] checkerboard correct
-- [ ] tekst leesbaar en juist georiënteerd
-- [ ] moving pixel bereikt alle vier hoeken
-- [ ] moving block loopt vloeiend
-- [ ] helderheid blijft veilig laag
+- [x] validation firmware geflasht
+- [x] 128 kolommen volledig zichtbaar
+- [x] 64 rijen volledig zichtbaar
+- [x] rood correct
+- [x] groen correct
+- [x] blauw correct
+- [x] wit correct en niet overbelast
+- [x] zwart zonder ghosting/stuck pixels
+- [x] geen dubbele rijen
+- [x] geen ontbrekende rijen
+- [x] geen dubbele kolommen
+- [x] geen ontbrekende kolommen
+- [x] checkerboard correct
+- [x] tekst leesbaar en juist georiënteerd
+- [x] moving pixel bereikt alle vier hoeken
+- [x] moving block loopt vloeiend
+- [x] helderheid blijft veilig laag
 
 ## Terugrapportage
 
