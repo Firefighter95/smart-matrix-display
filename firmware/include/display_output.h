@@ -17,6 +17,7 @@ public:
   virtual void setCursor(int16_t x, int16_t y) = 0;
   virtual void print(const String& text) = 0;
   virtual void setBrightness(uint8_t percentage) = 0;
+  virtual void present() {}
   virtual uint16_t color565(uint8_t red, uint8_t green, uint8_t blue) const = 0;
 };
 
@@ -65,6 +66,7 @@ public:
   void setCursor(int16_t x, int16_t y) override;
   void print(const String& text) override;
   void setBrightness(uint8_t percentage) override;
+  void present() override;
   uint16_t color565(uint8_t red, uint8_t green, uint8_t blue) const override;
   bool ready() const { return panel_ != nullptr; }
 

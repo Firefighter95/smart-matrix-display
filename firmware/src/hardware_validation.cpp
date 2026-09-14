@@ -68,6 +68,7 @@ bool HardwareValidation::begin(IDisplayOutput* output) {
     return false;
   }
   output_->setBrightness(HardwareConfig::VALIDATION_BRIGHTNESS);
+  output_->present();
   printDiagnostics();
   startTest(Test::BLACK, 1);
   return true;
@@ -132,18 +133,21 @@ void HardwareValidation::renderStaticTest() {
       break;
     default: break;
   }
+  output_->present();
 }
 
 void HardwareValidation::renderRowTest() {
   output_->clearScreen();
   const int16_t row = static_cast<int16_t>(step_ % HEIGHT);
   for (int16_t x = 0; x < WIDTH; ++x) drawPixel(x, row, color(255, 255, 255));
+  output_->present();
 }
 
 void HardwareValidation::renderColumnTest() {
   output_->clearScreen();
   const int16_t column = static_cast<int16_t>(step_ % WIDTH);
   for (int16_t y = 0; y < HEIGHT; ++y) drawPixel(column, y, color(255, 255, 255));
+  output_->present();
 }
 
 void HardwareValidation::renderMovingPixel() {
@@ -157,11 +161,13 @@ void HardwareValidation::renderMovingPixel() {
   else if ((position -= HEIGHT - 1) < WIDTH - 1) { x = WIDTH - position - 2; y = HEIGHT - 1; }
   else { position -= WIDTH - 1; x = 0; y = HEIGHT - position - 2; }
   drawPixel(x, y, color(255, 120, 0));
+  output_->present();
 }
 
 void HardwareValidation::renderMovingBlock() {
   output_->clearScreen();
   for (int16_t y = 0; y < 4; ++y) for (int16_t x = 0; x < 4; ++x) drawPixel(movingBlockX_ + x, movingBlockY_ + y, color(255, 120, 0));
+  output_->present();
 }
 
 void HardwareValidation::update() {

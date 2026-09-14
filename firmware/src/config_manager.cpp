@@ -2,7 +2,7 @@
 #include <ArduinoJson.h>
 
 namespace {
-const char* DEFAULT_CONFIG = R"json({"schemaVersion":2,"display":{"enabled":true,"brightness":25,"maxBrightness":100,"nightMode":true,"scheduleEnabled":true,"brightnessMode":"schedule","brightnessSchedule":[{"id":"morning","time":"07:00","brightness":45},{"id":"evening","time":"18:00","brightness":25},{"id":"late","time":"22:00","brightness":8},{"id":"midnight","time":"00:00","brightness":2}]},"clock":{"layout":"minimal","use24Hour":true,"showSeconds":false,"showDate":true,"timeColor":"#f4f7ff","dateColor":"#72e6a8","dividerColor":"#43506f","backgroundColor":"#050915","showStatusIndicator":true,"timezone":"Europe/Amsterdam"},"layouts":[],"rules":[],"profiles":[]})json";
+const char* DEFAULT_CONFIG = R"json({"schemaVersion":4,"display":{"enabled":true,"brightness":25,"maxBrightness":100,"nightMode":true,"scheduleEnabled":true,"brightnessMode":"schedule","brightnessSchedule":[{"id":"morning","time":"07:00","brightness":45},{"id":"evening","time":"18:00","brightness":25},{"id":"late","time":"22:00","brightness":8},{"id":"midnight","time":"00:00","brightness":2}]},"clock":{"layout":"minimal","use24Hour":true,"showSeconds":false,"showDate":true,"timeColor":"#f4f7ff","dateColor":"#72e6a8","dividerColor":"#43506f","backgroundColor":"#000000","showStatusIndicator":true,"timezone":"Europe/Amsterdam"},"layouts":[],"rules":[],"profiles":[]})json";
 }
 
 void ConfigManager::begin() {
@@ -18,6 +18,11 @@ void ConfigManager::begin() {
   }
   const uint8_t storedVersion = document["schemaVersion"] | 1;
   if (storedVersion < CURRENT_SCHEMA_VERSION) {
+    if (storedVersion < 4) {
+      String background = document["clock"]["backgroundColor"] | "";
+      background.toLowerCase();
+      if (background == "#050915") document["clock"]["backgroundColor"] = "#000000";
+    }
     document["schemaVersion"] = CURRENT_SCHEMA_VERSION;
     String migrated;
     serializeJson(document, migrated);
@@ -29,8 +34,11 @@ void ConfigManager::begin() {
 String ConfigManager::json() const { return configJson_; }
 
 bool ConfigManager::saveJson(const String& json) {
+  JsonDocument patch;
+  if (deserializeJson(patch, json) != DeserializationError::Ok || !patch.is<JsonObject>()) return false;
   JsonDocument document;
-  if (deserializeJson(document, json) != DeserializationError::Ok || !document.is<JsonObject>()) return false;
+  if (deserializeJson(document, configJson_) != DeserializationError::Ok || !document.is<JsonObject>()) return false;
+  for (JsonPair item : patch.as<JsonObject>()) document[item.key()] = item.value();
   document["schemaVersion"] = CURRENT_SCHEMA_VERSION;
   String normalized;
   serializeJson(document, normalized);

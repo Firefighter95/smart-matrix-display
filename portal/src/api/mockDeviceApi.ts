@@ -26,7 +26,7 @@ const initialClock: ClockConfig = {
   timeColor: '#f4f7ff',
   dateColor: '#72e6a8',
   dividerColor: '#43506f',
-  backgroundColor: '#050915',
+  backgroundColor: '#000000',
   showStatusIndicator: true,
   timezone: 'Europe/Amsterdam',
   elements: createDefaultClockElements(),

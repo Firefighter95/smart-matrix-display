@@ -24,7 +24,7 @@ void ClockScreen::dateText(const struct tm& local, char* buffer, size_t length) 
 
 void ClockScreen::begin() {
   lastSecond_ = -1;
-  render();
+  if (display_.mode() == DisplayMode::CLOCK) render();
 }
 
 void ClockScreen::update() {
@@ -46,7 +46,7 @@ void ClockScreen::render() {
   const bool showSeconds = clock["showSeconds"] | false;
   const bool showDate = clock["showDate"] | true;
   const String layout = clock["layout"] | "minimal";
-  const uint16_t background = colorFromHex(clock["backgroundColor"] | "#050915", 0x0000);
+  const uint16_t background = colorFromHex(clock["backgroundColor"] | "#000000", 0x0000);
   const uint16_t timeColor = colorFromHex(clock["timeColor"] | "#F4F7FF", 0xFFFF);
   const uint16_t dateColor = colorFromHex(clock["dateColor"] | "#72E6A8", 0x07E0);
   const uint16_t dividerColor = colorFromHex(clock["dividerColor"] | "#43506F", 0x431D);
@@ -62,6 +62,7 @@ void ClockScreen::render() {
     display_.output()->setTextColor(dateColor);
     display_.output()->setCursor(45, 52);
     display_.output()->print("NTP");
+    display_.output()->present();
     return;
   }
 
@@ -98,5 +99,6 @@ void ClockScreen::render() {
                               : !time_.synced() ? display_.output()->color565(255, 180, 0)
                                                 : display_.output()->color565(80, 255, 120);
   display_.output()->fillRect(124, 1, 3, 3, statusColor);
+  display_.output()->present();
   lastSecond_ = local.tm_sec;
 }

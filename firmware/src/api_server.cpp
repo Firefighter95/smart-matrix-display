@@ -82,6 +82,12 @@ void ApiServer::begin() {
       request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_CONFIG\",\"message\":\"Config moet een geldig JSON-object zijn.\"}}");
       return;
     }
+    JsonDocument saved;
+    deserializeJson(saved, config_.json());
+    const uint8_t requested = saved["display"]["brightness"] | 25;
+    const uint8_t maximum = saved["display"]["maxBrightness"] | 100;
+    display_.setBrightness(min(requested, maximum));
+    display_.setMode((saved["display"]["enabled"] | true) ? DisplayMode::CLOCK : DisplayMode::OFF);
     logs_.add(LogCategory::CONFIG, LogLevel::INFO, "Configuratie opgeslagen");
     request->send(200, "application/json", config_.json());
   }, nullptr, collectJsonBody);
@@ -133,6 +139,11 @@ void ApiServer::begin() {
       return;
     }
     display_.setBrightness(static_cast<uint8_t>(brightness));
+    JsonDocument patch;
+    patch["display"]["brightness"] = brightness;
+    String configBody;
+    serializeJson(patch, configBody);
+    config_.saveJson(configBody);
     logs_.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "Brightness gewijzigd");
     request->send(200, "application/json", "{\"ok\":true}");
   }, nullptr, collectJsonBody);

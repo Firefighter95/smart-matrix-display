@@ -5,7 +5,7 @@
 
 class ConfigManager {
 public:
-  static constexpr uint8_t CURRENT_SCHEMA_VERSION = 3;
+  static constexpr uint8_t CURRENT_SCHEMA_VERSION = 4;
 
   void begin();
   String json() const;

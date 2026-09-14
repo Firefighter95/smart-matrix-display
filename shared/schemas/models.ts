@@ -282,7 +282,7 @@ export interface WeatherSnapshot {
 }
 
 export interface DeviceConfig {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3 | 4;
   display: DisplayConfig;
   clock: ClockConfig;
   layouts?: LayoutModel[];

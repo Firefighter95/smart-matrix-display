@@ -244,7 +244,7 @@ export interface LayoutRenderContext {
 }
 
 export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, context: LayoutRenderContext) {
-  ctx.fillStyle = context.backgroundColor ?? '#050915';
+  ctx.fillStyle = context.backgroundColor ?? '#000000';
   ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
   const now = context.now ?? new Date();
   [...layout.elements].filter((item) => item.visible !== false).sort((a, b) => a.zIndex - b.zIndex).forEach((item) => {
@@ -277,7 +277,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
       ctx.fillStyle = item.color ?? '#72E6A8';
       ctx.fillRect(item.x, item.y, Math.round(item.width * progress), item.height);
     } else if (item.type === 'clock') {
-      const config: ClockConfig = { layout: 'minimal', use24Hour: true, showSeconds: false, showDate: false, timeColor: item.color ?? '#F4F7FF', dateColor: '#72E6A8', dividerColor: '#43506F', backgroundColor: context.backgroundColor ?? '#050915', showStatusIndicator: false, timezone: 'Europe/Amsterdam' };
+      const config: ClockConfig = { layout: 'minimal', use24Hour: true, showSeconds: false, showDate: false, timeColor: item.color ?? '#F4F7FF', dateColor: '#72E6A8', dividerColor: '#43506F', backgroundColor: context.backgroundColor ?? '#000000', showStatusIndicator: false, timezone: 'Europe/Amsterdam' };
       const value = formatTime(now, config);
       drawLayoutText(ctx, { ...item, text: value }, value);
     } else if (item.type === 'date') {

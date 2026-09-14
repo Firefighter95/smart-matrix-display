@@ -69,4 +69,5 @@ void Hub75DisplayOutput::setTextColor(uint16_t color) { if (panel_) panel_->setT
 void Hub75DisplayOutput::setCursor(int16_t x, int16_t y) { if (panel_) panel_->setCursor(x, y); }
 void Hub75DisplayOutput::print(const String& text) { if (panel_) panel_->print(text); }
 void Hub75DisplayOutput::setBrightness(uint8_t percentage) { if (panel_) panel_->setBrightness8(static_cast<uint8_t>(constrain(percentage, 0, 100) * 255 / 100)); }
+void Hub75DisplayOutput::present() { if (panel_ && HardwareConfig::DOUBLE_BUFFER) panel_->flipDMABuffer(); }
 uint16_t Hub75DisplayOutput::color565(uint8_t red, uint8_t green, uint8_t blue) const { return panel_ ? panel_->color565(red, green, blue) : 0; }

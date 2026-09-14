@@ -6,6 +6,7 @@ bool DisplayManager::begin() {
   mode_ = DisplayMode::CLOCK;
   lastPatternAt_ = millis();
   output_->clearScreen();
+  output_->present();
   return true;
 }
 
@@ -34,7 +35,10 @@ String DisplayManager::modeName() const {
 
 void DisplayManager::setMode(DisplayMode mode) {
   mode_ = mode;
-  if (output_ && (mode_ == DisplayMode::OFF || mode_ == DisplayMode::SLEEP)) output_->clearScreen();
+  if (output_ && (mode_ == DisplayMode::OFF || mode_ == DisplayMode::SLEEP)) {
+    output_->clearScreen();
+    output_->present();
+  }
 }
 
 void DisplayManager::renderTestPattern(uint8_t index) {
@@ -70,6 +74,7 @@ void DisplayManager::renderTestPattern(uint8_t index) {
     case 12: renderMovingBlock(); break;
     default: break;
   }
+  output_->present();
 }
 
 void DisplayManager::renderMovingBlock() {
@@ -89,5 +94,6 @@ void DisplayManager::update() {
   } else if (testIndex_ == 12 && now - lastFrameAt_ >= 60) {
     lastFrameAt_ = now;
     renderMovingBlock();
+    output_->present();
   }
 }

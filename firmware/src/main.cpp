@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <LittleFS.h>
+#include <ArduinoJson.h>
 
 #include "api_server.h"
 #include "brightness_manager.h"
@@ -32,6 +33,17 @@ ApiServer apiServer(configManager, displayManager, logManager, wifiManager, time
 HardwareValidation hardwareValidation;
 #endif
 
+namespace {
+void applyStoredDisplayConfig() {
+  JsonDocument document;
+  if (deserializeJson(document, configManager.json()) != DeserializationError::Ok) return;
+  const uint8_t requested = document["display"]["brightness"] | 25;
+  const uint8_t maximum = document["display"]["maxBrightness"] | 100;
+  displayManager.setBrightness(min(requested, maximum));
+  if (!(document["display"]["enabled"] | true)) displayManager.setMode(DisplayMode::OFF);
+}
+}
+
 void setup() {
   Serial.begin(115200);
   delay(200);
@@ -55,7 +67,10 @@ void setup() {
   timeManager.begin();
   brightnessManager.begin();
   messageScreen.begin();
-  if (displayManager.begin()) logManager.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "HUB75 productieklok gestart");
+  if (displayManager.begin()) {
+    applyStoredDisplayConfig();
+    logManager.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "HUB75 productieklok gestart");
+  }
   else logManager.add(LogCategory::DISPLAY_LOG, LogLevel::ERROR, "HUB75 DMA initialisatie mislukt");
   clockScreen.begin();
   // Web/API and OTA are intentionally available as scaffolding, but the physical test does not depend on them.
