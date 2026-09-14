@@ -77,6 +77,26 @@ python -m platformio device monitor --port COMx --baud 115200
 
 Wordt de controller niet herkend, volg dan de officiële bootprocedure: houd BOOT ingedrukt, sluit USB aan, laat BOOT los en druk na upload op RESET.
 
+### Herstel bij `do_core_init` / flash-bootloop
+
+De Waveshare N32R16 gebruikt QIO-flash met OPI-PSRAM. De custom boarddefinitie bouwt daarom expliciet de OPI-bootloader. Na een oudere build moet de nieuwe bootloader opnieuw worden geflasht:
+
+```powershell
+cd firmware
+python -m platformio run -e hardware-validation
+python -m platformio run -e hardware-validation -t upload --upload-port COM3
+python -m platformio device monitor --port COM3 --baud 115200
+```
+
+Vervang `COM3` wanneer Windows een andere poort toont. Blijft de controller daarna in een bootloop hangen, wis dan éénmalig de volledige flash en upload opnieuw. Dit wist ook NVS/configuratie en is daarom alleen geschikt voor deze eerste hardwaretest:
+
+```powershell
+python -m platformio run -e hardware-validation -t erase --upload-port COM3
+python -m platformio run -e hardware-validation -t upload --upload-port COM3
+```
+
+De verwachte eerste regel uit de applicatie is `Smart Matrix Hardware Validation`. Verschijnt die niet, rapporteer dan de eerste volledige bootcyclus vanaf `ESP-ROM` tot en met de foutregel.
+
 ## Verwachte seriële start
 
 De monitor staat op 115200 baud. Verwacht onder andere:
