@@ -39,7 +39,17 @@ ApiServer::ApiServer(ConfigManager& config, DisplayManager& display, LogManager&
 void ApiServer::begin() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   server_.on("/api/v1/status", HTTP_GET, [this](AsyncWebServerRequest* request) {
-    request->send(200, "application/json", status_.json(wifi_.networkReady(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname(), display_.brightness(), weather_.snapshotJson()));
+    String body = status_.json(wifi_.networkReady(), wifi_.rssi(), time_.synced(), display_.mode() != DisplayMode::OFF, display_.modeName(), wifi_.ip(), wifi_.hostname(), display_.brightness(), weather_.snapshotJson());
+    JsonDocument response;
+    JsonDocument configDocument;
+    deserializeJson(response, body);
+    deserializeJson(configDocument, config_.json());
+    response["active_layout"] = configDocument["activeLayoutId"] | configDocument["clock"]["layout"] | "builder";
+    response["profile"] = configDocument["activeProfileId"] | "normal";
+    response["queue_length"] = 0;
+    body = "";
+    serializeJson(response, body);
+    request->send(200, "application/json", body);
   });
   server_.on("/api/v1/wifi", HTTP_GET, [this](AsyncWebServerRequest* request) {
     JsonDocument response;
@@ -91,6 +101,59 @@ void ApiServer::begin() {
     display_.setMode((saved["display"]["enabled"] | true) ? DisplayMode::CLOCK : DisplayMode::OFF);
     logs_.add(LogCategory::CONFIG, LogLevel::INFO, "Configuratie opgeslagen");
     request->send(200, "application/json", config_.json());
+  }, nullptr, collectJsonBody);
+  server_.on("/api/v1/layout", HTTP_PUT, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (!parseJsonBody(request, document) || !document["layout_id"].is<const char*>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"layout_id is verplicht.\"}}");
+      return;
+    }
+    JsonDocument patch;
+    patch["activeLayoutId"] = document["layout_id"].as<String>();
+    String patchBody;
+    serializeJson(patch, patchBody);
+    if (!config_.saveJson(patchBody)) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"Layout kon niet worden opgeslagen.\"}}");
+      return;
+    }
+    display_.setMode(DisplayMode::CLOCK);
+    logs_.add(LogCategory::CONFIG, LogLevel::INFO, "Actieve layout gewijzigd");
+    request->send(200, "application/json", "{\"ok\":true}");
+  }, nullptr, collectJsonBody);
+  server_.on("/api/v1/profile", HTTP_PUT, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (!parseJsonBody(request, document) || !document["profile_id"].is<const char*>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_PROFILE\",\"message\":\"profile_id is verplicht.\"}}");
+      return;
+    }
+    JsonDocument patch;
+    patch["activeProfileId"] = document["profile_id"].as<String>();
+    String patchBody;
+    serializeJson(patch, patchBody);
+    if (!config_.saveJson(patchBody)) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_PROFILE\",\"message\":\"Profiel kon niet worden opgeslagen.\"}}");
+      return;
+    }
+    logs_.add(LogCategory::CONFIG, LogLevel::INFO, "Actief profiel gewijzigd");
+    request->send(200, "application/json", "{\"ok\":true}");
+  }, nullptr, collectJsonBody);
+  server_.on("/api/v1/layouts/show", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (!parseJsonBody(request, document) || !document["layout_id"].is<const char*>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"layout_id is verplicht.\"}}");
+      return;
+    }
+    JsonDocument patch;
+    patch["activeLayoutId"] = document["layout_id"].as<String>();
+    String patchBody;
+    serializeJson(patch, patchBody);
+    if (!config_.saveJson(patchBody)) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"Layout kon niet worden opgeslagen.\"}}");
+      return;
+    }
+    display_.setMode(DisplayMode::CLOCK);
+    logs_.add(LogCategory::EVENT, LogLevel::INFO, "Layout-event ontvangen");
+    request->send(202, "application/json", "{\"ok\":true,\"accepted\":true}");
   }, nullptr, collectJsonBody);
   server_.on("/api/v1/message", HTTP_POST, [this](AsyncWebServerRequest* request) {
     JsonDocument document;
@@ -172,6 +235,11 @@ void ApiServer::begin() {
     }
     const bool enabled = document["enabled"] | false;
     display_.setMode(enabled ? DisplayMode::CLOCK : DisplayMode::OFF);
+    JsonDocument patch;
+    patch["display"]["enabled"] = enabled;
+    String configBody;
+    serializeJson(patch, configBody);
+    config_.saveJson(configBody);
     request->send(200, "application/json", enabled ? "{\"ok\":true,\"enabled\":true}" : "{\"ok\":true,\"enabled\":false}");
   }, nullptr, collectJsonBody);
   server_.on("/api/v1/events/skip", HTTP_POST, [this](AsyncWebServerRequest* request) {
