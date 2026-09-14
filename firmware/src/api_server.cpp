@@ -131,10 +131,11 @@ void ApiServer::begin() {
     // A builder clock consumes the same snapshot as live weather data. Do not
     // replace the selected builder layout with the legacy full-screen weather
     // mode; keep that mode available for installations that explicitly use it.
-    JsonDocument configDocument;
-    deserializeJson(configDocument, config_.json());
-    const char* clockLayout = configDocument["clock"]["layout"] | "minimal";
-    const bool builderLayout = clockLayout != nullptr && strcmp(clockLayout, "builder") == 0;
+    // ConfigManager stores normalized compact JSON. Keep the mode decision
+    // independent from the temporary ArduinoJson document so a large portal
+    // configuration cannot make this route fall back to WEATHER accidentally.
+    const String configJson = config_.json();
+    const bool builderLayout = configJson.indexOf("\"layout\":\"builder\"") >= 0;
     if (!builderLayout) display_.setMode(DisplayMode::WEATHER);
     logs_.add(LogCategory::WEATHER, LogLevel::INFO, "Weather snapshot ontvangen");
     request->send(200, "application/json", weatherBody);
