@@ -2,9 +2,11 @@
 #include <time.h>
 
 void TimeManager::begin() {
-  setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
-  tzset();
-  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  // configTime() with zero offsets resets the ESP32 timezone to UTC. Use the
+  // timezone-aware variant so CET/CEST and the Amsterdam DST rules remain
+  // active after NTP synchronisation.
+  constexpr char AMSTERDAM_TZ[] = "CET-1CEST,M3.5.0,M10.5.0/3";
+  configTzTime(AMSTERDAM_TZ, "pool.ntp.org", "time.nist.gov");
 }
 
 void TimeManager::update() {
