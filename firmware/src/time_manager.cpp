@@ -7,13 +7,19 @@ void TimeManager::begin() {
   // active after NTP synchronisation.
   constexpr char AMSTERDAM_TZ[] = "CET-1CEST,M3.5.0,M10.5.0/3";
   configTzTime(AMSTERDAM_TZ, "pool.ntp.org", "time.nist.gov");
+  lastCheckAt_ = millis() - 1000;
 }
 
 void TimeManager::update() {
   if (millis() - lastCheckAt_ < 1000) return;
   lastCheckAt_ = millis();
+  const time_t epoch = time(nullptr);
+  if (epoch >= 1700000000) {
+    synced_ = true;
+    return;
+  }
   struct tm localTime;
-  if (getLocalTime(&localTime, 10)) synced_ = true;
+  if (getLocalTime(&localTime, 50)) synced_ = time(nullptr) >= 1700000000;
 }
 
 bool TimeManager::localTime(struct tm& result) const {

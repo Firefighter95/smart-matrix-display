@@ -70,14 +70,17 @@ void setup() {
   wifiManager.begin(configManager);
   timeManager.begin();
   weatherScreen.begin();
-  brightnessManager.begin();
   messageScreen.begin();
   audioManager.begin(configManager, logManager);
   if (displayManager.begin()) {
     applyStoredDisplayConfig();
+    brightnessManager.begin(displayManager, configManager, timeManager);
     logManager.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "HUB75 productieklok gestart");
   }
-  else logManager.add(LogCategory::DISPLAY_LOG, LogLevel::ERROR, "HUB75 DMA initialisatie mislukt");
+  else {
+    brightnessManager.begin(displayManager, configManager, timeManager);
+    logManager.add(LogCategory::DISPLAY_LOG, LogLevel::ERROR, "HUB75 DMA initialisatie mislukt");
+  }
   clockScreen.begin();
   // Web/API and OTA are intentionally available as scaffolding, but the physical test does not depend on them.
   otaManager.begin(wifiManager.hostname());
