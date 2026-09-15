@@ -19,6 +19,25 @@
 
 namespace HardwareConfig {
 
+// Waveshare ESP32-S3-RGB-Matrix audio hardware. Keep this separate from the
+// HUB75 mapping: the board routes the two-microphone ES7210 and ES8311 speaker
+// codec over I2C/I2S and these signals must not be guessed from generic ESP32
+// examples.
+namespace AudioConfig {
+constexpr char PROFILE_NAME[] = "WAVESHARE_ES7210_ES8311";
+constexpr int8_t I2C_SDA_PIN = 47;
+constexpr int8_t I2C_SCL_PIN = 48;
+constexpr int8_t I2S_BCLK_PIN = 43;
+constexpr int8_t I2S_MCLK_PIN = 12;
+constexpr int8_t I2S_LRCLK_PIN = 38;
+constexpr int8_t I2S_DOUT_PIN = 21;
+constexpr int8_t I2S_DIN_PIN = 39;
+constexpr int8_t POWER_AMP_ENABLE_PIN = 11;
+constexpr uint32_t ASSIST_SAMPLE_RATE = 16000;
+constexpr uint8_t ASSIST_BITS_PER_SAMPLE = 16;
+constexpr uint8_t MICROPHONE_COUNT = 2;
+} // namespace AudioConfig
+
 enum class HardwareProfile : uint8_t { WAVESHARE_ESP32_S3_RGB_MATRIX, CUSTOM_HUB75 };
 enum class ScanMode : uint8_t { ONE_THIRTY_SECOND_STANDARD, ONE_THIRTY_SECOND_NO_E_EXPERIMENTAL };
 constexpr HardwareProfile PROFILE = HardwareProfile::WAVESHARE_ESP32_S3_RGB_MATRIX;

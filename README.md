@@ -37,6 +37,8 @@ Zie [`docs/portal.md`](docs/portal.md) voor de ESP32-adapter, `.env`-schakeling 
 
 Voor Home Assistant-berichten, meerdere displays en de weerklok zie [`docs/home-assistant.md`](docs/home-assistant.md) en [`docs/home-assistant-weather.md`](docs/home-assistant-weather.md). HACS installeert de lokale integratie; ieder display wordt via IP als afzonderlijk HA-device toegevoegd.
 
+De voorbereiding voor spraak via Home Assistant Assist staat in [`docs/voice-assist.md`](docs/voice-assist.md). De Waveshare-controller heeft twee microfoons en een speakercodec; de eerste audiofase wordt een afzonderlijke hardwarevalidatie, gevolgd door push-to-talk Assist en daarna optioneel wake-word support.
+
 De bestaande builder- en HACS-inventarisatie staat in [`docs/existing-builder.md`](docs/existing-builder.md) en [`docs/existing-hacs.md`](docs/existing-hacs.md). Deze documenten vormen het compatibiliteitsuitgangspunt voor de volgende layout- en Event Engine-fasen.
 
 De actuele DONE/PARTIAL/MISSING/PLANNED-overzicht staat in [`docs/feature-status.md`](docs/feature-status.md).
