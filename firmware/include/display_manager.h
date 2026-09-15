@@ -17,6 +17,8 @@ public:
   String modeName() const;
   void setMode(DisplayMode mode);
   void setBrightness(uint8_t percentage);
+  void setAudioIndicator(bool microphoneActive, bool speakerActive);
+  void drawAudioIndicator();
 
 private:
   Hub75DisplayOutput hub75Output_;
@@ -27,6 +29,8 @@ private:
   uint32_t lastPatternAt_ = 0;
   uint32_t lastFrameAt_ = 0;
   int movingX_ = 0;
+  enum class AudioIndicator : uint8_t { OFF, MICROPHONE, SPEAKER };
+  AudioIndicator audioIndicator_ = AudioIndicator::OFF;
 
   void renderTestPattern(uint8_t index);
   void renderMovingBlock();

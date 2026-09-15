@@ -126,6 +126,7 @@ void ClockScreen::render() {
       display_.output()->setCursor(x, y);
       display_.output()->print(value);
     }
+    display_.drawAudioIndicator();
     display_.output()->present();
     if (hasLocalTime) lastSecond_ = local.tm_sec;
     return;
@@ -140,6 +141,7 @@ void ClockScreen::render() {
     display_.output()->setTextColor(dateColor);
     display_.output()->setCursor(45, 52);
     display_.output()->print("NTP");
+    display_.drawAudioIndicator();
     display_.output()->present();
     return;
   }
@@ -168,6 +170,7 @@ void ClockScreen::render() {
                               : !time_.synced() ? display_.output()->color565(255, 180, 0)
                                                 : display_.output()->color565(80, 255, 120);
   display_.output()->fillRect(124, 1, 3, 3, statusColor);
+  display_.drawAudioIndicator();
   display_.output()->present();
   lastSecond_ = local.tm_sec;
 }

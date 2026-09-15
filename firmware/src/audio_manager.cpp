@@ -202,6 +202,7 @@ void AudioManager::update() {
 }
 
 const char* AudioManager::state() const {
+  if (playbackActive()) return "RESPONDING";
   return captureActive_ ? "LISTENING" : "IDLE";
 }
 
@@ -241,6 +242,7 @@ bool AudioManager::speakerTest() {
     }
     totalWritten += written / (sizeof(samples[0]) * 2);
   }
+  if (totalWritten == SPEAKER_TEST_FRAMES) playbackUntilMs_ = millis() + 500;
   if (logs_) logs_->add(LogCategory::HOME_ASSISTANT,
                         totalWritten == SPEAKER_TEST_FRAMES ? LogLevel::INFO : LogLevel::ERROR,
                         totalWritten == SPEAKER_TEST_FRAMES ? "Speaker-test gestart" : "Speaker-test schrijven mislukt");

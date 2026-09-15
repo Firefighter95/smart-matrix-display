@@ -76,5 +76,6 @@ void WeatherScreen::render() {
     display_.output()->setCursor(92, 34);
     display_.output()->print(timeText);
   }
+  display_.drawAudioIndicator();
   display_.output()->present();
 }

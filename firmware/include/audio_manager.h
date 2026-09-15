@@ -19,6 +19,7 @@ public:
   uint8_t inputLevel() const { return inputLevel_; }
   uint8_t volume() const { return volume_; }
   bool captureActive() const { return captureActive_; }
+  bool playbackActive() const { return playbackUntilMs_ > millis(); }
   const char* state() const;
   const char* transport() const { return "none"; }
   const char* wakeWordEngine() const { return "pending_esp_sr"; }
@@ -48,5 +49,6 @@ private:
   uint8_t inputLevel_ = 0;
   uint8_t volume_ = 35;
   uint32_t lastSampleMs_ = 0;
+  uint32_t playbackUntilMs_ = 0;
   String error_;
 };

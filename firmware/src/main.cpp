@@ -95,10 +95,11 @@ void loop() {
   wifiManager.update();
   timeManager.update();
   brightnessManager.update();
+  audioManager.update();
+  displayManager.setAudioIndicator(audioManager.captureActive(), audioManager.playbackActive());
   clockScreen.update();
   weatherScreen.update();
   messageScreen.update();
-  audioManager.update();
   otaManager.update();
   apiServer.update();
   delay(1);

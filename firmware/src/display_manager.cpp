@@ -19,6 +19,23 @@ void DisplayManager::setBrightness(uint8_t percentage) {
   if (output_) output_->setBrightness(brightness_);
 }
 
+void DisplayManager::setAudioIndicator(bool microphoneActive, bool speakerActive) {
+  if (speakerActive) audioIndicator_ = AudioIndicator::SPEAKER;
+  else if (microphoneActive) audioIndicator_ = AudioIndicator::MICROPHONE;
+  else audioIndicator_ = AudioIndicator::OFF;
+}
+
+void DisplayManager::drawAudioIndicator() {
+  if (!output_ || mode_ == DisplayMode::OFF || mode_ == DisplayMode::SLEEP) return;
+  if (audioIndicator_ == AudioIndicator::SPEAKER) {
+    output_->fillRect(HardwareConfig::MATRIX_WIDTH - 4, HardwareConfig::MATRIX_HEIGHT - 4, 3, 3,
+                      color(40, 130, 255));
+  } else if (audioIndicator_ == AudioIndicator::MICROPHONE) {
+    output_->fillRect(HardwareConfig::MATRIX_WIDTH - 4, HardwareConfig::MATRIX_HEIGHT - 4, 3, 3,
+                      color(255, 140, 0));
+  }
+}
+
 String DisplayManager::modeName() const {
   switch (mode_) {
     case DisplayMode::TEST: return "TEST";
