@@ -13,7 +13,8 @@ const newElement = (type: LayoutElementType, index: number): LayoutElement => ({
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 export function LayoutBuilderPage({ api, status, config, layoutId, onNotify }: Props) {
-  const source = config.layouts?.find((layout) => layout.id === layoutId) ?? config.layouts?.find((layout) => layout.id === config.activeLayoutId) ?? config.layouts?.[0];
+  const [availableLayouts, setAvailableLayouts] = useState<LayoutModel[]>(config.layouts ?? []);
+  const source = availableLayouts.find((layout) => layout.id === layoutId) ?? availableLayouts.find((layout) => layout.id === config.activeLayoutId) ?? availableLayouts[0];
   const [draft, setDraft] = useState<LayoutModel | undefined>(source);
   const [selectedId, setSelectedId] = useState(source?.elements[0]?.id);
   const [past, setPast] = useState<LayoutModel[]>([]);
@@ -22,7 +23,8 @@ export function LayoutBuilderPage({ api, status, config, layoutId, onNotify }: P
   const [grid, setGrid] = useState(true);
   const [zoom, setZoom] = useState<1 | 2 | 4 | 6 | 8>(2);
 
-  useEffect(() => { if (!draft && source) setDraft(source); }, [draft, source]);
+  useEffect(() => { void api.getLayouts().then(setAvailableLayouts).catch(() => setAvailableLayouts(config.layouts ?? [])); }, [api, config.layouts]);
+  useEffect(() => { if (source && (!draft || draft.id !== source.id)) { setDraft(source); setSelectedId(source.elements[0]?.id); setPast([]); setFuture([]); } }, [draft, source]);
   const selected = draft?.elements.find((item) => item.id === selectedId);
   const commit = (next: LayoutModel) => { if (!draft) return; setPast((items) => [draft, ...items].slice(0, 30)); setFuture([]); setDraft(normalizeLayout(next)); };
   const updateElement = (id: string, patch: Partial<LayoutElement>) => { if (!draft) return; commit({ ...draft, elements: draft.elements.map((item) => item.id === id ? { ...item, ...patch } : item) }); };
