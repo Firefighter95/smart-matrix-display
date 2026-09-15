@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 #include "config_manager.h"
+#include "audio_manager.h"
 #include "display_manager.h"
 #include "log_manager.h"
 #include "system_status.h"
@@ -12,13 +13,14 @@
 
 class ApiServer {
 public:
-  ApiServer(ConfigManager& config, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather);
+  ApiServer(ConfigManager& config, AudioManager& audio, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather);
   void begin();
   void update();
 
 private:
   AsyncWebServer server_{80};
   ConfigManager& config_;
+  AudioManager& audio_;
   DisplayManager& display_;
   LogManager& logs_;
   WifiManager& wifi_;

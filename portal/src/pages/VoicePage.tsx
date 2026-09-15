@@ -27,7 +27,7 @@ export function VoicePage({ api, audio, onNotify }: Props) {
   };
 
   return <div className="page-stack">
-    <SectionHeading eyebrow="VOICE ASSIST" title="Spraak met Home Assistant" description="Test de microfoons, Assist-status en speaker rechtstreeks vanuit de portal." action={<StatusBadge tone={current.available ? stateTone(current.state) : 'warning'}>{current.available ? stateLabels[current.state] : 'Niet actief'}</StatusBadge>} />
+    <SectionHeading eyebrow="VOICE ASSIST" title="Spraak met Home Assistant" description="Test de echte microfoons en speaker rechtstreeks op de ESP32. De wake-word- en Assist-transportlaag volgt na deze hardwarevalidatie." action={<StatusBadge tone={current.available ? stateTone(current.state) : 'warning'}>{current.available ? stateLabels[current.state] : 'Niet actief'}</StatusBadge>} />
     <div className="stats-grid">
       <StatCard label="Assist-status" value={stateLabels[current.state]} detail={current.transport === 'mock' ? 'Mock transport' : 'Home Assistant transport'} icon="◉" tone={current.state === 'ERROR' ? 'red' : 'green'} />
       <StatCard label="Microfoons" value={`${current.microphoneCount}`} detail={current.inputCodec} icon="♩" tone="blue" />
@@ -36,9 +36,9 @@ export function VoicePage({ api, audio, onNotify }: Props) {
     </div>
     <div className="two-column-layout">
       <section className="panel voice-panel">
-        <div className="panel-heading"><div><span className="eyebrow">ASSIST SESSION</span><h2>{stateLabels[current.state]}</h2><p>Push-to-talk simulatie voor Home Assistant Assist.</p></div><span className="voice-state-icon">{current.state === 'LISTENING' ? '◉' : current.state === 'RESPONDING' ? '♪' : current.state === 'PROCESSING' ? '…' : '○'}</span></div>
+        <div className="panel-heading"><div><span className="eyebrow">LIVE AUDIO TEST</span><h2>{stateLabels[current.state]}</h2><p>{current.transport === 'mock' ? 'Push-to-talk simulatie in mock mode.' : 'Live microfooncapture voor hardwarevalidatie.'}</p></div><span className="voice-state-icon">{current.state === 'LISTENING' ? '◉' : current.state === 'RESPONDING' ? '♪' : current.state === 'PROCESSING' ? '…' : '○'}</span></div>
         <div className="voice-meter"><div className="voice-meter__bar" style={{ width: `${current.inputLevel}%` }} /><span>{current.state === 'LISTENING' ? 'Microfoon actief' : 'Microfoon stand-by'}</span></div>
-        <div className="form-actions"><Button variant="primary" disabled={!current.available || running} onClick={() => void run(() => api.startAssist(), 'Assist-sessie gestart')}>Start luisteren</Button><Button disabled={!running} onClick={() => void run(() => api.stopAssist(), 'Assist-sessie gestopt')}>Stop</Button><Button onClick={() => void run(() => api.playAudioTest(), 'Speaker-test gestart')}>Speaker testen</Button></div>
+        <div className="form-actions"><Button variant="primary" disabled={!current.available || running} onClick={() => void run(() => api.startAssist(), 'Microfooncapture gestart')}>{current.transport === 'mock' ? 'Start luisteren' : 'Microfoon testen'}</Button><Button disabled={!running} onClick={() => void run(() => api.stopAssist(), 'Microfooncapture gestopt')}>Stop</Button><Button disabled={!current.speakerConnected} onClick={() => void run(() => api.playAudioTest(), 'Speaker-test gestart')}>Speaker testen</Button></div>
         {current.lastTranscript && <div className="voice-transcript"><span>Laatste opdracht</span><strong>“{current.lastTranscript}”</strong></div>}
         {current.lastResponse && <div className="voice-transcript voice-transcript--response"><span>Assist antwoord</span><strong>{current.lastResponse}</strong></div>}
         {current.error && <div className="error-banner"><span>!</span><div><strong>Audio niet beschikbaar</strong><p>{current.error}</p></div></div>}
@@ -46,9 +46,9 @@ export function VoicePage({ api, audio, onNotify }: Props) {
       <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">HARDWARE</span><h2>Audio-keten</h2></div></div>
         <div className="details-list"><div><span>Codec microfoon</span><strong>{current.inputCodec}</strong></div><div><span>Codec speaker</span><strong>{current.outputCodec}</strong></div><div><span>Aantal microfoons</span><strong>{current.microphoneCount}</strong></div><div><span>Transport</span><strong>{current.transport === 'mock' ? 'Portal mock' : current.transport === 'home_assistant' ? 'Home Assistant' : 'Niet actief'}</strong></div><div><span>Volume</span><strong>{current.volume}%</strong></div></div>
-        <div className="quick-note"><span className="note-icon">i</span><span>De mock gebruikt dezelfde statusflow als de toekomstige firmware: IDLE → LISTENING → PROCESSING → RESPONDING → IDLE.</span></div>
+        <div className="quick-note"><span className="note-icon">i</span><span>Wake-word engine: {current.wakeWordEngine ?? (current.transport === 'mock' ? 'mock' : 'niet actief')} · audioformaat 16 kHz / 16-bit.</span></div>
       </section>
     </div>
-    <section className="panel"><div className="panel-heading"><div><span className="eyebrow">INTEGRATION STATUS</span><h2>Home Assistant koppeling</h2></div><StatusBadge tone="warning">Voorbereid</StatusBadge></div><div className="details-list"><div><span>Assist satellite entity</span><strong>Volgende firmwarefase</strong></div><div><span>Audioformaat</span><strong>16 kHz · 16-bit</strong></div><div><span>Wake word</span><strong>Na push-to-talk validatie</strong></div></div></section>
+    <section className="panel"><div className="panel-heading"><div><span className="eyebrow">INTEGRATION STATUS</span><h2>Home Assistant koppeling</h2></div><StatusBadge tone="warning">In opbouw</StatusBadge></div><div className="details-list"><div><span>Assist satellite entity</span><strong>Na live audio-transport</strong></div><div><span>Audioformaat</span><strong>16 kHz · 16-bit PCM</strong></div><div><span>Wake word</span><strong>ESP-SR / HA-configuratie volgt</strong></div></div></section>
   </div>;
 }

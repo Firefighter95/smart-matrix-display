@@ -30,6 +30,7 @@ export interface AudioStatus {
   inputLevel: number;
   volume: number;
   transport: 'mock' | 'home_assistant' | 'none';
+  wakeWordEngine?: 'mock' | 'esp_sr' | 'home_assistant' | 'pending_esp_sr' | 'none';
   lastTranscript?: string;
   lastResponse?: string;
   error?: string;

@@ -39,6 +39,11 @@ class SmartMatrixCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 config = await self.api.async_get_config()
             except SmartMatrixApiError:
                 config = {}
+            try:
+                status["audio"] = await self.api.async_get_audio_status()
+            except SmartMatrixApiError:
+                # Keep older firmware compatible with the HACS integration.
+                status.setdefault("audio", {"available": False, "state": "IDLE"})
             layouts = config.get("layouts", [])
             profiles = config.get("profiles", [])
             status.setdefault(

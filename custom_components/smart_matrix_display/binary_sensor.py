@@ -32,6 +32,8 @@ BINARY_SENSORS = (
     ),
     _BinarySensorSpec(key="time_synced", translation_key="time_synced"),
     _BinarySensorSpec(key="display_enabled", translation_key="display_enabled"),
+    _BinarySensorSpec(key="audio_available", translation_key="audio_available"),
+    _BinarySensorSpec(key="speaker_connected", translation_key="speaker_connected"),
 )
 
 
@@ -65,6 +67,7 @@ class SmartMatrixBinarySensor(SmartMatrixEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> Any:
-        return bool(
-            (self.coordinator.data or {}).get(self.entity_description.key, False)
-        )
+        data = self.coordinator.data or {}
+        if self.entity_description.key in {"audio_available", "speaker_connected"}:
+            return bool((data.get("audio") or {}).get(self.entity_description.key.removeprefix("audio_"), False))
+        return bool(data.get(self.entity_description.key, False))

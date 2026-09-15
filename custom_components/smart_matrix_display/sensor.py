@@ -49,6 +49,10 @@ SENSORS = (
     _SensorSpec(key="weather_condition", translation_key="weather_condition"),
     _SensorSpec(key="weather_temperature", translation_key="weather_temperature", unit=UnitOfTemperature.CELSIUS),
     _SensorSpec(key="weather_wind", translation_key="weather_wind", unit="m/s"),
+    _SensorSpec(key="audio_state", translation_key="audio_state"),
+    _SensorSpec(key="audio_input_level", translation_key="audio_input_level", unit=PERCENTAGE, diagnostic=True),
+    _SensorSpec(key="audio_microphones", translation_key="audio_microphones", diagnostic=True),
+    _SensorSpec(key="audio_wake_word_engine", translation_key="audio_wake_word_engine", diagnostic=True),
 )
 
 
@@ -91,4 +95,7 @@ class SmartMatrixSensor(SmartMatrixEntity, SensorEntity):
         if self.entity_description.key == "weather_wind":
             wind_kph = (data.get("weather") or {}).get("windSpeedKph")
             return round(wind_kph / 3.6, 1) if isinstance(wind_kph, (int, float)) else None
+        if self.entity_description.key.startswith("audio_"):
+            audio = data.get("audio") or {}
+            return audio.get(self.entity_description.key.removeprefix("audio_"))
         return data.get(self.entity_description.key)

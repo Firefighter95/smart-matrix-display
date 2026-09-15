@@ -27,6 +27,7 @@ BUTTONS = (
         method="async_clear_display",
     ),
     _ButtonSpec(key="restart", translation_key="restart", method="async_restart"),
+    _ButtonSpec(key="audio_test", translation_key="audio_test", method="async_audio_test"),
 )
 
 

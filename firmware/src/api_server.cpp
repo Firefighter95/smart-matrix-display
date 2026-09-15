@@ -33,8 +33,8 @@ bool parseJsonBody(AsyncWebServerRequest* request, JsonDocument& document) {
 }
 } // namespace
 
-ApiServer::ApiServer(ConfigManager& config, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather)
-  : config_(config), display_(display), logs_(logs), wifi_(wifi), time_(time), weather_(weather) {}
+ApiServer::ApiServer(ConfigManager& config, AudioManager& audio, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather)
+  : config_(config), audio_(audio), display_(display), logs_(logs), wifi_(wifi), time_(time), weather_(weather) {}
 
 void ApiServer::begin() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
@@ -51,20 +51,26 @@ void ApiServer::begin() {
     serializeJson(response, body);
     request->send(200, "application/json", body);
   });
-  // Audio contract is exposed before the real ES7210/ES8311 transport is
-  // enabled. This lets the portal distinguish "hardware not initialized"
-  // from a disconnected display and keeps the future Assist adapter stable.
-  server_.on("/api/v1/audio", HTTP_GET, [](AsyncWebServerRequest* request) {
-    request->send(200, "application/json", "{\"available\":false,\"initialized\":false,\"microphoneCount\":0,\"inputCodec\":\"ES7210\",\"outputCodec\":\"ES8311\",\"speakerConnected\":false,\"state\":\"IDLE\",\"inputLevel\":0,\"volume\":0,\"transport\":\"none\",\"error\":\"Audiofirmware nog niet geactiveerd\"}");
+  server_.on("/api/v1/audio", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    request->send(200, "application/json", audio_.json());
   });
-  server_.on("/api/v1/audio/assist/start", HTTP_POST, [](AsyncWebServerRequest* request) {
-    request->send(503, "application/json", "{\"ok\":false,\"error\":{\"code\":\"AUDIO_NOT_READY\",\"message\":\"De ES7210/ES8311 audiofirmware is nog niet geactiveerd.\"}}");
+  server_.on("/api/v1/audio/assist/start", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    if (!audio_.startAssist()) {
+      request->send(503, "application/json", "{\"ok\":false,\"error\":{\"code\":\"AUDIO_NOT_READY\",\"message\":\"Microfooncapture is niet beschikbaar.\"}}");
+      return;
+    }
+    request->send(202, "application/json", "{\"ok\":true,\"state\":\"LISTENING\",\"mode\":\"hardware_test\"}");
   });
-  server_.on("/api/v1/audio/assist/stop", HTTP_POST, [](AsyncWebServerRequest* request) {
-    request->send(503, "application/json", "{\"ok\":false,\"error\":{\"code\":\"AUDIO_NOT_READY\",\"message\":\"De audio-assist transportlaag is nog niet actief.\"}}");
+  server_.on("/api/v1/audio/assist/stop", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    audio_.stopAssist();
+    request->send(200, "application/json", "{\"ok\":true,\"state\":\"IDLE\"}");
   });
-  server_.on("/api/v1/audio/test", HTTP_POST, [](AsyncWebServerRequest* request) {
-    request->send(503, "application/json", "{\"ok\":false,\"error\":{\"code\":\"AUDIO_NOT_READY\",\"message\":\"De speaker-test is nog niet beschikbaar in deze firmware.\"}}");
+  server_.on("/api/v1/audio/test", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    if (!audio_.speakerTest()) {
+      request->send(503, "application/json", "{\"ok\":false,\"error\":{\"code\":\"AUDIO_NOT_READY\",\"message\":\"Speaker-test is niet beschikbaar.\"}}");
+      return;
+    }
+    request->send(202, "application/json", "{\"ok\":true,\"test\":\"440Hz\"}");
   });
   server_.on("/api/v1/wifi", HTTP_GET, [this](AsyncWebServerRequest* request) {
     JsonDocument response;

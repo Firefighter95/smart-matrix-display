@@ -53,6 +53,9 @@ from .const import (
     CONF_WEATHER_ENTITY,
     DOMAIN,
     PLATFORMS,
+    SERVICE_AUDIO_START,
+    SERVICE_AUDIO_STOP,
+    SERVICE_AUDIO_TEST,
     SERVICE_CLEAR,
     SERVICE_CLEAR_DISPLAY,
     SERVICE_RESTART,
@@ -313,6 +316,15 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         async def handle_skip_event(call: ServiceCall) -> None:
             await _call_all(_target_runtimes(hass, call), "async_skip_event")
 
+        async def handle_audio_start(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_start_audio_capture")
+
+        async def handle_audio_stop(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_stop_audio_capture")
+
+        async def handle_audio_test(call: ServiceCall) -> None:
+            await _call_all(_target_runtimes(hass, call), "async_audio_test")
+
         hass.services.async_register(
             DOMAIN,
             SERVICE_SEND_MESSAGE,
@@ -345,6 +357,9 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         hass.services.async_register(DOMAIN, SERVICE_SET_LAYOUT, handle_set_layout, schema=LAYOUT_SELECT_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SET_PROFILE, handle_set_profile, schema=PROFILE_SCHEMA)
         hass.services.async_register(DOMAIN, SERVICE_SKIP_EVENT, handle_skip_event)
+        hass.services.async_register(DOMAIN, SERVICE_AUDIO_START, handle_audio_start)
+        hass.services.async_register(DOMAIN, SERVICE_AUDIO_STOP, handle_audio_stop)
+        hass.services.async_register(DOMAIN, SERVICE_AUDIO_TEST, handle_audio_test)
     return True
 
 

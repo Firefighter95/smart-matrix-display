@@ -34,6 +34,19 @@
     }
   },
   "entity": {
+    "sensor": {
+      "audio_state": {"name": "Audio state"},
+      "audio_input_level": {"name": "Microphone input level"},
+      "audio_microphones": {"name": "Microphones"},
+      "audio_wake_word_engine": {"name": "Wake-word engine"}
+    },
+    "binary_sensor": {
+      "audio_available": {"name": "Audio available"},
+      "speaker_connected": {"name": "Speaker connected"}
+    },
+    "button": {
+      "audio_test": {"name": "Test speaker"}
+    },
     "number": {
       "brightness_control": {"name": "Brightness control"}
     },

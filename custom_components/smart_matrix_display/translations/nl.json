@@ -53,14 +53,21 @@
       ,"ip_address": {"name": "IP-adres"}
       ,"hostname": {"name": "Hostnaam"}
       ,"weather_condition": {"name": "Weerconditie"}
+      ,"audio_state": {"name": "Audio-status"}
+      ,"audio_input_level": {"name": "Microfoonniveau"}
+      ,"audio_microphones": {"name": "Microfoons"}
+      ,"audio_wake_word_engine": {"name": "Wake-wordengine"}
     },
     "binary_sensor": {
       "online": {"name": "Online"},
       "time_synced": {"name": "Tijd gesynchroniseerd"}
+      ,"audio_available": {"name": "Audio beschikbaar"}
+      ,"speaker_connected": {"name": "Speaker verbonden"}
     },
     "button": {
       "clear_display": {"name": "Display wissen"},
       "restart": {"name": "Herstarten"}
+      ,"audio_test": {"name": "Speaker testen"}
     },
     "number": {
       "brightness_control": {"name": "Helderheidsregeling"}

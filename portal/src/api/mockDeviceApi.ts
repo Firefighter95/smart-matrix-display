@@ -97,6 +97,7 @@ const initialAudio: AudioStatus = {
   inputLevel: 0,
   volume: 55,
   transport: 'mock',
+  wakeWordEngine: 'mock',
 };
 
 const clone = <T,>(value: T): T => structuredClone(value);

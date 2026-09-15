@@ -1,10 +1,14 @@
 # Voice Assist via Home Assistant
 
-Smart Matrix Display is being prepared as a local Home Assistant Assist
-satellite. The Waveshare ESP32-S3-RGB-Matrix board contains two microphones,
-an ES7210 microphone codec, an ES8311 speaker codec and an onboard speaker
-header. The existing HUB75 display path remains independent from the audio
-path.
+The live audio hardware layer is now enabled on the Waveshare
+ESP32-S3-RGB-Matrix board. The board contains two microphones, an ES7210
+microphone codec, an ES8311 speaker codec and an onboard speaker header. The
+existing HUB75 display path remains independent from the audio path.
+
+This milestone validates the codecs, I2S and speaker output on the real device.
+It is not yet the final Home Assistant Assist transport: the current capture
+endpoint is a local hardware test and does not stream PCM audio to an Assist
+pipeline or run a wake word. That is the next implementation step.
 
 ## Hardware profile
 
@@ -28,28 +32,29 @@ an ESP32 GPIO.
 
 ## Integration design
 
-The HACS integration will expose the display as a native Home Assistant
-`assist_satellite` entity. This allows the standard Assist Satellite actions
-and states to be used:
+The target HACS integration will expose the display as a native Home Assistant
+`assist_satellite` entity. This will allow the standard Assist Satellite
+actions and states to be used:
 
 - `IDLE`
 - `LISTENING`
 - `PROCESSING`
 - `RESPONDING`
 
-The ESP32 firmware will stream 16 kHz, 16-bit microphone audio only while an
-Assist session is active and play the returned TTS audio through ES8311. The
+The planned transport will stream 16 kHz, 16-bit microphone audio only while
+an Assist session is active and play returned TTS audio through ES8311. The
 HACS integration remains the Home Assistant-side adapter and keeps Home
 Assistant credentials out of the ESP32 firmware.
 
 ## Rollout
 
-1. Audio hardware validation: detect and initialize ES7210/ES8311, verify both
-   microphones and play a local test tone.
+1. **Completed:** audio hardware validation detects and initializes
+   ES7210/ES8311 and exposes a local input meter plus speaker test.
 2. Push-to-talk Assist session over the local network.
 3. Native `assist_satellite` entity, announcements and HA automation actions.
 4. Display feedback for listening, processing, responding and audio errors.
-5. Optional wake-word detection after the audio path is stable.
+5. Wake-word detection, preferably with ESP-SR/WakeNet after the audio path is
+   stable and microphone gain/false-wake behavior have been tuned.
 
 Push-to-talk is the first production milestone. Wake-word detection is kept as
 a separate step because it requires tuning microphone gain, echo cancellation
@@ -61,16 +66,40 @@ Start the local portal with `cd portal`, `npm install` and `npm run dev`. Open
 **Voice Assist** in the sidebar. In mock mode the following controls are
 available without an ESP32:
 
-- **Start luisteren** runs a complete Assist session simulation;
-- the live input meter simulates the two-microphone input;
-- the transcript and response are shown after processing;
-- **Speaker testen** simulates TTS playback;
+- **Microfoon testen** starts live microphone capture on the device and shows
+  the input level;
+- **Speaker testen** plays a short 440 Hz tone on the connected speaker;
+- in mock mode, the same controls simulate input, transcript and response;
 - the existing development toolbar can still simulate Wi-Fi and API failures.
 
-The mock uses the same `AudioStatus` model and `DeviceApi` methods as the
-future ESP32 transport. The current firmware exposes `GET /api/v1/audio` as a
-stable capability endpoint and returns an explicit `AUDIO_NOT_READY` response
-for action endpoints until the real codec driver is enabled.
+The live firmware exposes the following stable endpoints:
+
+- `GET /api/v1/audio` — codec detection, microphone level, speaker state and
+  transport capability;
+- `POST /api/v1/audio/assist/start` — start the local microphone capture test;
+- `POST /api/v1/audio/assist/stop` — stop capture;
+- `POST /api/v1/audio/test` — play the local speaker test tone.
+
+The current live response deliberately reports `transport: "none"` and
+`wakeWordEngine: "pending_esp_sr"` until the network Assist transport and
+wake-word engine are implemented. The portal and HACS integration use the same
+`AudioStatus` model and can already monitor and test the real hardware.
+
+## Hardware validation
+
+After a network firmware upload, open `http://smartmatrix.local/#/voice` (or
+the device IP) and run **Speaker testen**. Then run **Microfoon testen** and
+speak or clap close to the board. The input meter should move. A valid status
+response can also be checked from PowerShell:
+
+```powershell
+Invoke-RestMethod http://smartmatrix.local/api/v1/audio | ConvertTo-Json
+```
+
+The two codecs being detected proves the board wiring and I2C path are alive,
+but it does not by itself prove that the microphone signal reaches the I2S
+buffer or that the speaker is connected correctly; both need the functional
+tests above.
 
 ## References
 

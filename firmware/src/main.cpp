@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 
 #include "api_server.h"
+#include "audio_manager.h"
 #include "brightness_manager.h"
 #include "clock_screen.h"
 #include "config_manager.h"
@@ -30,7 +31,8 @@ BrightnessManager brightnessManager;
 ClockScreen clockScreen(displayManager, timeManager, wifiManager, configManager, weatherScreen);
 MessageScreen messageScreen;
 OtaManager otaManager;
-ApiServer apiServer(configManager, displayManager, logManager, wifiManager, timeManager, weatherScreen);
+AudioManager audioManager;
+ApiServer apiServer(configManager, audioManager, displayManager, logManager, wifiManager, timeManager, weatherScreen);
 #ifdef SMART_MATRIX_HARDWARE_VALIDATION
 HardwareValidation hardwareValidation;
 #endif
@@ -70,6 +72,7 @@ void setup() {
   weatherScreen.begin();
   brightnessManager.begin();
   messageScreen.begin();
+  audioManager.begin(configManager, logManager);
   if (displayManager.begin()) {
     applyStoredDisplayConfig();
     logManager.add(LogCategory::DISPLAY_LOG, LogLevel::INFO, "HUB75 productieklok gestart");
@@ -95,6 +98,7 @@ void loop() {
   clockScreen.update();
   weatherScreen.update();
   messageScreen.update();
+  audioManager.update();
   otaManager.update();
   apiServer.update();
   delay(1);

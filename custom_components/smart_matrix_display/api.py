@@ -86,6 +86,26 @@ class SmartMatrixApiClient:
 
         return await self._request("GET", "/api/v1/status")
 
+    async def async_get_audio_status(self) -> dict[str, Any]:
+        """Fetch live microphone, speaker and Assist hardware status."""
+
+        return await self._request("GET", "/api/v1/audio")
+
+    async def async_start_audio_capture(self) -> dict[str, Any]:
+        """Start live microphone capture for hardware validation."""
+
+        return await self._request("POST", "/api/v1/audio/assist/start")
+
+    async def async_stop_audio_capture(self) -> dict[str, Any]:
+        """Stop live microphone capture."""
+
+        return await self._request("POST", "/api/v1/audio/assist/stop")
+
+    async def async_audio_test(self) -> dict[str, Any]:
+        """Play the short onboard speaker test tone."""
+
+        return await self._request("POST", "/api/v1/audio/test")
+
     async def async_get_config(self) -> dict[str, Any]:
         """Fetch persisted device configuration."""
 

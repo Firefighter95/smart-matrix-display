@@ -84,17 +84,41 @@ De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent
 ## Audio / Voice Assist
 
 `GET /api/v1/audio` geeft de audio-capabilities en huidige Assist-status terug.
-De eerste firmwarefase meldt expliciet `available: false` totdat de ES7210/ES8311
-driver en Home Assistant audio-transport zijn geactiveerd.
+De live firmware initialiseert de ES7210-microfooncodec, ES8311-speakercodec en
+I2S wanneer deze op de Waveshare ESP32-S3 RGB Matrix aanwezig zijn. Het
+endpoint rapporteert onder andere `microphoneCount`, `inputLevel`,
+`speakerConnected`, `transport` en `wakeWordEngine`.
 
 De toekomstige acties zijn:
 
-- `POST /api/v1/audio/assist/start` → start een Assist-sessie;
-- `POST /api/v1/audio/assist/stop` → beëindig de sessie;
-- `POST /api/v1/audio/test` → speel een speaker-test af.
+- `POST /api/v1/audio/assist/start` → start de lokale microfoon-hardwaretest;
+- `POST /api/v1/audio/assist/stop` → beëindig de lokale capture-test;
+- `POST /api/v1/audio/test` → speel een korte 440 Hz speaker-test af.
 
 De lokale portal gebruikt deze endpoints via `DeviceApi`. In mock mode worden
-dezelfde acties volledig gesimuleerd.
+dezelfde acties volledig gesimuleerd. De huidige firmware heeft nog geen
+netwerktransport naar een Home Assistant Assist-pipeline en rapporteert daarom
+bewust `transport: "none"`; wake-word-detectie rapporteert
+`wakeWordEngine: "pending_esp_sr"` totdat ESP-SR/WakeNet en het Assist-transport
+zijn toegevoegd.
+
+Voorbeeld:
+
+```json
+{
+  "available": true,
+  "initialized": true,
+  "microphoneCount": 2,
+  "inputCodec": "ES7210",
+  "outputCodec": "ES8311",
+  "speakerConnected": true,
+  "state": "IDLE",
+  "inputLevel": 0,
+  "volume": 35,
+  "transport": "none",
+  "wakeWordEngine": "pending_esp_sr"
+}
+```
 
 ## Overige endpoints
 

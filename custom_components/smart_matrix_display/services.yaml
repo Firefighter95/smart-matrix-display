@@ -326,6 +326,27 @@ skip_event:
     device:
       integration: smart_matrix_display
 
+audio_start:
+  name: Start microphone test
+  description: Start live microphone capture on the selected display for hardware validation.
+  target:
+    device:
+      integration: smart_matrix_display
+
+audio_stop:
+  name: Stop microphone test
+  description: Stop live microphone capture on the selected display.
+  target:
+    device:
+      integration: smart_matrix_display
+
+audio_test:
+  name: Test speaker
+  description: Play the onboard speaker test tone on the selected display.
+  target:
+    device:
+      integration: smart_matrix_display
+
 set_brightness:
   name: Set brightness
   description: Set the manual brightness percentage.
