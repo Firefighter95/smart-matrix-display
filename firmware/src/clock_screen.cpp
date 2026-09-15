@@ -55,6 +55,22 @@ void ClockScreen::render() {
   struct tm local;
   const bool hasLocalTime = time_.localTime(local);
 
+  // Prefer the editable 128x64 layouts stored by the portal. The legacy
+  // renderer below remains available for older configurations.
+  const String activeLayoutId = document["activeLayoutId"] | "";
+  JsonArray layouts = document["layouts"].as<JsonArray>();
+  if (!activeLayoutId.isEmpty()) {
+    for (JsonObject layoutModel : layouts) {
+      const String category = layoutModel["category"] | "";
+      if (String(layoutModel["id"] | "") == activeLayoutId &&
+          (category == "clock" || category == "weather" || category == "system")) {
+        renderer_.render(layoutModel, JsonObjectConst(), clock, background);
+        if (hasLocalTime) lastSecond_ = local.tm_sec;
+        return;
+      }
+    }
+  }
+
   char timeText[12] = "--:--";
   if (hasLocalTime) {
     if (use24Hour) {

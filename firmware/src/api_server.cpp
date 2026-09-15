@@ -33,8 +33,8 @@ bool parseJsonBody(AsyncWebServerRequest* request, JsonDocument& document) {
 }
 } // namespace
 
-ApiServer::ApiServer(ConfigManager& config, AudioManager& audio, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather)
-  : config_(config), audio_(audio), display_(display), logs_(logs), wifi_(wifi), time_(time), weather_(weather) {}
+ApiServer::ApiServer(ConfigManager& config, AudioManager& audio, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather, MessageScreen& message)
+  : config_(config), audio_(audio), display_(display), logs_(logs), wifi_(wifi), time_(time), weather_(weather), message_(message) {}
 
 void ApiServer::begin() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
@@ -133,10 +133,85 @@ void ApiServer::begin() {
     const uint8_t requested = saved["display"]["brightness"] | 25;
     const uint8_t maximum = saved["display"]["maxBrightness"] | 100;
     display_.setBrightness(min(requested, maximum));
-    display_.setMode((saved["display"]["enabled"] | true) ? DisplayMode::CLOCK : DisplayMode::OFF);
+    if (!message_.active()) display_.setMode((saved["display"]["enabled"] | true) ? DisplayMode::CLOCK : DisplayMode::OFF);
     logs_.add(LogCategory::CONFIG, LogLevel::INFO, "Configuratie opgeslagen");
     request->send(200, "application/json", config_.json());
   }, nullptr, collectJsonBody);
+  server_.on("/api/v1/layouts", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (deserializeJson(document, config_.json()) != DeserializationError::Ok || !document["layouts"].is<JsonArray>()) {
+      request->send(200, "application/json", "[]");
+      return;
+    }
+    String body;
+    serializeJson(document["layouts"], body);
+    request->send(200, "application/json", body);
+  });
+  server_.on(AsyncURIMatcher::prefix("/api/v1/layouts/"), HTTP_PUT, [this](AsyncWebServerRequest* request) {
+    JsonDocument layout;
+    if (!parseJsonBody(request, layout) || !layout["id"].is<const char*>() || !layout["elements"].is<JsonArray>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"Layout moet id en elements bevatten.\"}}");
+      return;
+    }
+    const String pathPrefix = "/api/v1/layouts/";
+    const String pathId = request->url().substring(pathPrefix.length());
+    const String layoutId = layout["id"].as<String>();
+    const int layoutWidth = layout["width"] | 0;
+    const int layoutHeight = layout["height"] | 0;
+    if (pathId.isEmpty() || pathId != layoutId || layoutWidth != 128 || layoutHeight != 64) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"Layout-id of afmetingen zijn ongeldig.\"}}");
+      return;
+    }
+    JsonDocument document;
+    if (deserializeJson(document, config_.json()) != DeserializationError::Ok) {
+      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"CONFIG_ERROR\",\"message\":\"Config kon niet worden gelezen.\"}}");
+      return;
+    }
+    JsonArray layouts = document["layouts"].as<JsonArray>();
+    if (layouts.isNull()) layouts = document["layouts"].to<JsonArray>();
+    bool replaced = false;
+    for (JsonObject existing : layouts) {
+      if (String(existing["id"] | "") != layoutId) continue;
+      existing.clear();
+      for (JsonPair item : layout.as<JsonObject>()) existing[item.key()] = item.value();
+      replaced = true;
+      break;
+    }
+    if (!replaced) {
+      JsonObject added = layouts.add<JsonObject>();
+      for (JsonPair item : layout.as<JsonObject>()) added[item.key()] = item.value();
+    }
+    String fullConfig;
+    serializeJson(document, fullConfig);
+    if (!config_.saveJson(fullConfig)) {
+      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"CONFIG_ERROR\",\"message\":\"Layout kon niet worden opgeslagen.\"}}");
+      return;
+    }
+    logs_.add(LogCategory::BUILDER, LogLevel::INFO, String("Layout opgeslagen: ") + layoutId);
+    String response;
+    serializeJson(layout, response);
+    request->send(200, "application/json", response);
+  }, nullptr, collectJsonBody);
+  server_.on(AsyncURIMatcher::prefix("/api/v1/layouts/"), HTTP_DELETE, [this](AsyncWebServerRequest* request) {
+    const String pathPrefix = "/api/v1/layouts/";
+    const String layoutId = request->url().substring(pathPrefix.length());
+    JsonDocument document;
+    if (layoutId.isEmpty() || deserializeJson(document, config_.json()) != DeserializationError::Ok) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"Layout-id is ongeldig.\"}}");
+      return;
+    }
+    JsonArray layouts = document["layouts"].as<JsonArray>();
+    for (size_t index = 0; index < layouts.size(); ++index) {
+      if (String(layouts[index]["id"] | "") == layoutId) layouts.remove(index--);
+    }
+    String fullConfig;
+    serializeJson(document, fullConfig);
+    if (!config_.saveJson(fullConfig)) {
+      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"CONFIG_ERROR\",\"message\":\"Layout kon niet worden verwijderd.\"}}");
+      return;
+    }
+    request->send(200, "application/json", "{\"ok\":true}");
+  });
   server_.on("/api/v1/layout", HTTP_PUT, [this](AsyncWebServerRequest* request) {
     JsonDocument document;
     if (!parseJsonBody(request, document) || !document["layout_id"].is<const char*>()) {
@@ -196,11 +271,14 @@ void ApiServer::begin() {
       request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_MESSAGE\",\"message\":\"message is verplicht.\"}}");
       return;
     }
-    display_.setMode(DisplayMode::MESSAGE);
-    logs_.add(LogCategory::API, LogLevel::INFO, "Message event ontvangen");
     String body;
     serializeJson(document, body);
-    request->send(200, "application/json", body);
+    if (!message_.showMessage(body)) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_MESSAGE\",\"message\":\"Bericht kon niet worden gestart.\"}}");
+      return;
+    }
+    logs_.add(LogCategory::API, LogLevel::INFO, "Message event ontvangen");
+    request->send(202, "application/json", body);
   }, nullptr, collectJsonBody);
   server_.on("/api/v1/events", HTTP_POST, [this](AsyncWebServerRequest* request) {
     JsonDocument document;
@@ -208,10 +286,13 @@ void ApiServer::begin() {
       request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_EVENT\",\"message\":\"source en type zijn verplicht.\"}}");
       return;
     }
-    display_.setMode(DisplayMode::MESSAGE);
-    logs_.add(LogCategory::EVENT, LogLevel::INFO, "Structured event ontvangen");
     String body;
     serializeJson(document, body);
+    if (!message_.showEvent(body)) {
+      request->send(409, "application/json", "{\"ok\":false,\"error\":{\"code\":\"EVENT_REJECTED\",\"message\":\"Event heeft een lagere prioriteit dan de actieve melding.\"}}");
+      return;
+    }
+    logs_.add(LogCategory::EVENT, LogLevel::INFO, "Structured event ontvangen");
     request->send(202, "application/json", body);
   }, nullptr, collectJsonBody);
   server_.on("/api/v1/weather", HTTP_PUT, [this](AsyncWebServerRequest* request) {
@@ -278,14 +359,14 @@ void ApiServer::begin() {
     request->send(200, "application/json", enabled ? "{\"ok\":true,\"enabled\":true}" : "{\"ok\":true,\"enabled\":false}");
   }, nullptr, collectJsonBody);
   server_.on("/api/v1/events/skip", HTTP_POST, [this](AsyncWebServerRequest* request) {
-    display_.setMode(DisplayMode::CLOCK);
+    message_.clear();
     logs_.add(LogCategory::QUEUE, LogLevel::INFO, "Event overgeslagen");
     request->send(200, "application/json", "{\"ok\":true}");
   });
   server_.on("/api/v1/events/history", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(200, "application/json", "[]"); });
   server_.on("/api/v1/diagnostics", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(200, "application/json", "{\"queueLength\":0,\"apiRequests\":0,\"errors\":0}"); });
   server_.on("/api/v1/clear", HTTP_POST, [this](AsyncWebServerRequest* request) {
-    display_.setMode(DisplayMode::CLOCK);
+    message_.clear();
     logs_.add(LogCategory::API, LogLevel::INFO, "Display gewist");
     request->send(200, "application/json", "{\"ok\":true}");
   });

@@ -10,10 +10,11 @@
 #include "wifi_manager.h"
 #include "time_manager.h"
 #include "weather_screen.h"
+#include "message_screen.h"
 
 class ApiServer {
 public:
-  ApiServer(ConfigManager& config, AudioManager& audio, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather);
+  ApiServer(ConfigManager& config, AudioManager& audio, DisplayManager& display, LogManager& logs, WifiManager& wifi, TimeManager& time, WeatherScreen& weather, MessageScreen& message);
   void begin();
   void update();
 
@@ -26,6 +27,7 @@ private:
   WifiManager& wifi_;
   TimeManager& time_;
   WeatherScreen& weather_;
+  MessageScreen& message_;
   SystemStatus status_;
   uint32_t otaRestartAt_ = 0;
 };

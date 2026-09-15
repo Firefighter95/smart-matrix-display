@@ -29,10 +29,10 @@ TimeManager timeManager;
 WeatherScreen weatherScreen(displayManager, timeManager, configManager);
 BrightnessManager brightnessManager;
 ClockScreen clockScreen(displayManager, timeManager, wifiManager, configManager, weatherScreen);
-MessageScreen messageScreen;
+MessageScreen messageScreen(displayManager, configManager, timeManager, wifiManager, weatherScreen);
 OtaManager otaManager;
 AudioManager audioManager;
-ApiServer apiServer(configManager, audioManager, displayManager, logManager, wifiManager, timeManager, weatherScreen);
+ApiServer apiServer(configManager, audioManager, displayManager, logManager, wifiManager, timeManager, weatherScreen, messageScreen);
 #ifdef SMART_MATRIX_HARDWARE_VALIDATION
 HardwareValidation hardwareValidation;
 #endif
