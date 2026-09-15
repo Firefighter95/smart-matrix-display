@@ -411,8 +411,16 @@ void ApiServer::begin() {
     (void)request;
     (void)filename;
   });
-  if (LittleFS.begin(false)) server_.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-  else server_.on("/", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(503, "text/plain", "LittleFS portal niet beschikbaar"); });
+  if (LittleFS.begin(false)) {
+    // Some ESPAsyncWebServer builds do not apply setDefaultFile() to the
+    // bare root path. Keep both / and /index.html reliable on the device.
+    server_.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+      request->send(LittleFS, "/index.html", "text/html");
+    });
+    server_.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+  } else {
+    server_.on("/", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(503, "text/plain", "LittleFS portal niet beschikbaar"); });
+  }
   server_.begin();
 }
 
