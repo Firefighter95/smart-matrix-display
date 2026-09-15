@@ -26,6 +26,8 @@ constexpr uint8_t ES7210_MIC2_GAIN = 0x44;
 constexpr uint8_t ES7210_MIC1_POWER = 0x47;
 constexpr uint8_t ES7210_MIC2_POWER = 0x48;
 constexpr uint8_t ES7210_MIC12_POWER = 0x4B;
+constexpr size_t SPEAKER_TEST_FRAMES = 8000; // 500 ms at 16 kHz
+constexpr size_t SPEAKER_TEST_BUFFER_FRAMES = 512;
 }
 
 void AudioManager::begin(ConfigManager& config, LogManager& logs) {
@@ -95,7 +97,8 @@ bool AudioManager::initEs8311() {
   // coefficient family used by the Waveshare Arduino reference driver.
   ok &= writeCodec(ES8311_ADDRESS, 0x02, 0x00);
   ok &= writeCodec(ES8311_ADDRESS, 0x03, 0x10);
-  ok &= writeCodec(ES8311_ADDRESS, 0x04, 0x10);
+  // 4.096 MHz MCLK / 16 kHz sample rate: DAC OSR 0x20.
+  ok &= writeCodec(ES8311_ADDRESS, 0x04, 0x20);
   ok &= writeCodec(ES8311_ADDRESS, 0x05, 0x00);
   ok &= writeCodec(ES8311_ADDRESS, 0x06, 0x03);
   ok &= writeCodec(ES8311_ADDRESS, 0x07, 0x00);
@@ -127,9 +130,13 @@ bool AudioManager::initEs7210() {
   ok &= writeCodec(ES7210_ADDRESS, ES7210_ANALOG, 0x43);
   ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC12_BIAS, 0x70);
   ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC34_BIAS, 0x70);
+  ok &= writeCodec(ES7210_ADDRESS, 0x07, 0x20); // 16 kHz ADC oversampling
   ok &= writeCodec(ES7210_ADDRESS, ES7210_MAINCLK, 0xC1);
   ok &= writeCodec(ES7210_ADDRESS, ES7210_SDP_INTERFACE1, 0x60); // I2S, 16-bit
   ok &= writeCodec(ES7210_ADDRESS, ES7210_SDP_INTERFACE2, 0x00); // stereo mode
+  // Enable the clock tree for MIC1 and MIC2. The reset value 0x3F disables
+  // every ADC clock; leaving it unchanged makes I2S reads permanently zero.
+  ok &= writeCodec(ES7210_ADDRESS, ES7210_CLOCK_OFF, 0x34);
   ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC1_GAIN, 0x1A); // 30 dB + enable
   ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC2_GAIN, 0x1A);
   ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC1_POWER, 0x08);
@@ -183,7 +190,7 @@ void AudioManager::update() {
   if (!initialized_ || !i2sReady_ || !microphonePresent_ || !captureActive_) return;
   static uint8_t buffer[AUDIO_BUFFER_BYTES];
   size_t bytes = 0;
-  if (i2s_read(I2S_NUM_0, buffer, sizeof(buffer), &bytes, 0) != ESP_OK) return;
+  if (i2s_read(I2S_NUM_0, buffer, sizeof(buffer), &bytes, pdMS_TO_TICKS(20)) != ESP_OK) return;
   if (bytes < sizeof(int16_t)) return;
   int32_t peak = 0;
   for (size_t index = 0; index + 1 < bytes; index += 2) {
@@ -216,17 +223,28 @@ bool AudioManager::stopAssist() {
 bool AudioManager::speakerTest() {
   if (!initialized_ || !speakerPresent_) return false;
   digitalWrite(HardwareConfig::AudioConfig::POWER_AMP_ENABLE_PIN, HIGH);
-  int16_t samples[256 * 2];
-  for (size_t frame = 0; frame < 256; ++frame) {
-    const int16_t sample = static_cast<int16_t>(sin((2.0 * PI * 440.0 * frame) / AUDIO_SAMPLE_RATE) * 7000.0);
-    samples[frame * 2] = sample;
-    samples[frame * 2 + 1] = sample;
+  int16_t samples[SPEAKER_TEST_BUFFER_FRAMES * 2];
+  size_t totalWritten = 0;
+  while (totalWritten < SPEAKER_TEST_FRAMES) {
+    const size_t frames = min(SPEAKER_TEST_BUFFER_FRAMES, SPEAKER_TEST_FRAMES - totalWritten);
+    for (size_t frame = 0; frame < frames; ++frame) {
+      const size_t sampleFrame = totalWritten + frame;
+      const int16_t sample = static_cast<int16_t>(
+          sin((2.0 * PI * 440.0 * sampleFrame) / AUDIO_SAMPLE_RATE) * 10000.0);
+      samples[frame * 2] = sample;
+      samples[frame * 2 + 1] = sample;
+    }
+    size_t written = 0;
+    if (i2s_write(I2S_NUM_0, samples, frames * sizeof(samples[0]) * 2, &written,
+                  pdMS_TO_TICKS(100)) != ESP_OK) {
+      break;
+    }
+    totalWritten += written / (sizeof(samples[0]) * 2);
   }
-  size_t written = 0;
-  i2s_write(I2S_NUM_0, samples, sizeof(samples), &written, pdMS_TO_TICKS(100));
-  if (logs_) logs_->add(LogCategory::HOME_ASSISTANT, written ? LogLevel::INFO : LogLevel::ERROR,
-                        written ? "Speaker-test gestart" : "Speaker-test schrijven mislukt");
-  return written == sizeof(samples);
+  if (logs_) logs_->add(LogCategory::HOME_ASSISTANT,
+                        totalWritten == SPEAKER_TEST_FRAMES ? LogLevel::INFO : LogLevel::ERROR,
+                        totalWritten == SPEAKER_TEST_FRAMES ? "Speaker-test gestart" : "Speaker-test schrijven mislukt");
+  return totalWritten == SPEAKER_TEST_FRAMES;
 }
 
 void AudioManager::setError(const String& message) {
