@@ -81,7 +81,10 @@ const normalizeConfig = (raw: Partial<DeviceConfig>): DeviceConfig => ({
     ...(raw.clock ?? {}),
     elements: raw.clock?.elements ?? defaultClock.elements,
   },
-  layouts: Array.isArray(raw.layouts) ? raw.layouts : createDefaultLayouts(),
+  // A fresh ESP32 has an intentionally small config and may not have received
+  // the portal's template library yet. Keep the builder usable immediately;
+  // activating a template persists it through saveLayout before switching.
+  layouts: Array.isArray(raw.layouts) && raw.layouts.length ? raw.layouts : createDefaultLayouts(),
   rules: Array.isArray(raw.rules) ? raw.rules : [],
   profiles: Array.isArray(raw.profiles) ? raw.profiles : createDefaultProfiles(),
   activeLayoutId: raw.activeLayoutId ?? 'clock-classic',
@@ -148,7 +151,11 @@ export class Esp32DeviceApi implements DeviceApi {
       message: String(entry.message ?? ''),
     }));
   }
-  async getLayouts() { return this.request<LayoutModel[]>('/api/v1/layouts'); }
+  async getLayouts() {
+    const stored = await this.request<LayoutModel[]>('/api/v1/layouts');
+    const defaults = createDefaultLayouts();
+    return [...defaults.filter((item) => !stored.some((candidate) => candidate.id === item.id)), ...stored];
+  }
   async saveLayout(layout: LayoutModel) {
     return this.request<LayoutModel>(`/api/v1/layouts/${encodeURIComponent(layout.id)}`, { method: 'PUT', body: JSON.stringify(layout) });
   }
