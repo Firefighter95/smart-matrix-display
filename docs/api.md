@@ -47,7 +47,7 @@ Bij ontbrekende credentials start de ESP32 een fallback access point met een SSI
 
 ## Bericht
 
-`POST /api/v1/message` accepteert `title`, `message`, `duration` in seconden, `color`, `alignment` (`left`, `center`, `right`) en `priority`. Succes geeft `200 OK` en het actieve bericht terug. Ongeldige JSON of velden geeft `400 Bad Request`.
+`POST /api/v1/message` accepteert `title`, `message`, `duration` in seconden, `color`, `alignment` (`left`, `center`, `right`), `priority` en optioneel `layoutId`. Succes geeft `202 Accepted`; het bericht wordt direct op de matrix gerenderd en keert na de looptijd terug naar de actieve kloklayout. Een lagere prioriteit dan een lopende melding wordt geweigerd met `409 Conflict`.
 
 ```json
 {"title":"WASMACHINE","message":"KLAAR","duration":20,"color":"#00FF00","alignment":"center","priority":50}
@@ -138,7 +138,20 @@ actief is, zodat spreken of klappen direct zichtbaar wordt in de meter.
 
 `PUT /api/v1/brightness` accepteert `{ "brightness": 0..100 }` en `PUT /api/v1/power` accepteert `{ "enabled": true|false }`.
 
-`POST /api/v1/events` accepteert minimaal `source` en `type`, valideert de JSON-body en zet de firmware voorlopig in message-mode. `POST /api/v1/events/skip` keert terug naar `CLOCK`. `GET /api/v1/events/history` en `GET /api/v1/diagnostics` leveren softwarecontracten; event-persistentie en volledige embedded queue blijven vervolgstappen.
+`POST /api/v1/events` accepteert minimaal `source` en `type`, plus optioneel `layoutId`, `priority`, `duration` en `payload`. Het event wordt via dezelfde firmware-renderer op de matrix getoond en verloopt daarna naar de actieve kloklayout. `POST /api/v1/events/skip` keert terug naar `CLOCK`. `GET /api/v1/events/history` en `GET /api/v1/diagnostics` leveren softwarecontracten; event-persistentie en volledige embedded queue blijven vervolgstappen.
+
+## Layouts
+
+- `GET /api/v1/layouts` → opgeslagen versioned 128×64-layouts;
+- `PUT /api/v1/layouts/{id}` → valideert en bewaart een volledige layout uit de builder;
+- `DELETE /api/v1/layouts/{id}` → verwijdert een opgeslagen layout;
+- `PUT /api/v1/layout` met `{ "layout_id": "clock-weather" }` → maakt een layout actief.
+
+Clock-, weather- en system-layouts worden door de embedded `LayoutRenderer` gebruikt. Bericht- en event-layouts gebruiken `layoutId` en lezen waarden uit `payload`; zo blijven dezelfde layoutbestanden bruikbaar in portal, mock device en ESP32.
+
+## Automatische helderheid en tijd
+
+De firmware gebruikt `Europe/Amsterdam` met automatische CET/CEST-zomertijd. `display.scheduleEnabled` en `display.brightnessSchedule` bepalen de actieve helderheid; de laatste schedule-entry vóór de lokale tijd is actief en de lijst loopt over middernacht door. `maxBrightness` begrenst iedere schedulewaarde. Bij tijdelijk verlies van WiFi blijft de laatst geldige kloktijd doorlopen.
 
 De portal gebruikt uitsluitend `DeviceApi`; `MockDeviceApi` en `Esp32DeviceApi` houden UI en transport los van elkaar.
 

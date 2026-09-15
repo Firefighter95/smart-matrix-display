@@ -41,3 +41,9 @@ npm run portal:esp32
 `npm run build:esp32` bouwt eerst de compacte Vite-productiebuild, kopieert die via een tijdelijke map naar `firmware/data/` en maakt daarnaast gzip-varianten van HTML/CSS/JS/SVG. Bestaande assets worden eerst naar een timestamped backupmap verplaatst en na succes verwijderd. De ESP32 kan de ongecomprimeerde assets direct via LittleFS serveren; gzip is voorbereid voor een latere content-encoding handler.
 
 De build print totale grootte en de grootste bestanden.
+
+Op een productie-device worden standaardtemplates vanuit de portalbibliotheek
+getoond. Bij **Als idle instellen** wordt de gekozen template eerst via
+`PUT /api/v1/layouts/{id}` op de ESP32 opgeslagen en daarna actief gemaakt.
+Daardoor kan een layout in de builder worden aangepast en wordt precies die
+versie ook door de matrix-renderer gebruikt.
