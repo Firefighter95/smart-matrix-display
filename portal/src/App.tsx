@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { DeviceConfig, DeviceStatus, LogEntry, Message } from '../../shared/schemas/models';
+import type { AudioStatus, DeviceConfig, DeviceStatus, LogEntry, Message } from '../../shared/schemas/models';
 import { createDeviceApi, isMockMode } from './api';
 import type { DeviceApi } from './api/deviceApi';
 import { isMockDeviceApi } from './api/mockDeviceApi';
@@ -15,6 +15,7 @@ import { SystemPage } from './pages/SystemPage';
 import { EventsPage } from './pages/EventsPage';
 import { LayoutsPage } from './pages/LayoutsPage';
 import { LayoutBuilderPage } from './pages/LayoutBuilderPage';
+import { VoicePage } from './pages/VoicePage';
 import { deriveDeviceFaults } from './status/health';
 
 const fallbackStatus: DeviceStatus = {
@@ -24,7 +25,7 @@ const fallbackStatus: DeviceStatus = {
 
 const getPage = (): Page => {
   const value = window.location.hash.replace('#/', '').split('/')[0] as Page;
-  return ['dashboard', 'display', 'clock', 'messages', 'layouts', 'builder', 'events', 'api', 'system'].includes(value) ? value : 'dashboard';
+  return ['dashboard', 'display', 'clock', 'messages', 'layouts', 'builder', 'events', 'voice', 'api', 'system'].includes(value) ? value : 'dashboard';
 };
 
 const getBuilderLayoutId = () => window.location.hash.replace('#/builder/', '').split('/')[0] || undefined;
@@ -35,6 +36,7 @@ export default function App() {
   const [status, setStatus] = useState<DeviceStatus>(fallbackStatus);
   const [config, setConfig] = useState<DeviceConfig>();
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [audio, setAudio] = useState<AudioStatus>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' | 'info' }>();
@@ -42,8 +44,8 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [nextStatus, nextConfig, nextLogs] = await Promise.all([api.getStatus(), api.getConfig(), api.getLogs()]);
-      setStatus(nextStatus); setConfig(nextConfig); setLogs(nextLogs); setError(undefined);
+      const [nextStatus, nextConfig, nextLogs, nextAudio] = await Promise.all([api.getStatus(), api.getConfig(), api.getLogs(), api.getAudioStatus()]);
+      setStatus(nextStatus); setConfig(nextConfig); setLogs(nextLogs); setAudio(nextAudio); setError(undefined);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Kan apparaat niet bereiken');
       setStatus((current) => ({ ...current, online: false }));
@@ -85,6 +87,7 @@ export default function App() {
       {page === 'layouts' && <LayoutsPage api={api} status={displayStatus} config={config} onUpdate={updateConfig} onNotify={notify} />}
       {page === 'builder' && <LayoutBuilderPage api={api} status={displayStatus} config={config} layoutId={getBuilderLayoutId()} onNotify={notify} />}
       {page === 'events' && <EventsPage api={api} status={displayStatus} config={config} onNotify={notify} />}
+      {page === 'voice' && <VoicePage api={api} audio={audio} onNotify={notify} />}
       {page === 'api' && <ApiPage api={api} status={displayStatus} config={config} onNotify={notify} />}
       {page === 'system' && <SystemPage api={api} status={displayStatus} logs={logs} onReboot={reboot} onNotify={notify} />}
     </>

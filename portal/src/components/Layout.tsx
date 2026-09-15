@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { DeviceStatus } from '../../../shared/schemas/models';
 import { faultColor, primaryDeviceFault } from '../status/health';
 
-export type Page = 'dashboard' | 'display' | 'clock' | 'messages' | 'layouts' | 'builder' | 'events' | 'api' | 'system';
+export type Page = 'dashboard' | 'display' | 'clock' | 'messages' | 'layouts' | 'builder' | 'events' | 'voice' | 'api' | 'system';
 
 const navItems: { id: Page; label: string; icon: string; group?: string }[] = [
   { id: 'dashboard', label: 'Overzicht', icon: '⌂' },
@@ -12,6 +12,7 @@ const navItems: { id: Page; label: string; icon: string; group?: string }[] = [
   { id: 'builder', label: 'Builder', icon: '✦' },
   { id: 'messages', label: 'Berichten', icon: '▤' },
   { id: 'events', label: 'Events / P2000', icon: '⚡', group: 'ONTWIKKELING' },
+  { id: 'voice', label: 'Voice Assist', icon: '◉', group: 'ONTWIKKELING' },
   { id: 'api', label: 'API', icon: '{}', group: 'ONTWIKKELING' },
   { id: 'system', label: 'Systeem', icon: '⚙' },
 ];

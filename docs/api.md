@@ -81,6 +81,21 @@ Invoke-RestMethod http://smartmatrix.local/api/v1/status | ConvertTo-Json -Depth
 
 De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent `windSpeedKph` visueel om naar m/s. Het transportcontract blijft km/h; dit voorkomt providerafhankelijke eenheden in de HA-integratie. Op het dashboard zie je de laatste ontvangen conditie, temperatuur, windsnelheid, bron en timestamp.
 
+## Audio / Voice Assist
+
+`GET /api/v1/audio` geeft de audio-capabilities en huidige Assist-status terug.
+De eerste firmwarefase meldt expliciet `available: false` totdat de ES7210/ES8311
+driver en Home Assistant audio-transport zijn geactiveerd.
+
+De toekomstige acties zijn:
+
+- `POST /api/v1/audio/assist/start` → start een Assist-sessie;
+- `POST /api/v1/audio/assist/stop` → beëindig de sessie;
+- `POST /api/v1/audio/test` → speel een speaker-test af.
+
+De lokale portal gebruikt deze endpoints via `DeviceApi`. In mock mode worden
+dezelfde acties volledig gesimuleerd.
+
 ## Overige endpoints
 
 - `POST /api/v1/clear` → wis bericht, ga terug naar `CLOCK`.

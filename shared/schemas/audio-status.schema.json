@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "/shared/schemas/audio-status.schema.json",
+  "title": "Smart Matrix audio and Assist status",
+  "type": "object",
+  "required": ["available", "initialized", "microphoneCount", "state", "inputLevel", "volume", "transport"],
+  "properties": {
+    "available": { "type": "boolean" },
+    "initialized": { "type": "boolean" },
+    "microphoneCount": { "type": "integer", "minimum": 0, "maximum": 2 },
+    "inputCodec": { "type": "string" },
+    "outputCodec": { "type": "string" },
+    "speakerConnected": { "type": "boolean" },
+    "state": { "enum": ["IDLE", "LISTENING", "PROCESSING", "RESPONDING", "ERROR"] },
+    "inputLevel": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "volume": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "transport": { "enum": ["mock", "home_assistant", "none"] },
+    "lastTranscript": { "type": "string", "maxLength": 512 },
+    "lastResponse": { "type": "string", "maxLength": 512 },
+    "error": { "type": "string", "maxLength": 256 }
+  },
+  "additionalProperties": false
+}

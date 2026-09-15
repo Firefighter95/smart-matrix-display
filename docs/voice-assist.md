@@ -55,6 +55,23 @@ Push-to-talk is the first production milestone. Wake-word detection is kept as
 a separate step because it requires tuning microphone gain, echo cancellation
 and wake-word CPU/memory usage alongside the HUB75 DMA renderer.
 
+## Portal test mode
+
+Start the local portal with `cd portal`, `npm install` and `npm run dev`. Open
+**Voice Assist** in the sidebar. In mock mode the following controls are
+available without an ESP32:
+
+- **Start luisteren** runs a complete Assist session simulation;
+- the live input meter simulates the two-microphone input;
+- the transcript and response are shown after processing;
+- **Speaker testen** simulates TTS playback;
+- the existing development toolbar can still simulate Wi-Fi and API failures.
+
+The mock uses the same `AudioStatus` model and `DeviceApi` methods as the
+future ESP32 transport. The current firmware exposes `GET /api/v1/audio` as a
+stable capability endpoint and returns an explicit `AUDIO_NOT_READY` response
+for action endpoints until the real codec driver is enabled.
+
 ## References
 
 - [Waveshare ESP32-S3-RGB-Matrix](https://www.waveshare.com/product/iot-communication/esp32-s3-rgb-matrix.htm)

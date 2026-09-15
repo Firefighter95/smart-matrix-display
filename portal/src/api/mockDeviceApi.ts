@@ -1,5 +1,6 @@
 import type {
   ClockConfig,
+  AudioStatus,
   DeviceDiagnostics,
   DeviceConfig,
   DeviceStatus,
@@ -85,6 +86,19 @@ const initialStatus: DeviceStatus = {
   },
 };
 
+const initialAudio: AudioStatus = {
+  available: true,
+  initialized: true,
+  microphoneCount: 2,
+  inputCodec: 'ES7210',
+  outputCodec: 'ES8311',
+  speakerConnected: true,
+  state: 'IDLE',
+  inputLevel: 0,
+  volume: 55,
+  transport: 'mock',
+};
+
 const clone = <T,>(value: T): T => structuredClone(value);
 const MOCK_CONFIG_KEY = 'smart-matrix.mock.config.v2';
 const readInitialConfig = (): DeviceConfig => {
@@ -121,6 +135,8 @@ export class MockDeviceApiImpl implements MockDeviceApi {
   private reconnects = 0;
   private apiRequests = 0;
   private apiErrors = 0;
+  private audio = clone(initialAudio);
+  private audioTimers: number[] = [];
   private tickHandle = window.setInterval(() => this.tick(), 1000);
 
   private log(category: LogEntry['category'], level: LogEntry['level'], message: string): LogEntry {
@@ -161,6 +177,11 @@ export class MockDeviceApiImpl implements MockDeviceApi {
       this.status.displayEnabled = this.config.display.enabled;
     }
     this.syncEngineStatus();
+    if (this.audio.state === 'LISTENING') {
+      this.audio.inputLevel = 18 + Math.round((Math.sin(Date.now() / 180) + 1) * 28);
+    } else {
+      this.audio.inputLevel = Math.max(0, this.audio.inputLevel - 12);
+    }
     this.emit();
   }
 
@@ -198,6 +219,61 @@ export class MockDeviceApiImpl implements MockDeviceApi {
       brightness: Math.min(this.config.display.brightness, this.config.display.maxBrightness),
       displayEnabled: this.status.displayEnabled && this.config.display.enabled,
     });
+  }
+
+  async getAudioStatus(): Promise<AudioStatus> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    return clone(this.audio);
+  }
+
+  async startAssist(): Promise<AudioStatus> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    this.audioTimers.forEach((timer) => window.clearTimeout(timer));
+    this.audioTimers = [];
+    this.audio = { ...this.audio, state: 'LISTENING', inputLevel: 24, lastTranscript: undefined, error: undefined };
+    this.addLog('HOME_ASSISTANT', 'INFO', 'Mock Assist-sessie gestart · microfoon luistert');
+    this.audioTimers.push(window.setTimeout(() => {
+      this.audio = { ...this.audio, state: 'PROCESSING', inputLevel: 0 };
+      this.addLog('HOME_ASSISTANT', 'INFO', 'Mock spraak ontvangen · Assist verwerkt opdracht');
+      this.emit();
+    }, 2200));
+    this.audioTimers.push(window.setTimeout(() => {
+      this.audio = { ...this.audio, state: 'RESPONDING', lastTranscript: 'Hoe laat is het?', lastResponse: `Het is ${new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}.` };
+      this.addLog('HOME_ASSISTANT', 'INFO', 'Mock Assist antwoord wordt afgespeeld');
+      this.emit();
+    }, 3600));
+    this.audioTimers.push(window.setTimeout(() => {
+      this.audio = { ...this.audio, state: 'IDLE', inputLevel: 0 };
+      this.addLog('HOME_ASSISTANT', 'INFO', 'Mock Assist-sessie afgerond');
+      this.emit();
+    }, 6200));
+    this.emit();
+    return clone(this.audio);
+  }
+
+  async stopAssist(): Promise<AudioStatus> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    this.audioTimers.forEach((timer) => window.clearTimeout(timer));
+    this.audioTimers = [];
+    this.audio = { ...this.audio, state: 'IDLE', inputLevel: 0 };
+    this.addLog('HOME_ASSISTANT', 'WARN', 'Mock Assist-sessie gestopt');
+    return clone(this.audio);
+  }
+
+  async playAudioTest(): Promise<AudioStatus> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    this.audio = { ...this.audio, state: 'RESPONDING', inputLevel: 0, error: undefined };
+    this.addLog('HOME_ASSISTANT', 'INFO', 'Mock speaker-test afgespeeld');
+    this.audioTimers.push(window.setTimeout(() => {
+      this.audio = { ...this.audio, state: 'IDLE' };
+      this.emit();
+    }, 1500));
+    this.emit();
+    return clone(this.audio);
   }
 
   async getWifi(): Promise<WifiInfo> {
@@ -390,6 +466,9 @@ export class MockDeviceApiImpl implements MockDeviceApi {
     this.status.currentEvent = undefined;
     this.status.queueLength = 0;
     this.engine = new EventEngine({ rules: this.config.rules });
+    this.audioTimers.forEach((timer) => window.clearTimeout(timer));
+    this.audioTimers = [];
+    this.audio = clone(initialAudio);
     this.startedAt = Date.now() - initialStatus.uptime * 1000;
     this.addLog('SYSTEM', 'INFO', 'Mock simulator teruggezet naar beginstaat');
   }
@@ -397,6 +476,7 @@ export class MockDeviceApiImpl implements MockDeviceApi {
   dispose() {
     window.clearInterval(this.tickHandle);
     window.clearTimeout(this.messageTimeout);
+    this.audioTimers.forEach((timer) => window.clearTimeout(timer));
   }
 }
 

@@ -1,4 +1,4 @@
-import type { ClockConfig, DeviceConfig, DeviceDiagnostics, DeviceFault, DeviceStatus, DisplayConfig, DisplayEvent, DisplayProfile, EventHistoryEntry, EventInput, LayoutModel, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
+import type { AudioStatus, ClockConfig, DeviceConfig, DeviceDiagnostics, DeviceFault, DeviceStatus, DisplayConfig, DisplayEvent, DisplayProfile, EventHistoryEntry, EventInput, LayoutModel, LogEntry, Message, WeatherSnapshot } from '../../../shared/schemas/models';
 import { createDefaultClockElements } from '../../../shared/schemas/models';
 import type { DeviceApi, WifiInfo, WifiUpdate } from './deviceApi';
 import { createDefaultLayouts } from '../engine/layouts';
@@ -26,6 +26,7 @@ const normalizeStatus = (raw: RawRecord): DeviceStatus => ({
   heapFree: pick(raw, 'heapFree', 'heap_free', 0),
   psramFree: pick(raw, 'psramFree', 'psram_free', 0),
   displayEnabled: pick(raw, 'displayEnabled', 'display_enabled', true),
+  audio: raw.audio as DeviceStatus['audio'],
   activeMessage: raw.activeMessage as Message | undefined,
   weather: raw.weather as WeatherSnapshot | undefined,
   faults: raw.faults as DeviceFault[] | undefined,
@@ -102,6 +103,16 @@ export class Esp32DeviceApi implements DeviceApi {
   }
 
   async getStatus() { return normalizeStatus(await this.request<RawRecord>('/api/v1/status')); }
+  async getAudioStatus(): Promise<AudioStatus> {
+    try {
+      return await this.request<AudioStatus>('/api/v1/audio');
+    } catch {
+      return { available: false, initialized: false, microphoneCount: 0, inputCodec: '—', outputCodec: '—', speakerConnected: false, state: 'IDLE', inputLevel: 0, volume: 0, transport: 'none', error: 'Audiofirmware nog niet geactiveerd' };
+    }
+  }
+  async startAssist() { return this.request<AudioStatus>('/api/v1/audio/assist/start', { method: 'POST' }); }
+  async stopAssist() { return this.request<AudioStatus>('/api/v1/audio/assist/stop', { method: 'POST' }); }
+  async playAudioTest() { return this.request<AudioStatus>('/api/v1/audio/test', { method: 'POST' }); }
   async getWifi() { return normalizeWifi(await this.request<RawRecord>('/api/v1/wifi')); }
   async updateWifi(input: WifiUpdate) {
     await this.request('/api/v1/wifi', { method: 'PUT', body: JSON.stringify(input) });

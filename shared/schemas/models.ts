@@ -17,6 +17,23 @@ export type EventSource = 'portal' | 'home_assistant' | 'p2000' | 'system' | 'ti
 export type EventResult = 'DISPLAYED' | 'QUEUED' | 'INTERRUPTED' | 'RESUMED' | 'EXPIRED' | 'IGNORED' | 'FAILED';
 export type ProfileId = 'normal' | 'night' | 'away' | 'demo' | 'fire';
 export type BrightnessMode = 'manual' | 'schedule' | 'ambient' | 'hybrid';
+export type AssistState = 'IDLE' | 'LISTENING' | 'PROCESSING' | 'RESPONDING' | 'ERROR';
+
+export interface AudioStatus {
+  available: boolean;
+  initialized: boolean;
+  microphoneCount: number;
+  inputCodec: string;
+  outputCodec: string;
+  speakerConnected: boolean;
+  state: AssistState;
+  inputLevel: number;
+  volume: number;
+  transport: 'mock' | 'home_assistant' | 'none';
+  lastTranscript?: string;
+  lastResponse?: string;
+  error?: string;
+}
 
 export type LogCategory =
   | 'SYSTEM' | 'WIFI' | 'TIME' | 'DISPLAY' | 'RENDER' | 'EVENT' | 'QUEUE' | 'RULE' | 'PROFILE'
@@ -188,6 +205,7 @@ export interface DeviceStatus {
   heapFree: number;
   psramFree: number;
   displayEnabled: boolean;
+  audio?: AudioStatus;
   activeLayout?: string;
   profile?: ProfileId;
   queueLength?: number;

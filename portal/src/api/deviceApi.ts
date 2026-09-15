@@ -2,6 +2,7 @@ import type {
   DeviceConfig,
   DeviceDiagnostics,
   DeviceStatus,
+  AudioStatus,
   DisplayEvent,
   DisplayProfile,
   EventHistoryEntry,
@@ -30,6 +31,10 @@ export interface WifiUpdate {
 
 export interface DeviceApi {
   getStatus(): Promise<DeviceStatus>;
+  getAudioStatus(): Promise<AudioStatus>;
+  startAssist(): Promise<AudioStatus>;
+  stopAssist(): Promise<AudioStatus>;
+  playAudioTest(): Promise<AudioStatus>;
   getWifi(): Promise<WifiInfo>;
   updateWifi(input: WifiUpdate): Promise<void>;
   getConfig(): Promise<DeviceConfig>;
