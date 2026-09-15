@@ -1,0 +1,275 @@
+alias: 🚒 Uitrukprofiel uitvoeren
+description: >-
+  Voert woningacties, notificaties, TTS, media-acties en een P2000-weergave uit
+  op de Smart Matrix voor een ontvangen Precom- of P2000-melding.
+mode: parallel
+max: 10
+fields:
+  melding:
+    description: Volledige meldingstekst
+    example: P1 Woningbrand
+  plaats:
+    description: Plaatsnaam
+    example: Swifterbant
+  adres:
+    description: Volledig adres
+    example: De Greente 1, 8255 BS Swifterbant
+  prioriteit:
+    description: Prioriteit
+    example: P1
+  discipline:
+    description: Discipline
+    example: Brandweer
+  regio:
+    description: Veiligheidsregio
+    example: VR Flevoland
+  kaart_url:
+    description: Google Maps-link
+  latitude:
+    description: Breedtegraad
+  longitude:
+    description: Lengtegraad
+  is_test:
+    description: Geeft aan of het een testmelding betreft
+  bron:
+    description: Webhook of P2000-sensor
+sequence:
+  - variables:
+      melding_tekst: >-
+        {{ melding | default('Onbekende melding', true) | string | trim }}
+      plaats_tekst: >-
+        {{ plaats | default('Onbekende plaats', true) | string | trim }}
+      adres_tekst: >-
+        {{ adres | default(plaats_tekst, true) | string | trim }}
+      prio: >-
+        {{ prioriteit | default('', true) | string | upper | trim }}
+      discipline_tekst: >-
+        {{ discipline | default('Brandweer', true) | string | trim }}
+      regio_tekst: >-
+        {{ regio | default('Onbekende regio', true) | string | trim }}
+      bron_tekst: >-
+        {{ bron | default('Onbekend', true) | string | trim }}
+      kaart_link: >-
+        {{ kaart_url | default('https://www.google.com/maps/search/?api=1&query=' ~ (adres_tekst | urlencode), true) | string | trim }}
+      testmelding: "{{ is_test | default(false) | bool }}"
+      thom_thuis: "{{ is_state('person.thom', 'home') }}"
+      maaike_thuis: "{{ is_state('person.maaike', 'home') }}"
+      nacht: "{{ now().hour >= 22 or now().hour < 7 }}"
+      is_p1: "{{ prio == 'P1' }}"
+      is_p2: "{{ prio == 'P2' }}"
+      urgente_melding: "{{ prio in ['P1', 'P2'] }}"
+      testmodus: "{{ is_state('input_boolean.precom_testmodus', 'on') }}"
+      titel: >-
+        🚒 {% if testmelding %}TEST - {% endif %}{% if prio %}{{ prio }} - {% endif %}Blusploeg Swifterbant - {{ plaats_tekst }}
+      notificatie_tekst: |-
+        {{ melding_tekst }}
+        📍 {{ adres_tekst }}
+        {% if regio_tekst %}
+        Regio: {{ regio_tekst }}
+        {% endif %}
+      route_kazerne: >-
+        https://www.google.com/maps/dir/?api=1&destination={{ 'Brandweerkazerne Swifterbant' | urlencode }}&travelmode=driving
+      melding_zonder_prioriteit: |-
+        {% set tekst = melding_tekst %}
+        {% if prio %}
+          {% set tekst = tekst | replace(prio, '') %}
+        {% endif %}
+        {{ tekst | trim(' .,-') }}
+      tts_tekst: |-
+        {% if testmelding %}Attentie. Dit is een testmelding.{% else %}Attentie.{% endif %}
+        {% if prio %}{{ prio }} brandweermelding voor Blusploeg Swifterbant.{% else %}Brandweermelding voor Blusploeg Swifterbant.{% endif %}
+        {% if melding_zonder_prioriteit and melding_zonder_prioriteit | lower not in ['onbekende melding', 'precom-melding ontvangen'] %}
+          {{ melding_zonder_prioriteit }}.
+        {% endif %}
+        {% if adres_tekst and adres_tekst | lower not in ['onbekende locatie', 'onbekende plaats'] %}
+          Locatie {{ adres_tekst }}.
+        {% elif plaats_tekst and plaats_tekst | lower != 'onbekende plaats' %}
+          Locatie {{ plaats_tekst }}.
+        {% endif %}
+
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.precom_actief
+
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.precom_status
+    data:
+      value: >-
+        {% if testmelding %}Testmelding actief{% elif thom_thuis %}Melding actief - Thom thuis{% else %}Melding actief - Thom niet thuis{% endif %}
+
+  - action: scene.create
+    data:
+      scene_id: precom_verlichting_voor_melding
+      snapshot_entities:
+        - light.lamp_thom
+        - light.spotjes_gang
+        - light.woonkamer_lichten
+        - light.keuken_3
+
+  - parallel:
+      - alias: Notificatie Thom
+        sequence:
+          - action: notify.mobile_app_iphone_16_van_thom
+            data:
+              title: "{{ titel | trim }}"
+              message: "{{ notificatie_tekst }}"
+              data:
+                url: "{{ kaart_link }}"
+                clickAction: "{{ kaart_link }}"
+                actions:
+                  - action: URI
+                    title: Open incidentkaart
+                    uri: "{{ kaart_link }}"
+                  - action: URI
+                    title: Route naar kazerne
+                    uri: "{{ route_kazerne | trim }}"
+                  - action: PRECOM_HERSTEL
+                    title: Herstel woning
+                push:
+                  sound:
+                    name: default
+                    critical: "{{ 1 if urgente_melding else 0 }}"
+                    volume: 1
+
+      - alias: Notificatie Maaike
+        sequence:
+          - action: notify.mobile_app_iphone_van_maaike
+            data:
+              title: "{{ titel | trim }}"
+              message: "{{ notificatie_tekst }}"
+              data:
+                url: "{{ kaart_link }}"
+                clickAction: "{{ kaart_link }}"
+                actions:
+                  - action: URI
+                    title: Open kaart
+                    uri: "{{ kaart_link }}"
+                push:
+                  sound:
+                    name: default
+                    critical: "{{ 1 if (nacht or urgente_melding) else 0 }}"
+                    volume: 1
+
+      - alias: Uitrukmelding op Smart Matrix
+        sequence:
+          - condition: template
+            value_template: "{{ thom_thuis and urgente_melding }}"
+          - action: smart_matrix_display.show_event
+            target:
+              device_id: ce2ad8560b0123bfaf4406caa1fe1efe
+            data:
+              source: p2000
+              event_type: dispatch
+              layout_id: >-
+                {% if is_p1 %}p2000-fire-p1{% elif is_p2 %}p2000-fire-p2{% else %}p2000-generic{% endif %}
+              duration: 300
+              priority: >-
+                {% if is_p1 %}100{% elif is_p2 %}90{% else %}70{% endif %}
+              payload:
+                title: "{{ titel | trim }}"
+                message: "{{ melding_tekst }}"
+                description: "{{ melding_tekst }}"
+                priority: "{{ prio }}"
+                discipline: "{{ discipline_tekst }}"
+                place: "{{ plaats_tekst }}"
+                street: "{{ adres_tekst }}"
+                region: "{{ regio_tekst }}"
+                units: ""
+                rawText: "{{ melding_tekst }}"
+                color: >-
+                  {% if is_p1 %}#FF0000{% elif is_p2 %}#FF8C00{% else %}#FFFFFF{% endif %}
+
+      - alias: TTS-uitrukmelding
+        sequence:
+          - condition: template
+            value_template: "{{ thom_thuis and urgente_melding }}"
+          - action: script.tts_aankondiging_via_music_assistant
+            data:
+              bericht: "{{ tts_tekst | trim }}"
+
+      - alias: Logboekregistratie
+        sequence:
+          - action: logbook.log
+            data:
+              name: 🚒 Blusploeg Swifterbant
+              entity_id: sensor.blusploeg_swifterbant
+              message: >-
+                {{ prio | default('Geen prioriteit', true) }} melding ontvangen via {{ bron_tekst }}. {{ melding_tekst }}. Locatie: {{ adres_tekst }}. Discipline: {{ discipline_tekst }}. Regio: {{ regio_tekst }}. Testmelding: {{ testmelding }}. Thom thuis: {{ thom_thuis }}. Maaike thuis: {{ maaike_thuis }}. Matrix-layout: {% if is_p1 %}p2000-fire-p1{% elif is_p2 %}p2000-fire-p2{% else %}p2000-generic{% endif %}.
+
+      - alias: Verlichting en voordeur
+        sequence:
+          - condition: template
+            value_template: "{{ thom_thuis and urgente_melding }}"
+          - parallel:
+              - sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ nacht }}"
+                        sequence:
+                          - action: light.turn_on
+                            target:
+                              entity_id: light.lamp_thom
+                            data:
+                              brightness_pct: 25
+                              transition: 2
+                    default:
+                      - action: light.turn_on
+                        target:
+                          entity_id: light.lamp_thom
+                        data:
+                          brightness_pct: 50
+                          transition: 2
+              - sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: light.spotjes_gang
+                    data:
+                      brightness_pct: "{{ 40 if nacht else 80 }}"
+                      transition: 2
+              - alias: Voordeur
+                sequence:
+                  - condition: template
+                    value_template: "{{ not testmodus and not testmelding }}"
+                  - condition: state
+                    entity_id: lock.voordeur
+                    state: locked
+                  - action: lock.unlock
+                    target:
+                      entity_id: lock.voordeur
+
+      - alias: Media pauzeren
+        sequence:
+          - condition: template
+            value_template: "{{ thom_thuis and urgente_melding }}"
+          - parallel:
+              - sequence:
+                  - condition: template
+                    value_template: "{{ not maaike_thuis }}"
+                  - condition: state
+                    entity_id: media_player.woonkamer
+                    state: playing
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.precom_media_gepauzeerd
+                  - action: media_player.media_pause
+                    target:
+                      entity_id: media_player.woonkamer
+
+  - if:
+      - condition: template
+        value_template: "{{ thom_thuis and urgente_melding }}"
+    then:
+      - delay: "00:00:45"
+      - action: light.turn_off
+        target:
+          entity_id: light.lamp_thom
+        data:
+          transition: 3
+      - delay: "00:00:40"
+      - action: light.turn_off
+        target:
+          entity_id: light.spotjes_gang
+        data:
+          transition: 3
