@@ -79,6 +79,7 @@ The live firmware exposes the following stable endpoints:
 - `POST /api/v1/audio/assist/start` — start the local microphone capture test;
 - `POST /api/v1/audio/assist/stop` — stop capture;
 - `POST /api/v1/audio/test` — play the local speaker test tone.
+- `PUT /api/v1/audio/volume` — set and persist speaker volume from 0–100.
 
 The current live response deliberately reports `transport: "none"` and
 `wakeWordEngine: "pending_esp_sr"` until the network Assist transport and
@@ -100,6 +101,10 @@ The two codecs being detected proves the board wiring and I2C path are alive,
 but it does not by itself prove that the microphone signal reaches the I2S
 buffer or that the speaker is connected correctly; both need the functional
 tests above.
+
+The portal uses a fast audio-status poll while capture is active. Speak or
+clap close to the microphones and confirm that `inputLevel` changes; a small
+ambient level is expected even in a quiet room.
 
 ## References
 

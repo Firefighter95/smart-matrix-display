@@ -72,6 +72,20 @@ void ApiServer::begin() {
     }
     request->send(202, "application/json", "{\"ok\":true,\"test\":\"440Hz\"}");
   });
+  server_.on("/api/v1/audio/volume", HTTP_PUT, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (!parseJsonBody(request, document) || !document["volume"].is<int>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_VOLUME\",\"message\":\"volume moet een getal van 0 tot 100 zijn.\"}}");
+      return;
+    }
+    const int requested = document["volume"].as<int>();
+    if (requested < 0 || requested > 100 || !audio_.setVolume(static_cast<uint8_t>(requested))) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_VOLUME\",\"message\":\"volume moet tussen 0 en 100 liggen.\"}}");
+      return;
+    }
+    logs_.add(LogCategory::HOME_ASSISTANT, LogLevel::INFO, String("Speakervolume ingesteld op ") + requested + "%");
+    request->send(200, "application/json", audio_.json());
+  }, nullptr, collectJsonBody);
   server_.on("/api/v1/wifi", HTTP_GET, [this](AsyncWebServerRequest* request) {
     JsonDocument response;
     response["connected"] = wifi_.connected();
@@ -296,14 +310,20 @@ void ApiServer::begin() {
   });
   server_.on("/api/v1/ota/filesystem", HTTP_POST, [this](AsyncWebServerRequest* request) {
     if (Update.hasError()) {
-      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"OTA_FAILED\",\"message\":\"LittleFS-update mislukt.\"}}");
+      String body = "{\"ok\":false,\"error\":{\"code\":\"OTA_FAILED\",\"message\":\"LittleFS-update mislukt.\",\"updateCode\":" + String(Update.getError()) + "},\"partitionBytes\":" + String(LittleFS.totalBytes()) + "}";
+      request->send(500, "application/json", body);
       return;
     }
     request->send(200, "application/json", "{\"ok\":true,\"restarting\":true,\"target\":\"filesystem\"}");
     otaRestartAt_ = millis() + 1000;
   }, [](AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t* data, size_t len, bool final) {
     if (index == 0) {
-      if (!Update.begin(LittleFS.totalBytes(), U_SPIFFS)) Update.printError(Serial);
+      // Do not write a new image while LittleFS still has the old partition
+      // mounted; cached filesystem metadata can otherwise corrupt the update.
+      LittleFS.end();
+      // Let Update resolve the data-partition size itself. LittleFS.totalBytes()
+      // can return zero on a mounted image even though the partition is valid.
+      if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) Update.printError(Serial);
     }
     if (len && Update.write(data, len) != len) Update.printError(Serial);
     if (final && !Update.end(true)) Update.printError(Serial);

@@ -277,6 +277,15 @@ export class MockDeviceApiImpl implements MockDeviceApi {
     return clone(this.audio);
   }
 
+  async setVolume(volume: number): Promise<AudioStatus> {
+    this.apiRequests += 1;
+    if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');
+    this.audio = { ...this.audio, volume: Math.max(0, Math.min(100, Math.round(volume))) };
+    this.addLog('HOME_ASSISTANT', 'INFO', `Mock speakervolume ingesteld op ${this.audio.volume}%`);
+    this.emit();
+    return clone(this.audio);
+  }
+
   async getWifi(): Promise<WifiInfo> {
     this.apiRequests += 1;
     if (this.scenarios.has('apiError')) throw new Error('Mock API timeout');

@@ -35,6 +35,7 @@ export interface DeviceApi {
   startAssist(): Promise<AudioStatus>;
   stopAssist(): Promise<AudioStatus>;
   playAudioTest(): Promise<AudioStatus>;
+  setVolume(volume: number): Promise<AudioStatus>;
   getWifi(): Promise<WifiInfo>;
   updateWifi(input: WifiUpdate): Promise<void>;
   getConfig(): Promise<DeviceConfig>;

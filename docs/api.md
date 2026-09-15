@@ -94,6 +94,8 @@ De toekomstige acties zijn:
 - `POST /api/v1/audio/assist/start` → start de lokale microfoon-hardwaretest;
 - `POST /api/v1/audio/assist/stop` → beëindig de lokale capture-test;
 - `POST /api/v1/audio/test` → speel een korte 440 Hz speaker-test af.
+- `PUT /api/v1/audio/volume` met `{ "volume": 0..100 }` → stel het
+  speakervolume in en bewaar dit in de deviceconfiguratie.
 
 De lokale portal gebruikt deze endpoints via `DeviceApi`. In mock mode worden
 dezelfde acties volledig gesimuleerd. De huidige firmware heeft nog geen
@@ -119,6 +121,10 @@ Voorbeeld:
   "wakeWordEngine": "pending_esp_sr"
 }
 ```
+
+Tijdens `LISTENING` wordt `inputLevel` bijgewerkt op basis van de ES7210-I2S
+samplepiek. De Voice-pagina pollt dit niveau sneller zolang de microfoon-test
+actief is, zodat spreken of klappen direct zichtbaar wordt in de meter.
 
 ## Overige endpoints
 

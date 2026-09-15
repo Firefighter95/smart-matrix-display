@@ -113,6 +113,7 @@ export class Esp32DeviceApi implements DeviceApi {
   async startAssist() { return this.request<AudioStatus>('/api/v1/audio/assist/start', { method: 'POST' }); }
   async stopAssist() { return this.request<AudioStatus>('/api/v1/audio/assist/stop', { method: 'POST' }); }
   async playAudioTest() { return this.request<AudioStatus>('/api/v1/audio/test', { method: 'POST' }); }
+  async setVolume(volume: number) { return this.request<AudioStatus>('/api/v1/audio/volume', { method: 'PUT', body: JSON.stringify({ volume }) }); }
   async getWifi() { return normalizeWifi(await this.request<RawRecord>('/api/v1/wifi')); }
   async updateWifi(input: WifiUpdate) {
     await this.request('/api/v1/wifi', { method: 'PUT', body: JSON.stringify(input) });

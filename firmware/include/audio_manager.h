@@ -28,6 +28,7 @@ public:
   bool startAssist();
   bool stopAssist();
   bool speakerTest();
+  bool setVolume(uint8_t percentage);
   String json() const;
 
 private:
@@ -37,6 +38,7 @@ private:
   bool initEs8311();
   bool initEs7210();
   bool initI2s();
+  bool setMicrophonePower(bool enabled);
   void setError(const String& message);
 
   bool i2sReady_ = false;

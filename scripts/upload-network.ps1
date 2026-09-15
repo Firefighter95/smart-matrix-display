@@ -34,8 +34,8 @@ $field = if ($Filesystem) { 'filesystem' } else { 'firmware' }
 $url = "http://$DeviceAddress/api/v1/$endpoint"
 Write-Host "Upload $field naar $url"
 & curl.exe --fail --show-error --silent --request POST --form "${field}=@$image" $url
-if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 56) { exit $LASTEXITCODE }
-if ($LASTEXITCODE -eq 56) { Write-Host 'Controller sloot de HTTP-verbinding tijdens de automatische reboot; upload is aangeboden.' }
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 52 -and $LASTEXITCODE -ne 56) { exit $LASTEXITCODE }
+if ($LASTEXITCODE -eq 52 -or $LASTEXITCODE -eq 56) { Write-Host 'Controller sloot de HTTP-verbinding tijdens de automatische reboot; upload is aangeboden.' }
 
 $statusUrl = "http://$DeviceAddress/api/v1/status"
 $online = $false

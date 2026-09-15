@@ -1,5 +1,6 @@
 #include "audio_manager.h"
 
+#include <ArduinoJson.h>
 #include <cmath>
 
 #include "hardware_config.h"
@@ -35,6 +36,10 @@ void AudioManager::begin(ConfigManager& config, LogManager& logs) {
   logs_ = &logs;
   error_ = "";
   volume_ = 35;
+  JsonDocument storedConfig;
+  if (deserializeJson(storedConfig, config.json()) == DeserializationError::Ok) {
+    volume_ = constrain(static_cast<int>(storedConfig["audio"]["volume"] | 35), 0, 100);
+  }
 
   pinMode(HardwareConfig::AudioConfig::POWER_AMP_ENABLE_PIN, OUTPUT);
   digitalWrite(HardwareConfig::AudioConfig::POWER_AMP_ENABLE_PIN, LOW);
@@ -110,7 +115,7 @@ bool AudioManager::initEs8311() {
   ok &= writeCodec(ES8311_ADDRESS, 0x12, 0x00);
   ok &= writeCodec(ES8311_ADDRESS, 0x13, 0x10);
   ok &= writeCodec(ES8311_ADDRESS, 0x1C, 0x6A);
-  ok &= writeCodec(ES8311_ADDRESS, 0x32, static_cast<uint8_t>((volume_ * 256) / 100));
+  ok &= writeCodec(ES8311_ADDRESS, 0x32, static_cast<uint8_t>((volume_ * 255 + 50) / 100));
   ok &= writeCodec(ES8311_ADDRESS, 0x37, 0x08);
   return ok;
 }
@@ -197,7 +202,9 @@ void AudioManager::update() {
     const int16_t sample = static_cast<int16_t>(buffer[index] | (buffer[index + 1] << 8));
     peak = max(peak, abs(static_cast<int>(sample)));
   }
-  inputLevel_ = static_cast<uint8_t>(min(100L, (peak * 100L) / 32768L));
+  // Voice-level display: normal speech should be clearly visible while the
+  // full-scale sample range still maps to 100%.
+  inputLevel_ = static_cast<uint8_t>(min(100L, (peak * 100L) / 4096L));
   lastSampleMs_ = millis();
 }
 
@@ -208,6 +215,10 @@ const char* AudioManager::state() const {
 
 bool AudioManager::startAssist() {
   if (!available()) return false;
+  if (!setMicrophonePower(true)) {
+    setError("ES7210 microfoon kon niet worden gestart");
+    return false;
+  }
   captureActive_ = true;
   inputLevel_ = 0;
   if (logs_) logs_->add(LogCategory::HOME_ASSISTANT, LogLevel::INFO, "Live microfoon capture gestart");
@@ -217,8 +228,52 @@ bool AudioManager::startAssist() {
 bool AudioManager::stopAssist() {
   captureActive_ = false;
   inputLevel_ = 0;
+  if (microphonePresent_) setMicrophonePower(false);
   if (logs_) logs_->add(LogCategory::HOME_ASSISTANT, LogLevel::INFO, "Live microfoon capture gestopt");
   return true;
+}
+
+bool AudioManager::setMicrophonePower(bool enabled) {
+  if (!microphonePresent_) return false;
+  bool ok = true;
+  if (enabled) {
+    // Same power-up sequence used by the official ES7210 codec driver:
+    // restore ADC clocks, digital power, bias and both onboard microphones.
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_CLOCK_OFF, 0x34);
+    ok &= writeCodec(ES7210_ADDRESS, 0x06, 0x00);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_ANALOG, 0x43);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC1_POWER, 0x08);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC2_POWER, 0x08);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC12_POWER, 0x00);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC1_GAIN, 0x1A);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC2_GAIN, 0x1A);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_SDP_INTERFACE2, 0x00);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_RESET, 0x71);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_RESET, 0x41);
+  } else {
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC1_POWER, 0xFF);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC2_POWER, 0xFF);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_MIC12_POWER, 0xFF);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_ANALOG, 0xC0);
+    ok &= writeCodec(ES7210_ADDRESS, ES7210_CLOCK_OFF, 0x7F);
+    ok &= writeCodec(ES7210_ADDRESS, 0x06, 0x07);
+  }
+  return ok;
+}
+
+bool AudioManager::setVolume(uint8_t percentage) {
+  volume_ = constrain(percentage, static_cast<uint8_t>(0), static_cast<uint8_t>(100));
+  bool ok = !speakerPresent_ || writeCodec(ES8311_ADDRESS, 0x32,
+                                            static_cast<uint8_t>((volume_ * 255 + 50) / 100));
+  if (config_) {
+    JsonDocument patch;
+    patch["audio"]["volume"] = volume_;
+    String serialized;
+    serializeJson(patch, serialized);
+    ok = config_->saveJson(serialized) && ok;
+  }
+  if (!ok) setError("Speakervolume kon niet worden opgeslagen");
+  return ok;
 }
 
 bool AudioManager::speakerTest() {
