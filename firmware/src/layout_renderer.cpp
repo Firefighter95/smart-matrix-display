@@ -115,6 +115,22 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
           if (!value.isEmpty() && !description.isEmpty()) value += " ";
           value += description;
         }
+        else if (path == "temperatureWindSummary") {
+          if (weather["temperatureC"].is<float>()) value = String(weather["temperatureC"].as<float>(), 1) + "C";
+          if (weather["windSpeedKph"].is<float>()) {
+            if (!value.isEmpty()) value += " ";
+            value += String(weather["windSpeedKph"].as<float>() / 3.6f, 1) + "M/S";
+          }
+        }
+        else if (path == "rainSummary") {
+          const String today = valueAt(weather.as<JsonObjectConst>(), "precipitationTodayProbability");
+          const String tomorrow = valueAt(weather.as<JsonObjectConst>(), "precipitationTomorrowProbability");
+          if (!today.isEmpty()) value = "V" + today + "%";
+          if (!tomorrow.isEmpty()) {
+            if (!value.isEmpty()) value += " ";
+            value += "M" + tomorrow + "%";
+          }
+        }
         else value = valueAt(weather.as<JsonObjectConst>(), path);
     } else if (sourceType == "system") {
       if (path == "wifiRssi") value = String(wifi_.rssi());

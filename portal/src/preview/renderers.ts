@@ -195,7 +195,21 @@ const dataValue = (element: LayoutElement, status: DeviceStatus, event: DisplayE
   const source = element.dataSource;
   if (!source) return undefined;
   if (source.type === 'event_payload' || source.type === 'p2000' || source.type === 'home_assistant') return pathValue(event?.payload, source.path);
-  if (source.type === 'weather') return pathValue({ ...status.weather, summary: [status.weather?.weatherCode, status.weather?.description].filter(Boolean).join(' '), windSpeedMs: status.weather?.windSpeedKph === undefined ? undefined : (status.weather.windSpeedKph / 3.6).toFixed(1) }, source.path);
+  if (source.type === 'weather') {
+    const weather = status.weather;
+    const windSpeedMs = weather?.windSpeedKph === undefined ? undefined : (weather.windSpeedKph / 3.6).toFixed(1);
+    const temperature = weather?.temperatureC.toFixed(1);
+    const rainToday = weather?.precipitationTodayProbability;
+    const rainTomorrow = weather?.precipitationTomorrowProbability;
+    const derived = {
+      ...weather,
+      summary: [weather?.weatherCode, weather?.description].filter(Boolean).join(' '),
+      windSpeedMs,
+      temperatureWindSummary: [temperature === undefined ? undefined : `${temperature}C`, windSpeedMs === undefined ? undefined : `${windSpeedMs}M/S`].filter(Boolean).join(' '),
+      rainSummary: [rainToday === undefined ? undefined : `V${rainToday}%`, rainTomorrow === undefined ? undefined : `M${rainTomorrow}%`].filter(Boolean).join(' '),
+    };
+    return pathValue(derived, source.path);
+  }
   if (source.type === 'system') return pathValue(status, source.path);
   if (source.type === 'timer') return pathValue(event?.payload, source.path);
   return element.text;
