@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <Update.h>
+#include <esp_partition.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -402,9 +403,13 @@ void ApiServer::begin() {
       // Do not write a new image while LittleFS still has the old partition
       // mounted; cached filesystem metadata can otherwise corrupt the update.
       LittleFS.end();
-      // Let Update resolve the data-partition size itself. LittleFS.totalBytes()
-      // can return zero on a mounted image even though the partition is valid.
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) Update.printError(Serial);
+      // Use the actual data partition size. LittleFS.totalBytes() can be zero
+      // after LittleFS.end(), while an unknown Update size can leave a full
+      // image upload without a valid filesystem after reboot.
+      const esp_partition_t* partition = esp_partition_find_first(
+          ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, nullptr);
+      const size_t partitionSize = partition ? partition->size : UPDATE_SIZE_UNKNOWN;
+      if (!Update.begin(partitionSize, U_SPIFFS)) Update.printError(Serial);
     }
     if (len && Update.write(data, len) != len) Update.printError(Serial);
     if (final && !Update.end(true)) Update.printError(Serial);
