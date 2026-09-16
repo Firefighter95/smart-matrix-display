@@ -372,7 +372,10 @@ void ApiServer::begin() {
     request->send(200, "application/json", "{\"ok\":true}");
   });
   server_.on("/api/v1/logs", HTTP_GET, [this](AsyncWebServerRequest* request) { request->send(200, "application/json", logs_.toJson()); });
-  server_.on("/api/v1/restart", HTTP_POST, [this](AsyncWebServerRequest* request) { request->send(202, "application/json", "{\"ok\":true,\"restarting\":true}"); });
+  server_.on("/api/v1/restart", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    request->send(202, "application/json", "{\"ok\":true,\"restarting\":true}");
+    otaRestartAt_ = millis() + 1000;
+  });
   server_.on("/api/v1/ota/firmware", HTTP_POST, [this](AsyncWebServerRequest* request) {
     if (Update.hasError()) {
       request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"OTA_FAILED\",\"message\":\"Firmware-update mislukt.\"}}");
