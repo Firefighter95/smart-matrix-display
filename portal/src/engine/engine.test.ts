@@ -20,8 +20,11 @@ describe('layout and variable contracts', () => {
   it('uses a three-pixel border for P2000 alert layouts', () => {
     const layouts = createDefaultLayouts();
     for (const id of ['p2000-fire-p1', 'p2000-fire-p2', 'p2000-generic']) {
-      const border = layouts.find((layout) => layout.id === id)?.elements.find((item) => item.id === 'border');
+      const layout = layouts.find((item) => item.id === id);
+      const border = layout?.elements.find((item) => item.id === 'border');
       expect(border?.properties?.strokeWidth).toBe(3);
+      expect(border && { x: border.x, y: border.y, width: border.width, height: border.height }).toEqual({ x: 4, y: 4, width: 120, height: 56 });
+      expect(layout?.elements.filter((item) => item.type === 'dynamic_text').every((item) => item.x >= 7 && item.y >= 7 && item.x + item.width <= 121 && item.y + item.height <= 57)).toBe(true);
     }
   });
 

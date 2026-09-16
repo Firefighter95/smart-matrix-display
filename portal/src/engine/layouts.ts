@@ -32,13 +32,13 @@ const layout = (id: string, name: string, category: LayoutCategory, elements: La
 
 const p2000FireLayout = (id: string, name: string, accent: string, backgroundColor: string, description: string): LayoutModel => layout(id, name, 'p2000', [
   element({ id: 'background', type: 'filled_rectangle', x: 0, y: 0, width: 128, height: 64, backgroundColor }),
-  element({ id: 'border', type: 'rectangle', x: 0, y: 0, width: 128, height: 64, color: accent, properties: { strokeWidth: 3 } }),
-  element({ id: 'priority', type: 'dynamic_text', x: 3, y: 3, width: 122, height: 8, text: '{{priority}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'priority' } }),
-  element({ id: 'incident', type: 'dynamic_text', x: 3, y: 13, width: 122, height: 8, text: '{{incidentType}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'incidentType' } }),
-  element({ id: 'group', type: 'dynamic_text', x: 3, y: 23, width: 122, height: 8, text: '{{group}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'group' } }),
-  element({ id: 'street', type: 'dynamic_text', x: 3, y: 33, width: 122, height: 8, text: '{{street}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'street' } }),
-  element({ id: 'place', type: 'dynamic_text', x: 3, y: 43, width: 122, height: 8, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),
-  element({ id: 'vehicles', type: 'dynamic_text', x: 3, y: 53, width: 122, height: 8, text: '{{vehicleNumbers}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'vehicleNumbers' } }),
+  element({ id: 'border', type: 'rectangle', x: 4, y: 4, width: 120, height: 56, color: accent, properties: { strokeWidth: 3 } }),
+  element({ id: 'priority', type: 'dynamic_text', x: 7, y: 7, width: 114, height: 8, text: '{{priority}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'priority' } }),
+  element({ id: 'incident', type: 'dynamic_text', x: 7, y: 15, width: 114, height: 8, text: '{{incidentType}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'incidentType' } }),
+  element({ id: 'group', type: 'dynamic_text', x: 7, y: 23, width: 114, height: 8, text: '{{group}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'group' } }),
+  element({ id: 'street', type: 'dynamic_text', x: 7, y: 31, width: 114, height: 8, text: '{{street}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'street' } }),
+  element({ id: 'place', type: 'dynamic_text', x: 7, y: 39, width: 114, height: 8, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),
+  element({ id: 'vehicles', type: 'dynamic_text', x: 7, y: 47, width: 114, height: 8, text: '{{vehicleNumbers}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'vehicleNumbers' } }),
 ], description);
 
 export const createDefaultLayouts = (): LayoutModel[] => [
@@ -79,11 +79,11 @@ export const createDefaultLayouts = (): LayoutModel[] => [
   ], 'Urgente melding.'),
   layout('p2000-generic', 'P2000 Generic', 'p2000', [
     element({ id: 'background', type: 'filled_rectangle', x: 0, y: 0, width: 128, height: 64, backgroundColor: '#00131A' }),
-    element({ id: 'border', type: 'rectangle', x: 0, y: 0, width: 128, height: 64, color: '#00C8D8', properties: { strokeWidth: 3 } }),
-    element({ id: 'priority', type: 'dynamic_text', x: 3, y: 3, width: 40, height: 8, text: '{{priority}}', color: '#F47F8E', dataSource: { type: 'p2000', path: 'priority' } }),
-    element({ id: 'discipline', type: 'dynamic_text', x: 43, y: 3, width: 82, height: 8, text: '{{discipline}}', align: 'right', color: '#F2B866', dataSource: { type: 'p2000', path: 'discipline' } }),
-    element({ id: 'place', type: 'dynamic_text', x: 3, y: 17, width: 122, height: 8, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),
-    element({ id: 'description', type: 'dynamic_text', x: 3, y: 31, width: 122, height: 28, text: '{{description}}', scale: 1, align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'description' }, overflow: 'wrap' }),
+    element({ id: 'border', type: 'rectangle', x: 4, y: 4, width: 120, height: 56, color: '#00C8D8', properties: { strokeWidth: 3 } }),
+    element({ id: 'priority', type: 'dynamic_text', x: 7, y: 7, width: 40, height: 8, text: '{{priority}}', color: '#F47F8E', dataSource: { type: 'p2000', path: 'priority' } }),
+    element({ id: 'discipline', type: 'dynamic_text', x: 47, y: 7, width: 74, height: 8, text: '{{discipline}}', align: 'right', color: '#F2B866', dataSource: { type: 'p2000', path: 'discipline' } }),
+    element({ id: 'place', type: 'dynamic_text', x: 7, y: 20, width: 114, height: 8, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),
+    element({ id: 'description', type: 'dynamic_text', x: 7, y: 31, width: 114, height: 24, text: '{{description}}', scale: 1, align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'description' }, overflow: 'wrap' }),
   ], 'Algemene P2000-melding.'),
   layout('p2000-fire', 'P2000 Brandweer', 'p2000', [
     element({ id: 'priority', type: 'dynamic_text', x: 2, y: 2, width: 124, height: 8, text: '{{priority}}', align: 'center', color: '#F47F8E', dataSource: { type: 'p2000', path: 'priority' } }),
