@@ -5,6 +5,16 @@
 namespace {
 const char* DEFAULT_CONFIG = R"json({"schemaVersion":4,"display":{"enabled":true,"brightness":25,"maxBrightness":100,"nightMode":true,"scheduleEnabled":true,"brightnessMode":"schedule","brightnessSchedule":[{"id":"morning","time":"07:00","brightness":45},{"id":"evening","time":"18:00","brightness":25},{"id":"late","time":"22:00","brightness":8},{"id":"midnight","time":"00:00","brightness":2}]},"clock":{"layout":"minimal","use24Hour":true,"showSeconds":false,"showDate":true,"timeColor":"#f4f7ff","dateColor":"#72e6a8","dividerColor":"#43506f","backgroundColor":"#000000","showStatusIndicator":true,"timezone":"Europe/Amsterdam"},"layouts":[],"rules":[],"profiles":[]})json";
 
+esp_err_t writeNvsString(const char* key, const String& value) {
+  nvs_handle_t handle;
+  esp_err_t error = nvs_open("smartmatrix", NVS_READWRITE, &handle);
+  if (error != ESP_OK) return error;
+  error = nvs_set_str(handle, key, value.c_str());
+  if (error == ESP_OK) error = nvs_commit(handle);
+  nvs_close(handle);
+  return error;
+}
+
 void mergeJson(JsonVariant destination, JsonVariantConst source) {
   if (source.is<JsonObjectConst>()) {
     if (!destination.is<JsonObject>()) destination.to<JsonObject>();
@@ -152,10 +162,11 @@ bool ConfigManager::persistDocument(JsonDocument& document) {
     String layoutJson;
     serializeJson(layouts[index], layoutJson);
     const String key = String("l") + index;
-    if (preferences_.putString(key.c_str(), layoutJson) != layoutJson.length()) {
+    const esp_err_t writeError = writeNvsString(key.c_str(), layoutJson);
+    if (writeError != ESP_OK) {
       nvs_stats_t stats{};
       nvs_get_stats(nullptr, &stats);
-      lastStorageError_ = String("NVS-write mislukt voor ") + key + " (" + layoutJson.length() +
+      lastStorageError_ = String("NVS-write mislukt voor ") + key + " (" + esp_err_to_name(writeError) + ", " + layoutJson.length() +
                           " bytes; vrije entries " + stats.free_entries + "/" + stats.total_entries + ").";
       return false;
     }
@@ -173,10 +184,11 @@ bool ConfigManager::persistDocument(JsonDocument& document) {
   document.remove("layouts");
   String baseJson;
   serializeJson(document, baseJson);
-  if (preferences_.putString("config", baseJson) != baseJson.length()) {
+  const esp_err_t configWriteError = writeNvsString("config", baseJson);
+  if (configWriteError != ESP_OK) {
     nvs_stats_t stats{};
     nvs_get_stats(nullptr, &stats);
-    lastStorageError_ = String("NVS-write mislukt voor config (") + baseJson.length() +
+    lastStorageError_ = String("NVS-write mislukt voor config (") + esp_err_to_name(configWriteError) + ", " + baseJson.length() +
                         " bytes; vrije entries " + stats.free_entries + "/" + stats.total_entries + ").";
     return false;
   }
