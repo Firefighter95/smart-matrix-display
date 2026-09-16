@@ -17,7 +17,16 @@ from .const import (
     CONF_NAME,
     CONF_PORT,
     CONF_TOKEN,
+    CONF_WEATHER_CODE_ENTITY,
+    CONF_WEATHER_DESCRIPTION_ENTITY,
     CONF_WEATHER_ENTITY,
+    CONF_WEATHER_FORECAST_ENTITY,
+    CONF_WEATHER_RADIATION_ENTITY,
+    CONF_WEATHER_RAIN_TODAY_ENTITY,
+    CONF_WEATHER_RAIN_TOMORROW_ENTITY,
+    CONF_WEATHER_SUN_STATE_ENTITY,
+    CONF_WEATHER_WARNING_ENTITY,
+    CONF_WEATHER_WIND_DIRECTION_ENTITY,
     DEFAULT_PORT,
     DOMAIN,
 )
@@ -30,19 +39,56 @@ def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
         weather_field = vol.Optional(
             CONF_WEATHER_ENTITY, default=defaults[CONF_WEATHER_ENTITY]
         )
-    return vol.Schema(
-        {
-            vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, "")): str,
-            vol.Required(
-                CONF_PORT, default=defaults.get(CONF_PORT, DEFAULT_PORT)
-            ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
-            vol.Optional(CONF_TOKEN, default=defaults.get(CONF_TOKEN, "")): str,
-            vol.Optional(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
-            weather_field: selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="weather")
-            ),
-        }
-    )
+    fields: dict[Any, Any] = {
+        vol.Required(CONF_HOST, default=defaults.get(CONF_HOST, "")): str,
+        vol.Required(
+            CONF_PORT, default=defaults.get(CONF_PORT, DEFAULT_PORT)
+        ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
+        vol.Optional(CONF_TOKEN, default=defaults.get(CONF_TOKEN, "")): str,
+        vol.Optional(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
+        weather_field: selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="weather")
+        ),
+    }
+    for key in (
+        CONF_WEATHER_CODE_ENTITY,
+        CONF_WEATHER_DESCRIPTION_ENTITY,
+        CONF_WEATHER_FORECAST_ENTITY,
+        CONF_WEATHER_WARNING_ENTITY,
+        CONF_WEATHER_RAIN_TODAY_ENTITY,
+        CONF_WEATHER_RAIN_TOMORROW_ENTITY,
+        CONF_WEATHER_RADIATION_ENTITY,
+        CONF_WEATHER_WIND_DIRECTION_ENTITY,
+        CONF_WEATHER_SUN_STATE_ENTITY,
+    ):
+        field = vol.Optional(key, default=defaults[key]) if defaults.get(key) else vol.Optional(key)
+        fields[field] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor")
+        )
+    return vol.Schema(fields)
+
+
+def _entry_data(user_input: dict[str, Any]) -> dict[str, Any]:
+    data = {
+        CONF_HOST: user_input[CONF_HOST].strip(),
+        CONF_PORT: user_input[CONF_PORT],
+        CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
+    }
+    for key in (
+        CONF_WEATHER_ENTITY,
+        CONF_WEATHER_CODE_ENTITY,
+        CONF_WEATHER_DESCRIPTION_ENTITY,
+        CONF_WEATHER_FORECAST_ENTITY,
+        CONF_WEATHER_WARNING_ENTITY,
+        CONF_WEATHER_RAIN_TODAY_ENTITY,
+        CONF_WEATHER_RAIN_TOMORROW_ENTITY,
+        CONF_WEATHER_RADIATION_ENTITY,
+        CONF_WEATHER_WIND_DIRECTION_ENTITY,
+        CONF_WEATHER_SUN_STATE_ENTITY,
+    ):
+        if user_input.get(key):
+            data[key] = user_input[key]
+    return data
 
 
 async def _test_device(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -90,13 +136,7 @@ class SmartMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 or status.get("hostname")
                 or f"Smart Matrix {user_input[CONF_HOST].strip()}"
             )
-            entry_data = {
-                CONF_HOST: user_input[CONF_HOST].strip(),
-                CONF_PORT: user_input[CONF_PORT],
-                CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
-            }
-            if user_input.get(CONF_WEATHER_ENTITY):
-                entry_data[CONF_WEATHER_ENTITY] = user_input[CONF_WEATHER_ENTITY]
+            entry_data = _entry_data(user_input)
             return self.async_create_entry(
                 title=title,
                 data=entry_data,
@@ -121,13 +161,7 @@ class SmartMatrixConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data_schema=_schema(user_input),
                     errors={"base": "cannot_connect"},
                 )
-            entry_data = {
-                CONF_HOST: user_input[CONF_HOST].strip(),
-                CONF_PORT: user_input[CONF_PORT],
-                CONF_TOKEN: user_input.get(CONF_TOKEN, ""),
-            }
-            if user_input.get(CONF_WEATHER_ENTITY):
-                entry_data[CONF_WEATHER_ENTITY] = user_input[CONF_WEATHER_ENTITY]
+            entry_data = _entry_data(user_input)
             self.hass.config_entries.async_update_entry(entry, data=entry_data)
             await self.hass.config_entries.async_reload(entry.entry_id)
             return self.async_abort(reason="reconfigure_successful")

@@ -11,7 +11,18 @@
     "apparentTemperatureC": { "type": "number" },
     "humidity": { "type": "number", "minimum": 0, "maximum": 100 },
     "precipitationProbability": { "type": "number", "minimum": 0, "maximum": 100 },
+    "precipitationTodayProbability": { "type": "number", "minimum": 0, "maximum": 100 },
+    "precipitationTomorrowProbability": { "type": "number", "minimum": 0, "maximum": 100 },
     "windSpeedKph": { "type": "number", "minimum": 0 },
+    "weatherCode": { "type": "string", "maxLength": 96 },
+    "description": { "type": "string", "maxLength": 96 },
+    "forecast": { "type": "string", "maxLength": 96 },
+    "warning": { "type": "string", "maxLength": 96 },
+    "rainTodayMm": { "type": "number", "minimum": 0 },
+    "rainTomorrowMm": { "type": "number", "minimum": 0 },
+    "globalRadiationWm2": { "type": "number", "minimum": 0 },
+    "windDirection": { "type": "string", "maxLength": 32 },
+    "sunState": { "type": "string", "maxLength": 96 },
     "observedAt": { "type": "string", "format": "date-time" }
   }
 }

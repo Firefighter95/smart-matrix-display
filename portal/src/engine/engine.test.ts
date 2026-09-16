@@ -3,6 +3,7 @@ import type { DeviceStatus, DisplayEvent } from '../../../shared/schemas/models'
 import { EventEngine } from './eventEngine';
 import { createDefaultLayouts, validateLayout } from './layouts';
 import { migrateClockToLayout } from './migrations';
+import { weatherCodeColor } from '../preview/renderers';
 import { evaluateRules } from './rules';
 import { resolveVariables } from './variables';
 
@@ -26,6 +27,16 @@ describe('layout and variable contracts', () => {
       expect(border && { x: border.x, y: border.y, width: border.width, height: border.height }).toEqual({ x: 4, y: 4, width: 120, height: 56 });
       expect(layout?.elements.filter((item) => item.type === 'dynamic_text').every((item) => item.x >= 7 && item.y >= 7 && item.x + item.width <= 121 && item.y + item.height <= 57)).toBe(true);
     }
+  });
+
+  it('includes weather details and uses the KNMI code color in the weather clock', () => {
+    const weatherLayout = createDefaultLayouts().find((layout) => layout.id === 'clock-weather');
+    expect(weatherLayout?.elements.map((item) => item.id)).toContain('weather-summary');
+    expect(weatherLayout?.elements.map((item) => item.id)).toContain('weather-warning');
+    expect(weatherLayout?.elements.map((item) => item.id)).toContain('rain-today');
+    expect(weatherLayout?.elements.find((item) => item.id === 'weather-summary')?.properties?.colorFromWeatherCode).toBe(true);
+    expect(weatherCodeColor({ source: 'home_assistant', condition: 'cloudy', weatherCode: 'Groen', temperatureC: 13.9, observedAt: 'now' })).toBe('#72E6A8');
+    expect(weatherCodeColor({ source: 'home_assistant', condition: 'cloudy', weatherCode: 'Oranje', temperatureC: 13.9, observedAt: 'now' })).toBe('#FF8C00');
   });
 
   it('migrates clock blocks without leaving the matrix', () => {

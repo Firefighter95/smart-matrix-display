@@ -7,7 +7,9 @@ Zelfstandige ESP32-S3 HUB75 RGB-matrixcontroller met een lokale adminportal en o
 - lokale donkere responsive portal met Dashboard, Display, Klok, Berichten, API en Systeem;
 - mock device-simulator met uptime, RSSI, NTP, berichten-timeout, logs en foutscenario's;
 - één pixel-perfect gedeelde 128×64 `MatrixPreview` voor dashboard, klok, display en berichten;
-- een `Weerklok`-layout met actuele Home Assistant-temperatuur en windsnelheid in m/s;
+- een `Weerklok`-layout met kleurgecodeerde weercode/omschrijving, verwachting, waarschuwing, temperatuur, windsnelheid in m/s en neerslagkans vandaag/morgen;
+- layoutbuilder met een actie om een layout tien seconden op de ESP32 te previewen, waarna idle hervat wordt;
+- geneste device-instellingen en layouts persistent opgeslagen in NVS; een gedeeltelijke instellingupdate behoudt overige velden;
 - gedeelde contracten en JSON-schema's in `shared/schemas/`;
 - PlatformIO/Arduino ESP32-S3 firmware scaffold met onafhankelijke Fase-A HUB75-test;
 - GitHub Actions voor portal, firmware en tagged release-artifacts.
@@ -156,7 +158,7 @@ Na de eerste lokale review kunnen desktop- en mobiele screenshots onder `docs/sc
 
 ## Bekende beperkingen van V1
 
-- de production clock is actief; message-, weather- en event-renderers worden nog verder gekoppeld aan de layout/event-engine;
+- forecast-, weerwaarschuwing- en overige KNMI-sensoren moeten in de HACS-configuratie optioneel aan de juiste HA-entities worden gekoppeld als ze niet als `weather.*`-attributen worden aangeboden;
 - de firmware gebruikt voorlopig single buffering; dubbele buffering volgt met een expliciete frame-presentatiestap;
-- de HACS-integratie en HA-services zijn toegevoegd, maar vereisen de toekomstige productie message-endpoint in de firmware om fysieke berichten te tonen;
+- een ESP32-herstart herstelt de weer-snapshot via HACS op de eerstvolgende statuspoll; de snapshot zelf wordt niet naar NVS geschreven;
 - de lokale portal/mock mode is volledig bruikbaar voor UI- en UX-review zonder ESP32.

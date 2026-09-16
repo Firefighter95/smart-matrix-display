@@ -10,6 +10,27 @@ CONF_PORT = "port"
 CONF_TOKEN = "token"
 CONF_NAME = "name"
 CONF_WEATHER_ENTITY = "weather_entity"
+CONF_WEATHER_CODE_ENTITY = "weather_code_entity"
+CONF_WEATHER_DESCRIPTION_ENTITY = "weather_description_entity"
+CONF_WEATHER_FORECAST_ENTITY = "weather_forecast_entity"
+CONF_WEATHER_WARNING_ENTITY = "weather_warning_entity"
+CONF_WEATHER_RAIN_TODAY_ENTITY = "weather_rain_today_entity"
+CONF_WEATHER_RAIN_TOMORROW_ENTITY = "weather_rain_tomorrow_entity"
+CONF_WEATHER_RADIATION_ENTITY = "weather_radiation_entity"
+CONF_WEATHER_WIND_DIRECTION_ENTITY = "weather_wind_direction_entity"
+CONF_WEATHER_SUN_STATE_ENTITY = "weather_sun_state_entity"
+
+WEATHER_SENSOR_FIELDS = {
+    "weatherCode": CONF_WEATHER_CODE_ENTITY,
+    "description": CONF_WEATHER_DESCRIPTION_ENTITY,
+    "forecast": CONF_WEATHER_FORECAST_ENTITY,
+    "warning": CONF_WEATHER_WARNING_ENTITY,
+    "precipitationTodayProbability": CONF_WEATHER_RAIN_TODAY_ENTITY,
+    "precipitationTomorrowProbability": CONF_WEATHER_RAIN_TOMORROW_ENTITY,
+    "globalRadiationWm2": CONF_WEATHER_RADIATION_ENTITY,
+    "windDirection": CONF_WEATHER_WIND_DIRECTION_ENTITY,
+    "sunState": CONF_WEATHER_SUN_STATE_ENTITY,
+}
 
 DEFAULT_PORT = 80
 DEFAULT_TIMEOUT = 10

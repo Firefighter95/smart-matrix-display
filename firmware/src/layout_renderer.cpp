@@ -102,14 +102,20 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
   JsonObjectConst source = element["dataSource"].as<JsonObjectConst>();
   if (!source.isNull()) {
     const String sourceType = source["type"] | "static";
-    const String path = source["path"] | "";
-    String value;
-    if (sourceType == "weather") {
-      JsonDocument weather;
-      if (weather_.hasSnapshot()) deserializeJson(weather, weather_.snapshotJson());
-      if (path == "temperatureC") value = weather["temperatureC"].is<float>() ? String(weather["temperatureC"].as<float>(), 1) : "";
-      else if (path == "windSpeedMs") value = weather["windSpeedKph"].is<float>() ? String(weather["windSpeedKph"].as<float>() / 3.6f, 1) : "";
-      else value = valueAt(weather.as<JsonObjectConst>(), path);
+      const String path = source["path"] | "";
+      String value;
+      if (sourceType == "weather") {
+        JsonDocument weather;
+        if (weather_.hasSnapshot()) deserializeJson(weather, weather_.snapshotJson());
+        if (path == "temperatureC") value = weather["temperatureC"].is<float>() ? String(weather["temperatureC"].as<float>(), 1) : "";
+        else if (path == "windSpeedMs") value = weather["windSpeedKph"].is<float>() ? String(weather["windSpeedKph"].as<float>() / 3.6f, 1) : "";
+        else if (path == "summary") {
+          value = weather["weatherCode"] | "";
+          const String description = weather["description"] | "";
+          if (!value.isEmpty() && !description.isEmpty()) value += " ";
+          value += description;
+        }
+        else value = valueAt(weather.as<JsonObjectConst>(), path);
     } else if (sourceType == "system") {
       if (path == "wifiRssi") value = String(wifi_.rssi());
       else if (path == "timeSynced") value = time_.synced() ? "OK" : "NTP FOUT";
@@ -147,6 +153,21 @@ void LayoutRenderer::drawText(const String& text, int16_t x, int16_t y, int16_t 
 void LayoutRenderer::render(JsonObjectConst layout, JsonObjectConst payload, JsonObjectConst clockConfig, uint16_t background) {
   if (!display_.output()) return;
   display_.output()->fillScreen(background);
+  JsonDocument weatherSnapshot;
+  if (weather_.hasSnapshot()) deserializeJson(weatherSnapshot, weather_.snapshotJson());
+  String weatherCode = weatherSnapshot["weatherCode"] | "";
+  weatherCode.toLowerCase();
+  String weatherColor = "#F4F7FF";
+  if (weatherCode.indexOf("rood") >= 0 || weatherCode.indexOf("red") >= 0) weatherColor = "#FF4055";
+  else if (weatherCode.indexOf("oranje") >= 0 || weatherCode.indexOf("orange") >= 0) weatherColor = "#FF8C00";
+  else if (weatherCode.indexOf("geel") >= 0 || weatherCode.indexOf("yellow") >= 0) weatherColor = "#FFD34F";
+  else if (weatherCode.indexOf("groen") >= 0 || weatherCode.indexOf("green") >= 0) weatherColor = "#72E6A8";
+  else {
+    String condition = weatherSnapshot["condition"] | "";
+    condition.toLowerCase();
+    if (condition.indexOf("sunny") >= 0 || condition.indexOf("clear") >= 0) weatherColor = "#FFD34F";
+    else if (condition.indexOf("cloud") >= 0 || condition.indexOf("rain") >= 0 || condition.indexOf("snow") >= 0 || condition.indexOf("fog") >= 0) weatherColor = "#70D7F4";
+  }
   JsonArrayConst elements = layout["elements"].as<JsonArrayConst>();
   for (JsonObjectConst element : elements) {
     if (!(element["visible"] | true)) continue;
@@ -155,10 +176,11 @@ void LayoutRenderer::render(JsonObjectConst layout, JsonObjectConst payload, Jso
     const int16_t width = max(1, min(128 - x, static_cast<int>(element["width"] | 128)));
     const int16_t height = max(1, min(64 - y, static_cast<int>(element["height"] | 8)));
     const String type = element["type"] | "text";
-    const String color = element["color"] | "#F4F7FF";
+    String color = element["color"] | "#F4F7FF";
+    const JsonObjectConst properties = element["properties"].as<JsonObjectConst>();
+    if (properties["colorFromWeatherCode"] | false) color = weatherColor;
     if (type == "rectangle") {
       const uint16_t lineColor = colorFromHex(color, 0xFFFF);
-      const JsonObjectConst properties = element["properties"].as<JsonObjectConst>();
       const int16_t requestedStroke = properties["strokeWidth"] | 1;
       const int16_t strokeWidth = constrain(requestedStroke, 1, max<int16_t>(1, min(width, height) / 2));
       for (int16_t inset = 0; inset < strokeWidth; ++inset) {

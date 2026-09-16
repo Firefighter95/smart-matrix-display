@@ -74,6 +74,7 @@ from .const import (
     SERVICE_SHOW_LAYOUT,
     SERVICE_SHOW_MESSAGE,
     SERVICE_SKIP_EVENT,
+    WEATHER_SENSOR_FIELDS,
 )
 from .coordinator import SmartMatrixCoordinator
 from .weather import async_send_weather_state
@@ -235,7 +236,13 @@ async def _push_weather_targets(
                 f"No weather entity is configured for {runtime['name']}"
             )
         tasks.append(
-            async_send_weather_state(hass, runtime, entity_id, raise_errors=True)
+            async_send_weather_state(
+                hass,
+                runtime,
+                entity_id,
+                runtime.get("weather_sensors"),
+                raise_errors=True,
+            )
         )
     results = await asyncio.gather(*tasks, return_exceptions=True)
     errors = [result for result in results if isinstance(result, Exception)]
@@ -245,19 +252,46 @@ async def _push_weather_targets(
         ) from errors[0]
 
 
-def _setup_weather_listener(
-    hass: HomeAssistant, runtime: dict[str, Any], entity_id: str
-) -> None:
+def _setup_weather_listener(hass: HomeAssistant, runtime: dict[str, Any], entity_id: str) -> None:
     """Forward changes from the selected HA weather entity to this display."""
 
     @callback
     def handle_weather_change(_event: Any) -> None:
-        hass.async_create_task(async_send_weather_state(hass, runtime, entity_id))
+        hass.async_create_task(
+            async_send_weather_state(
+                hass, runtime, entity_id, runtime.get("weather_sensors")
+            )
+        )
 
+    watched_entities = [entity_id, *runtime.get("weather_sensors", {}).values()]
     runtime["weather_unsub"] = async_track_state_change_event(
-        hass, [entity_id], handle_weather_change
+        hass, watched_entities, handle_weather_change
     )
-    hass.async_create_task(async_send_weather_state(hass, runtime, entity_id))
+    hass.async_create_task(
+        async_send_weather_state(hass, runtime, entity_id, runtime.get("weather_sensors"))
+    )
+
+
+def _setup_device_reboot_listener(
+    hass: HomeAssistant, runtime: dict[str, Any]
+) -> None:
+    """Restore the HA weather snapshot after the display itself reboots."""
+
+    @callback
+    def handle_device_update() -> None:
+        coordinator_data = runtime["coordinator"].data or {}
+        entity_id = runtime.get("weather_entity")
+        if not coordinator_data.get("_device_rebooted") or not entity_id:
+            return
+        hass.async_create_task(
+            async_send_weather_state(
+                hass, runtime, entity_id, runtime.get("weather_sensors")
+            )
+        )
+
+    runtime["reboot_unsub"] = runtime["coordinator"].async_add_listener(
+        handle_device_update
+    )
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
@@ -421,12 +455,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "device_id": device_id,
         "name": entry.title,
         "weather_entity": entry.data.get(CONF_WEATHER_ENTITY),
+        "weather_sensors": {
+            field: entry.data[key]
+            for field, key in WEATHER_SENSOR_FIELDS.items()
+            if entry.data.get(key)
+        },
         "logger": _LOGGER,
     }
     if entry.data.get(CONF_WEATHER_ENTITY):
         _setup_weather_listener(
             hass, hass.data[DOMAIN][entry.entry_id], entry.data[CONF_WEATHER_ENTITY]
         )
+    _setup_device_reboot_listener(hass, hass.data[DOMAIN][entry.entry_id])
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -439,5 +479,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         runtime = hass.data.get(DOMAIN, {}).get(entry.entry_id)
         if runtime and runtime.get("weather_unsub"):
             runtime["weather_unsub"]()
+        if runtime and runtime.get("reboot_unsub"):
+            runtime["reboot_unsub"]()
         hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     return unloaded

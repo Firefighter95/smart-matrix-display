@@ -195,7 +195,7 @@ const dataValue = (element: LayoutElement, status: DeviceStatus, event: DisplayE
   const source = element.dataSource;
   if (!source) return undefined;
   if (source.type === 'event_payload' || source.type === 'p2000' || source.type === 'home_assistant') return pathValue(event?.payload, source.path);
-  if (source.type === 'weather') return pathValue({ ...status.weather, windSpeedMs: status.weather?.windSpeedKph === undefined ? undefined : (status.weather.windSpeedKph / 3.6).toFixed(1) }, source.path);
+  if (source.type === 'weather') return pathValue({ ...status.weather, summary: [status.weather?.weatherCode, status.weather?.description].filter(Boolean).join(' '), windSpeedMs: status.weather?.windSpeedKph === undefined ? undefined : (status.weather.windSpeedKph / 3.6).toFixed(1) }, source.path);
   if (source.type === 'system') return pathValue(status, source.path);
   if (source.type === 'timer') return pathValue(event?.payload, source.path);
   return element.text;
@@ -234,6 +234,17 @@ const drawLayoutText = (ctx: CanvasRenderingContext2D, element: LayoutElement, t
   });
 };
 
+export const weatherCodeColor = (weather?: DeviceStatus['weather']): string => {
+  const code = `${weather?.weatherCode ?? ''} ${weather?.condition ?? ''}`.toLocaleLowerCase('nl-NL');
+  if (code.includes('rood') || code.includes('red')) return '#FF4055';
+  if (code.includes('oranje') || code.includes('orange')) return '#FF8C00';
+  if (code.includes('geel') || code.includes('yellow')) return '#FFD34F';
+  if (code.includes('groen') || code.includes('green')) return '#72E6A8';
+  if (code.includes('sunny') || code.includes('clear')) return '#FFD34F';
+  if (code.includes('cloud') || code.includes('rain') || code.includes('snow') || code.includes('fog')) return '#70D7F4';
+  return '#F4F7FF';
+};
+
 export interface LayoutRenderContext {
   status: DeviceStatus;
   event?: DisplayEvent;
@@ -246,6 +257,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
   ctx.fillRect(0, 0, MATRIX_WIDTH, MATRIX_HEIGHT);
   const now = context.now ?? new Date();
   [...layout.elements].filter((item) => item.visible !== false).sort((a, b) => a.zIndex - b.zIndex).forEach((item) => {
+    const renderItem = item.properties?.colorFromWeatherCode ? { ...item, color: weatherCodeColor(context.status.weather) } : item;
     ctx.save();
     ctx.globalAlpha = item.opacity ?? 1;
     ctx.beginPath();
@@ -272,7 +284,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
       drawText(ctx, item.icon ?? '◆', item.x, item.y, item.scale ?? 1, item.color ?? '#F4F7FF');
     } else if (item.type === 'timer') {
       const remaining = Number(dataValue(item, context.status, context.event) ?? context.event?.duration ?? 0);
-      drawLayoutText(ctx, { ...item, text: `${Math.max(0, Math.ceil(remaining))}S` }, `${Math.max(0, Math.ceil(remaining))}S`);
+      drawLayoutText(ctx, { ...renderItem, text: `${Math.max(0, Math.ceil(remaining))}S` }, `${Math.max(0, Math.ceil(remaining))}S`);
     } else if (item.type === 'progress') {
       const progress = Math.max(0, Math.min(1, Number(dataValue(item, context.status, context.event) ?? 0)));
       ctx.fillStyle = item.backgroundColor ?? '#1A2639';
@@ -282,12 +294,12 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
     } else if (item.type === 'clock') {
       const config: ClockConfig = { layout: 'minimal', use24Hour: true, showSeconds: false, showDate: false, timeColor: item.color ?? '#F4F7FF', dateColor: '#72E6A8', dividerColor: '#43506F', backgroundColor: context.backgroundColor ?? '#000000', showStatusIndicator: false, timezone: 'Europe/Amsterdam' };
       const value = formatTime(now, config);
-      drawLayoutText(ctx, { ...item, text: value }, value);
+      drawLayoutText(ctx, { ...renderItem, text: value }, value);
     } else if (item.type === 'date') {
       const value = formatDate(now);
-      drawLayoutText(ctx, { ...item, text: value }, value);
+      drawLayoutText(ctx, { ...renderItem, text: value }, value);
     } else {
-      drawLayoutText(ctx, item, elementText(item, context.status, context.event, now));
+      drawLayoutText(ctx, renderItem, elementText(renderItem, context.status, context.event, now));
     }
     ctx.restore();
   });

@@ -41,7 +41,27 @@ def _to_kph(value: float, unit: str | None) -> float:
     return value
 
 
-def snapshot_from_state(state: State) -> dict[str, Any]:
+def _attribute(attributes: dict[str, Any], *names: str) -> Any:
+    normalized = {str(key).lower(): value for key, value in attributes.items()}
+    for name in names:
+        value = normalized.get(name.lower())
+        if value is not None and str(value).strip().lower() not in UNKNOWN_STATES:
+            return value
+    return None
+
+
+def _text(value: Any) -> str | None:
+    if value is None:
+        return None
+    result = str(value).strip()
+    if not result or result.lower() in UNKNOWN_STATES:
+        return None
+    return result[:96]
+
+
+def snapshot_from_state(
+    state: State, supplemental: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Build the versioned weather payload from one HA weather entity."""
 
     if state.state.lower() in UNKNOWN_STATES:
@@ -60,6 +80,33 @@ def snapshot_from_state(state: State) -> dict[str, Any]:
         ),
         "observedAt": state.last_updated.isoformat(),
     }
+
+    text_fields = {
+        "weatherCode": ("weather_code", "weercode", "condition_code", "weathercode"),
+        "description": ("description", "weather_description", "omschrijving", "condition_text"),
+        "forecast": ("forecast", "weather_forecast", "weersverwachting", "forecast_text"),
+        "warning": ("warning", "weather_warning", "waarschuwing"),
+        "windDirection": ("wind_direction", "winddirection", "windrichting"),
+        "sunState": ("sun_state", "sunstate", "zon"),
+    }
+    for target, names in text_fields.items():
+        value = _text((supplemental or {}).get(target)) or _text(_attribute(attributes, *names))
+        if value:
+            payload[target] = value
+
+    numeric_fields = {
+        "rainTodayMm": ("rain_today", "rain_today_mm"),
+        "rainTomorrowMm": ("rain_tomorrow", "rain_tomorrow_mm"),
+        "globalRadiationWm2": ("global_radiation", "global_radiation_w_m2", "solar_radiation"),
+        "precipitationTodayProbability": ("precipitation_today_probability", "precipitation_probability_today"),
+        "precipitationTomorrowProbability": ("precipitation_tomorrow_probability", "precipitation_probability_tomorrow"),
+    }
+    for target, names in numeric_fields.items():
+        value = _number((supplemental or {}).get(target))
+        if value is None:
+            value = _number(_attribute(attributes, *names))
+        if value is not None:
+            payload[target] = round(value, 1)
 
     optional_temperature = _number(attributes.get("apparent_temperature"))
     if optional_temperature is not None:
@@ -88,6 +135,7 @@ async def async_send_weather_state(
     hass: HomeAssistant,
     runtime: dict[str, Any],
     entity_id: str,
+    supplemental_entities: dict[str, str] | None = None,
     raise_errors: bool = False,
 ) -> None:
     """Push one configured weather entity to one display, logging soft failures."""
@@ -98,7 +146,12 @@ async def async_send_weather_state(
             raise HomeAssistantError(f"Weather entity {entity_id} does not exist")
         return
     try:
-        await runtime["api"].async_send_weather(snapshot_from_state(state))
+        supplemental = {
+            field: sensor_state.state
+            for field, sensor_entity_id in (supplemental_entities or {}).items()
+            if (sensor_state := hass.states.get(sensor_entity_id)) is not None
+        }
+        await runtime["api"].async_send_weather(snapshot_from_state(state, supplemental))
     except (HomeAssistantError, SmartMatrixApiError) as err:
         if raise_errors:
             raise

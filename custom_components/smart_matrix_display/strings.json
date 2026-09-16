@@ -9,7 +9,16 @@
           "port": "HTTP port",
           "token": "API token",
           "name": "Display name",
-          "weather_entity": "Home Assistant weather entity"
+          "weather_entity": "Home Assistant weather entity",
+          "weather_code_entity": "Weather code sensor (optional)",
+          "weather_description_entity": "Weather description sensor (optional)",
+          "weather_forecast_entity": "Weather forecast sensor (optional)",
+          "weather_warning_entity": "Weather warning sensor (optional)",
+          "weather_rain_today_entity": "Precipitation probability today sensor (optional)",
+          "weather_rain_tomorrow_entity": "Precipitation probability tomorrow sensor (optional)",
+          "weather_radiation_entity": "Global radiation sensor (optional)",
+          "weather_wind_direction_entity": "Wind direction sensor (optional)",
+          "weather_sun_state_entity": "Sun state sensor (optional)"
         }
       },
       "reconfigure": {
@@ -20,7 +29,16 @@
           "port": "HTTP port",
           "token": "API token",
           "name": "Display name",
-          "weather_entity": "Home Assistant weather entity"
+          "weather_entity": "Home Assistant weather entity",
+          "weather_code_entity": "Weather code sensor (optional)",
+          "weather_description_entity": "Weather description sensor (optional)",
+          "weather_forecast_entity": "Weather forecast sensor (optional)",
+          "weather_warning_entity": "Weather warning sensor (optional)",
+          "weather_rain_today_entity": "Precipitation probability today sensor (optional)",
+          "weather_rain_tomorrow_entity": "Precipitation probability tomorrow sensor (optional)",
+          "weather_radiation_entity": "Global radiation sensor (optional)",
+          "weather_wind_direction_entity": "Wind direction sensor (optional)",
+          "weather_sun_state_entity": "Sun state sensor (optional)"
         }
       }
     },
@@ -53,8 +71,17 @@
       ,"ip_address": {"name": "IP address"}
       ,"hostname": {"name": "Hostname"}
       ,"weather_condition": {"name": "Weather condition"}
+      ,"weather_code": {"name": "Weather code"}
+      ,"weather_description": {"name": "Weather description"}
+      ,"weather_forecast": {"name": "Weather forecast"}
+      ,"weather_warning": {"name": "Weather warning"}
       ,"weather_temperature": {"name": "Weather temperature"}
       ,"weather_wind": {"name": "Weather wind speed"}
+      ,"weather_rain_today": {"name": "Precipitation today"}
+      ,"weather_rain_tomorrow": {"name": "Precipitation tomorrow"}
+      ,"weather_radiation": {"name": "Global radiation"}
+      ,"weather_wind_direction": {"name": "Wind direction"}
+      ,"weather_sun_state": {"name": "Sun state"}
       ,"audio_state": {"name": "Audio state"}
       ,"audio_input_level": {"name": "Microphone input level"}
       ,"audio_microphones": {"name": "Microphones"}

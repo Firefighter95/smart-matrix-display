@@ -9,7 +9,16 @@
           "port": "HTTP-poort",
           "token": "API-token",
           "name": "Displaynaam",
-          "weather_entity": "Home Assistant weerentity"
+          "weather_entity": "Home Assistant weerentity",
+          "weather_code_entity": "Weercode-sensor (optioneel)",
+          "weather_description_entity": "Weeromschrijving-sensor (optioneel)",
+          "weather_forecast_entity": "Weersverwachting-sensor (optioneel)",
+          "weather_warning_entity": "Weerswaarschuwing-sensor (optioneel)",
+          "weather_rain_today_entity": "Neerslagkans vandaag-sensor (optioneel)",
+          "weather_rain_tomorrow_entity": "Neerslagkans morgen-sensor (optioneel)",
+          "weather_radiation_entity": "Globale straling-sensor (optioneel)",
+          "weather_wind_direction_entity": "Windrichting-sensor (optioneel)",
+          "weather_sun_state_entity": "Zonstatus-sensor (optioneel)"
         }
       },
       "reconfigure": {
@@ -20,7 +29,16 @@
           "port": "HTTP-poort",
           "token": "API-token",
           "name": "Displaynaam",
-          "weather_entity": "Home Assistant weerentity"
+          "weather_entity": "Home Assistant weerentity",
+          "weather_code_entity": "Weercode-sensor (optioneel)",
+          "weather_description_entity": "Weeromschrijving-sensor (optioneel)",
+          "weather_forecast_entity": "Weersverwachting-sensor (optioneel)",
+          "weather_warning_entity": "Weerswaarschuwing-sensor (optioneel)",
+          "weather_rain_today_entity": "Neerslagkans vandaag-sensor (optioneel)",
+          "weather_rain_tomorrow_entity": "Neerslagkans morgen-sensor (optioneel)",
+          "weather_radiation_entity": "Globale straling-sensor (optioneel)",
+          "weather_wind_direction_entity": "Windrichting-sensor (optioneel)",
+          "weather_sun_state_entity": "Zonstatus-sensor (optioneel)"
         }
       }
     },
@@ -36,6 +54,17 @@
   "entity": {
     "sensor": {
       "mode": {"name": "Modus"},
+      "weather_code": {"name": "Weercode"},
+      "weather_description": {"name": "Weeromschrijving"},
+      "weather_forecast": {"name": "Weersverwachting"},
+      "weather_warning": {"name": "Weerswaarschuwing"},
+      "weather_temperature": {"name": "Weertemperatuur"},
+      "weather_wind": {"name": "Windsnelheid"},
+      "weather_rain_today": {"name": "Neerslag vandaag"},
+      "weather_rain_tomorrow": {"name": "Neerslag morgen"},
+      "weather_radiation": {"name": "Globale straling"},
+      "weather_wind_direction": {"name": "Windrichting"},
+      "weather_sun_state": {"name": "Zonstatus"},
       "brightness": {"name": "Helderheid"},
       "wifi_signal": {"name": "Wi-Fi-signaal"},
       "uptime": {"name": "Uptime"},

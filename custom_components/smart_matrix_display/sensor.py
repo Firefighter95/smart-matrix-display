@@ -47,8 +47,17 @@ SENSORS = (
     _SensorSpec(key="ip", translation_key="ip_address", diagnostic=True),
     _SensorSpec(key="hostname", translation_key="hostname", diagnostic=True),
     _SensorSpec(key="weather_condition", translation_key="weather_condition"),
+    _SensorSpec(key="weather_code", translation_key="weather_code"),
+    _SensorSpec(key="weather_description", translation_key="weather_description"),
+    _SensorSpec(key="weather_forecast", translation_key="weather_forecast"),
+    _SensorSpec(key="weather_warning", translation_key="weather_warning"),
     _SensorSpec(key="weather_temperature", translation_key="weather_temperature", unit=UnitOfTemperature.CELSIUS),
     _SensorSpec(key="weather_wind", translation_key="weather_wind", unit="m/s"),
+    _SensorSpec(key="weather_rain_today", translation_key="weather_rain_today", unit=PERCENTAGE),
+    _SensorSpec(key="weather_rain_tomorrow", translation_key="weather_rain_tomorrow", unit=PERCENTAGE),
+    _SensorSpec(key="weather_radiation", translation_key="weather_radiation", unit="W/m²"),
+    _SensorSpec(key="weather_wind_direction", translation_key="weather_wind_direction"),
+    _SensorSpec(key="weather_sun_state", translation_key="weather_sun_state"),
     _SensorSpec(key="audio_state", translation_key="audio_state"),
     _SensorSpec(key="audio_input_level", translation_key="audio_input_level", unit=PERCENTAGE, diagnostic=True),
     _SensorSpec(key="audio_microphones", translation_key="audio_microphones", diagnostic=True),
@@ -90,11 +99,27 @@ class SmartMatrixSensor(SmartMatrixEntity, SensorEntity):
     @property
     def native_value(self) -> Any:
         data = self.coordinator.data or {}
+        key = self.entity_description.key
+        weather = data.get("weather") or {}
         if self.entity_description.key == "weather_temperature":
-            return (data.get("weather") or {}).get("temperatureC")
+            return weather.get("temperatureC")
         if self.entity_description.key == "weather_wind":
-            wind_kph = (data.get("weather") or {}).get("windSpeedKph")
+            wind_kph = weather.get("windSpeedKph")
             return round(wind_kph / 3.6, 1) if isinstance(wind_kph, (int, float)) else None
+        weather_fields = {
+            "weather_condition": "condition",
+            "weather_code": "weatherCode",
+            "weather_description": "description",
+            "weather_forecast": "forecast",
+            "weather_warning": "warning",
+            "weather_rain_today": "precipitationTodayProbability",
+            "weather_rain_tomorrow": "precipitationTomorrowProbability",
+            "weather_radiation": "globalRadiationWm2",
+            "weather_wind_direction": "windDirection",
+            "weather_sun_state": "sunState",
+        }
+        if key in weather_fields:
+            return weather.get(weather_fields[key])
         if self.entity_description.key.startswith("audio_"):
             audio = data.get("audio") or {}
             return audio.get(self.entity_description.key.removeprefix("audio_"))

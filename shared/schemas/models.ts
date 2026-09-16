@@ -296,7 +296,18 @@ export interface WeatherSnapshot {
   apparentTemperatureC?: number;
   humidity?: number;
   precipitationProbability?: number;
+  precipitationTodayProbability?: number;
+  precipitationTomorrowProbability?: number;
   windSpeedKph?: number;
+  weatherCode?: string;
+  description?: string;
+  forecast?: string;
+  warning?: string;
+  rainTodayMm?: number;
+  rainTomorrowMm?: number;
+  globalRadiationWm2?: number;
+  windDirection?: string;
+  sunState?: string;
   observedAt: string;
 }
 

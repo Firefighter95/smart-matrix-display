@@ -33,6 +33,19 @@ class SmartMatrixCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             status = await self.api.async_get_status()
+            previous = self.data or {}
+            previous_uptime = previous.get("uptime")
+            current_uptime = status.get("uptime")
+            status["_device_rebooted"] = (
+                isinstance(previous_uptime, (int, float))
+                and isinstance(current_uptime, (int, float))
+                and current_uptime < previous_uptime
+            )
+            try:
+                status["weather"] = await self.api.async_get_weather()
+            except SmartMatrixApiError:
+                # Older firmware may not expose this endpoint yet.
+                status.setdefault("weather", {})
             # Keep configuration-backed controls readable even on firmware
             # versions that do not yet expose the richer runtime status.
             try:

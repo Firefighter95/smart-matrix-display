@@ -91,6 +91,11 @@ class SmartMatrixApiClient:
 
         return await self._request("GET", "/api/v1/audio")
 
+    async def async_get_weather(self) -> dict[str, Any]:
+        """Fetch the latest weather snapshot currently shown by the device."""
+
+        return await self._request("GET", "/api/v1/weather")
+
     async def async_start_audio_capture(self) -> dict[str, Any]:
         """Start live microphone capture for hardware validation."""
 

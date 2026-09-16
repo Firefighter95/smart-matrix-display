@@ -66,11 +66,20 @@ Bij ontbrekende credentials start de ESP32 een fallback access point met een SSI
   "humidity": 71,
   "precipitationProbability": 20,
   "windSpeedKph": 12,
+  "weatherCode": "Groen",
+  "description": "Zwaar bewolkt",
+  "forecast": "Enkele buien",
+  "warning": "Veilig",
+  "precipitationTodayProbability": 50,
+  "precipitationTomorrowProbability": 80,
+  "globalRadiationWm2": 0,
+  "windDirection": "ZW",
+  "sunState": "Onder de horizon",
   "observedAt": "2026-09-10T08:30:00+02:00"
 }
 ```
 
-De HACS-integratie maakt dit snapshot automatisch uit de geselecteerde `weather.*`-entity. De firmware valideert het snapshot en bewaart het als actuele runtime-weerdata. Bij een `builder`-kloklayout blijft de kloklayout actief en kunnen builder-elementen `temperature` en `wind` deze waarden direct tonen. Bij andere kloklayouts wordt de zelfstandige displaymode `WEATHER` gebruikt. De snapshot blijft in RAM beschikbaar tot een reboot; de HACS-listener pusht na een herverbinding of herstart opnieuw de actuele waarde.
+De HACS-integratie maakt dit snapshot uit de geselecteerde `weather.*`-entity en optionele KNMI-sensors. De firmware bewaart het snapshot tijdens runtime; bij een ESP32-herstart detecteert HACS de uptime-reset en stuurt de actuele waarden opnieuw. Configuratie en layouts worden afzonderlijk persistent in NVS bewaard. De centrale builderlayout `clock-weather` toont de weercode en omschrijving in de kleur van de weercode, forecast, waarschuwing, temperatuur, wind in m/s en neerslagkans vandaag/morgen.
 
 `GET /api/v1/weather` geeft de laatst ontvangen snapshot terug. Dezelfde data staat optioneel genest onder `weather` in `GET /api/v1/status`. Daarmee kun je controleren of Home Assistant werkelijk de verwachte waarden aanlevert:
 

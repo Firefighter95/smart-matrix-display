@@ -10,7 +10,7 @@ String SystemStatus::json(bool online, int32_t rssi, bool synced, bool displayEn
   result += ",\"wifi_rssi\":" + String(rssi);
   result += ",\"uptime\":" + String(millis() / 1000);
   result += ",\"time_synced\":" + String(synced ? "true" : "false");
-  result += ",\"firmware\":\"1.5.1-dev+layout-border\",\"resolution\":\"128x64\"";
+  result += ",\"firmware\":\"1.5.2-dev+weather-layout\",\"resolution\":\"128x64\"";
   result += ",\"hardware_profile\":\"" + String(HardwareConfig::PROFILE_NAME) + "\"";
   result += ",\"panel_profile\":\"" + String(HardwareConfig::PANEL_PROFILE_NAME) + "\"";
   result += ",\"scan_rows\":" + String(HardwareConfig::SCAN_ROWS);
