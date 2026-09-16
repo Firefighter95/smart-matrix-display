@@ -117,6 +117,18 @@ sequence:
               data:
                 url: "{{ kaart_link }}"
                 clickAction: "{{ kaart_link }}"
+                tag: smartmatrix-p2000
+                live_update: true
+                critical_text: "{{ prio }} · {{ plaats_tekst }}"
+                notification_icon: mdi:fire-truck
+                notification_icon_color: >-
+                  {% if is_p1 %}#FF0000{% elif is_p2 %}#FF8C00{% else %}#70D7F4{% endif %}
+                color: >-
+                  {% if is_p1 %}#FF0000{% elif is_p2 %}#FF8C00{% else %}#70D7F4{% endif %}
+                background_color: "#101820"
+                text_color: "#FFFFFF"
+                progress_bar_color: >-
+                  {% if is_p1 %}#FF0000{% elif is_p2 %}#FF8C00{% else %}#70D7F4{% endif %}
                 actions:
                   - action: URI
                     title: Open incidentkaart
@@ -179,6 +191,13 @@ sequence:
                 rawText: "{{ melding_tekst }}"
                 color: >-
                   {% if is_p1 %}#FF0000{% elif is_p2 %}#FF8C00{% else %}#FFFFFF{% endif %}
+          - delay:
+              seconds: 300
+          - action: notify.mobile_app_iphone_16_van_thom
+            data:
+              message: clear_notification
+              data:
+                tag: smartmatrix-p2000
 
       - alias: TTS-uitrukmelding
         sequence:
