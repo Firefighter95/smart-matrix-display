@@ -112,10 +112,31 @@ bool ConfigManager::saveJson(const String& json) {
   return persistDocument(document);
 }
 
-bool ConfigManager::persistDocument(JsonDocument& document) {
-  JsonDocument base;
-  base.set(document);
+bool ConfigManager::saveLayout(const String& json) {
+  JsonDocument layout;
+  if (deserializeJson(layout, json) != DeserializationError::Ok || !layout.is<JsonObject>() ||
+      !layout["id"].is<const char*>() || !layout["elements"].is<JsonArray>()) {
+    return false;
+  }
 
+  JsonDocument document;
+  if (deserializeJson(document, configJson_) != DeserializationError::Ok || !document.is<JsonObject>()) return false;
+  JsonArray layouts = document["layouts"].as<JsonArray>();
+  if (layouts.isNull()) layouts = document["layouts"].to<JsonArray>();
+
+  const String layoutId = layout["id"].as<String>();
+  for (JsonObject existing : layouts) {
+    if (String(existing["id"] | "") != layoutId) continue;
+    existing.clear();
+    existing.set(layout.as<JsonObjectConst>());
+    return persistDocument(document);
+  }
+
+  layouts.add(layout.as<JsonObjectConst>());
+  return persistDocument(document);
+}
+
+bool ConfigManager::persistDocument(JsonDocument& document) {
   JsonArrayConst layouts = document["layouts"].as<JsonArrayConst>();
   const uint8_t layoutCount = layouts.isNull() ? 0 : static_cast<uint8_t>(min<size_t>(layouts.size(), 32));
   for (uint8_t index = 0; index < layoutCount; ++index) {
@@ -132,13 +153,13 @@ bool ConfigManager::persistDocument(JsonDocument& document) {
   preferences_.putUChar("lcount", layoutCount);
   preferences_.remove("layouts");
 
-  base.remove("layouts");
-  String baseJson;
-  serializeJson(base, baseJson);
-  if (preferences_.putString("config", baseJson) != baseJson.length()) return false;
-
   String fullJson;
   serializeJson(document, fullJson);
+  document.remove("layouts");
+  String baseJson;
+  serializeJson(document, baseJson);
+  if (preferences_.putString("config", baseJson) != baseJson.length()) return false;
+
   configJson_ = fullJson;
   return true;
 }

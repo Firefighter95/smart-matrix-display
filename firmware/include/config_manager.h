@@ -11,6 +11,7 @@ public:
   void begin();
   String json() const;
   bool saveJson(const String& json);
+  bool saveLayout(const String& json);
   bool saveWifi(const String& ssid, const String& password, const String& hostname);
   String wifiSsid();
   String wifiPassword();

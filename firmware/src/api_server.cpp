@@ -181,28 +181,9 @@ void ApiServer::begin() {
       request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_LAYOUT\",\"message\":\"Layout-id of afmetingen zijn ongeldig.\"}}");
       return;
     }
-    JsonDocument document;
-    if (deserializeJson(document, config_.json()) != DeserializationError::Ok) {
-      request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"CONFIG_ERROR\",\"message\":\"Config kon niet worden gelezen.\"}}");
-      return;
-    }
-    JsonArray layouts = document["layouts"].as<JsonArray>();
-    if (layouts.isNull()) layouts = document["layouts"].to<JsonArray>();
-    bool replaced = false;
-    for (JsonObject existing : layouts) {
-      if (String(existing["id"] | "") != layoutId) continue;
-      existing.clear();
-      for (JsonPair item : layout.as<JsonObject>()) existing[item.key()] = item.value();
-      replaced = true;
-      break;
-    }
-    if (!replaced) {
-      JsonObject added = layouts.add<JsonObject>();
-      for (JsonPair item : layout.as<JsonObject>()) added[item.key()] = item.value();
-    }
-    String fullConfig;
-    serializeJson(document, fullConfig);
-    if (!config_.saveJson(fullConfig)) {
+    String layoutJson;
+    serializeJson(layout, layoutJson);
+    if (!config_.saveLayout(layoutJson)) {
       request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"CONFIG_ERROR\",\"message\":\"Layout kon niet worden opgeslagen.\"}}");
       return;
     }

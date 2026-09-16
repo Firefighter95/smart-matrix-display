@@ -35,7 +35,9 @@ Sommige KNMI-integraties tonen code, omschrijving, verwachting, waarschuwing, ne
 
 De snapshotvelden zijn `weatherCode`, `description`, `forecast`, `warning`, `precipitationTodayProbability`, `precipitationTomorrowProbability`, `globalRadiationWm2`, `windDirection` en `sunState`. De standaard Weather Clock toont weercode en omschrijving met kleur afgestemd op de code, verwachting, waarschuwing, temperatuur, windsnelheid in m/s en neerslagkans vandaag/morgen. De overige velden blijven beschikbaar voor eigen layouts en als HA-sensors.
 
-Kies in de lokale portal onder **Klok → Weerklok** de layout. De preview en firmware gebruiken dezelfde 128×64 layout en rekent `windSpeedKph` om naar m/s.
+Kies in de lokale portal onder **Klok → Weerklok** de layout. De preview en firmware gebruiken dezelfde 128×64 layout en rekenen `windSpeedKph` om naar m/s. Vanuit de Layout Builder kun je een opgeslagen layout ook tijdelijk tien seconden op het display tonen; daarna keert het scherm terug naar de ingestelde idle-layout.
+
+Instellingen, layouts en de actieve idle-layout worden in niet-vluchtig geheugen op de ESP32 opgeslagen. Een reboot hoort deze dus niet naar fabriekswaarden terug te zetten. De actuele weersnapshot zelf is runtime-data en wordt na een reboot opnieuw door de HACS-integratie aangeleverd.
 
 ## Forecasts
 
