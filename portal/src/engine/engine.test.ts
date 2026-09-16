@@ -29,13 +29,13 @@ describe('layout and variable contracts', () => {
     }
   });
 
-  it('includes weather details and uses the KNMI code color in the weather clock', () => {
+  it('keeps the weather clock inside the bezel and uses a clean code-colored summary', () => {
     const weatherLayout = createDefaultLayouts().find((layout) => layout.id === 'clock-weather');
-    expect(weatherLayout?.elements.map((item) => item.id)).toContain('weather-summary');
-    expect(weatherLayout?.elements.map((item) => item.id)).toContain('weather-warning');
-    expect(weatherLayout?.elements.map((item) => item.id)).toContain('rain-chances');
-    expect(weatherLayout?.elements.map((item) => item.id)).toContain('temperature-wind');
+    expect(weatherLayout?.elements.map((item) => item.id)).toEqual(['time', 'date', 'weather-summary', 'forecast-summary', 'weather-metrics']);
     expect(weatherLayout?.elements.find((item) => item.id === 'weather-summary')?.properties?.colorFromWeatherCode).toBe(true);
+    expect(weatherLayout?.elements.find((item) => item.id === 'weather-summary')?.dataSource?.path).toBe('description');
+    expect(weatherLayout?.elements.find((item) => item.id === 'weather-metrics')?.dataSource?.path).toBe('metricsSummary');
+    expect(weatherLayout?.elements.every((item) => item.x >= 4 && item.x + item.width <= 124 && item.y >= 4 && item.y + item.height <= 60)).toBe(true);
     expect(weatherCodeColor({ source: 'home_assistant', condition: 'cloudy', weatherCode: 'Groen', temperatureC: 13.9, observedAt: 'now' })).toBe('#72E6A8');
     expect(weatherCodeColor({ source: 'home_assistant', condition: 'cloudy', weatherCode: 'Oranje', temperatureC: 13.9, observedAt: 'now' })).toBe('#FF8C00');
   });

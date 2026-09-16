@@ -201,12 +201,44 @@ const dataValue = (element: LayoutElement, status: DeviceStatus, event: DisplayE
     const temperature = weather?.temperatureC.toFixed(1);
     const rainToday = weather?.precipitationTodayProbability;
     const rainTomorrow = weather?.precipitationTomorrowProbability;
+    const warning = weather?.warning?.trim();
+    const warningIsSafe = !warning || ['veilig', 'safe', 'geen waarschuwing', 'geen waarschuwingen'].includes(warning.toLocaleLowerCase('nl-NL'));
+    const weatherLine = (warningIsSafe ? weather?.forecast : warning)?.split(/[.!?\r\n]/, 1)[0]?.trim() ?? '';
+    const forecastSummary = weatherLine.length <= 20
+      ? weatherLine
+      : `${weatherLine.slice(0, 17).replace(/\s+\S*$/, '').trim() || weatherLine.slice(0, 17).trim()}...`;
+    const metrics = [
+      temperature === undefined ? undefined : `${temperature}C`,
+      windSpeedMs === undefined ? undefined : `W${windSpeedMs}m/s`,
+      rainToday === undefined ? undefined : `V${Math.round(rainToday)}%`,
+      rainTomorrow === undefined ? undefined : `M${Math.round(rainTomorrow)}%`,
+    ].filter((part): part is string => Boolean(part));
+    let metricsSummary = metrics.join(' ');
+    if (metricsSummary.length > 20) metricsSummary = metricsSummary.replaceAll('%', '');
+    if (metricsSummary.length > 20) {
+      metricsSummary = [
+        temperature === undefined ? undefined : `${Math.round(weather!.temperatureC)}C`,
+        windSpeedMs === undefined ? undefined : `W${windSpeedMs}m/s`,
+        rainToday === undefined ? undefined : `V${Math.round(rainToday)}`,
+        rainTomorrow === undefined ? undefined : `M${Math.round(rainTomorrow)}`,
+      ].filter((part): part is string => Boolean(part)).join(' ');
+    }
+    if (metricsSummary.length > 20) {
+      metricsSummary = [
+        temperature === undefined ? undefined : `${Math.round(weather!.temperatureC)}C`,
+        windSpeedMs === undefined ? undefined : `W${Math.round(Number(windSpeedMs))}`,
+        rainToday === undefined ? undefined : `V${Math.round(rainToday)}`,
+        rainTomorrow === undefined ? undefined : `M${Math.round(rainTomorrow)}`,
+      ].filter((part): part is string => Boolean(part)).join(' ');
+    }
     const derived = {
       ...weather,
       summary: [weather?.weatherCode, weather?.description].filter(Boolean).join(' '),
       windSpeedMs,
       temperatureWindSummary: [temperature === undefined ? undefined : `${temperature}C`, windSpeedMs === undefined ? undefined : `${windSpeedMs}M/S`].filter(Boolean).join(' '),
       rainSummary: [rainToday === undefined ? undefined : `V${rainToday}%`, rainTomorrow === undefined ? undefined : `M${rainTomorrow}%`].filter(Boolean).join(' '),
+      forecastSummary,
+      metricsSummary,
     };
     return pathValue(derived, source.path);
   }

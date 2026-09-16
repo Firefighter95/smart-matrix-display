@@ -131,6 +131,60 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
             value += "M" + tomorrow + "%";
           }
         }
+        else if (path == "forecastSummary") {
+          String warning = weather["warning"] | "";
+          warning.trim();
+          String normalizedWarning = warning;
+          normalizedWarning.toLowerCase();
+          if (warning.isEmpty() || normalizedWarning == "veilig" || normalizedWarning == "safe" || normalizedWarning == "geen waarschuwing" || normalizedWarning == "geen waarschuwingen") {
+            value = weather["forecast"] | "";
+          } else {
+            value = warning;
+          }
+          value.trim();
+          int sentenceEnd = value.indexOf('.');
+          if (sentenceEnd < 0) sentenceEnd = value.indexOf('!');
+          if (sentenceEnd < 0) sentenceEnd = value.indexOf('?');
+          if (sentenceEnd >= 0) value = value.substring(0, sentenceEnd);
+          value.trim();
+          if (value.length() > 20) {
+            String prefix = value.substring(0, 17);
+            const int lastSpace = prefix.lastIndexOf(' ');
+            if (lastSpace > 0) prefix = prefix.substring(0, lastSpace);
+            value = prefix + "...";
+          }
+        }
+        else if (path == "metricsSummary") {
+          String temperature;
+          String wind;
+          String today;
+          String tomorrow;
+          if (weather["temperatureC"].is<float>()) temperature = String(weather["temperatureC"].as<float>(), 1) + "C";
+          if (weather["windSpeedKph"].is<float>()) wind = "W" + String(weather["windSpeedKph"].as<float>() / 3.6f, 1) + "m/s";
+          if (weather["precipitationTodayProbability"].is<float>()) today = "V" + String(static_cast<int>(roundf(weather["precipitationTodayProbability"].as<float>()))) + "%";
+          if (weather["precipitationTomorrowProbability"].is<float>()) tomorrow = "M" + String(static_cast<int>(roundf(weather["precipitationTomorrowProbability"].as<float>()))) + "%";
+          auto composeMetrics = [](const String& temp, const String& windValue, const String& todayValue, const String& tomorrowValue, bool includePercent) {
+            String parts[4] = {temp, windValue, todayValue, tomorrowValue};
+            String result;
+            for (uint8_t i = 0; i < 4; ++i) {
+              if (parts[i].isEmpty()) continue;
+              if (!includePercent && i >= 2) parts[i].replace("%", "");
+              if (!result.isEmpty()) result += " ";
+              result += parts[i];
+            }
+            return result;
+          };
+          value = composeMetrics(temperature, wind, today, tomorrow, true);
+          if (value.length() > 20) value = composeMetrics(temperature, wind, today, tomorrow, false);
+          if (value.length() > 20 && weather["temperatureC"].is<float>()) {
+            temperature = String(static_cast<int>(roundf(weather["temperatureC"].as<float>()))) + "C";
+            value = composeMetrics(temperature, wind, today, tomorrow, false);
+          }
+          if (value.length() > 20 && weather["windSpeedKph"].is<float>()) {
+            wind = "W" + String(static_cast<int>(roundf(weather["windSpeedKph"].as<float>() / 3.6f)));
+            value = composeMetrics(temperature, wind, today, tomorrow, false);
+          }
+        }
         else value = valueAt(weather.as<JsonObjectConst>(), path);
     } else if (sourceType == "system") {
       if (path == "wifiRssi") value = String(wifi_.rssi());
