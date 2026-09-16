@@ -34,6 +34,8 @@ from .const import (
     ATTR_ENABLED,
     ATTR_EVENT_TYPE,
     ATTR_INCIDENT_ID,
+    ATTR_INCIDENT_TYPE,
+    ATTR_GESPREKSGROEP,
     ATTR_LAYOUT_ID,
     ATTR_LOCATION,
     ATTR_MESSAGE,
@@ -46,6 +48,7 @@ from .const import (
     ATTR_STREET,
     ATTR_TITLE,
     ATTR_UNITS,
+    ATTR_VEHICLE_NUMBERS,
     ATTR_WEATHER_ENTITY,
     CONF_HOST,
     CONF_PORT,
@@ -114,11 +117,15 @@ P2000_SCHEMA = _targeted_schema(
         vol.Optional(ATTR_LOCATION, default=""): cv.string,
         vol.Optional(ATTR_CAPCODE, default=""): cv.string,
         vol.Optional(ATTR_DISCIPLINE, default=""): cv.string,
+        vol.Optional(ATTR_GESPREKSGROEP, default=""): cv.string,
+        vol.Optional(ATTR_INCIDENT_TYPE, default=""): cv.string,
         vol.Optional(ATTR_STREET, default=""): cv.string,
         vol.Optional(ATTR_PLACE, default=""): cv.string,
         vol.Optional(ATTR_REGION, default=""): cv.string,
         vol.Optional(ATTR_UNITS, default=""): cv.string,
+        vol.Optional(ATTR_VEHICLE_NUMBERS, default=""): cv.string,
         vol.Optional(ATTR_INCIDENT_ID, default=""): cv.string,
+        vol.Optional(ATTR_LAYOUT_ID): cv.string,
         vol.Optional(ATTR_DURATION, default=30): vol.All(
             vol.Coerce(int), vol.Range(min=1, max=86400)
         ),
@@ -285,6 +292,14 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
                 message = f"{location}\n{message}"
             payload = _device_payload(call)
             payload[ATTR_MESSAGE] = message
+            if payload.get(ATTR_INCIDENT_TYPE):
+                payload["incidentType"] = payload.pop(ATTR_INCIDENT_TYPE)
+            if payload.get(ATTR_GESPREKSGROEP):
+                payload["group"] = payload[ATTR_GESPREKSGROEP]
+            if payload.get(ATTR_VEHICLE_NUMBERS):
+                payload["vehicleNumbers"] = payload[ATTR_VEHICLE_NUMBERS]
+            elif payload.get(ATTR_UNITS):
+                payload["vehicleNumbers"] = payload[ATTR_UNITS]
             event = {
                 "source": "p2000",
                 "type": "dispatch",

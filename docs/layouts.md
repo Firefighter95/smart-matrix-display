@@ -25,10 +25,16 @@ HACS-service `smart_matrix_display.show_event` gebruikt kunnen worden:
 - `p2000-fire-p2`: donkere oranje achtergrond en oranje rand;
 - `p2000-generic`: donkere cyaan achtergrond en cyaan rand.
 
-De gegevens worden verdeeld over vaste matrixregels: prioriteit en discipline,
-plaats, omschrijving, straat, regio en eenheden. Regels zijn bewust kort omdat
+De brandweer-layout toont geen overbodige disciplinekop. De gegevens worden
+verdeeld over vaste matrixregels: prioriteit, incidentsoort, gespreksgroep,
+straat, plaats en voertuig(en). Regels zijn bewust kort omdat
 de matrixfont ongeveer 20 tekens per regel kan tonen. Langere teksten kunnen
 later met pagina's of scrollen worden uitgebreid.
+
+De aanbevolen payloadvelden zijn `priority`, `incidentType`, `group`, `street`,
+`place` en `vehicleNumbers`. De HA-automation leidt `BMD-01` en zes-cijferige
+voertuignummers automatisch uit de ruwe melding af wanneer deze velden niet
+apart worden aangeleverd.
 
 In het eventcontract gebruikt de firmware `layoutId` (camelCase). De HACS-
 service accepteert `layout_id` en zet dit automatisch om, zodat bestaande Home

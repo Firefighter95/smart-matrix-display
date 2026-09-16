@@ -106,6 +106,38 @@ send_p2000:
       description: Optional source capcode for automation/debugging.
       selector:
         text:
+    incident_type:
+      name: Incident type
+      description: Short description such as BR WONING or REANIMATIE.
+      selector:
+        text:
+    gespreksgroep:
+      name: Gespreksgroep
+      description: Full radio conversation group, for example BMD-01.
+      selector:
+        text:
+    street:
+      name: Street
+      selector:
+        text:
+    place:
+      name: Place
+      selector:
+        text:
+    units:
+      name: Vehicle numbers
+      description: Vehicle numbers separated by spaces, for example 258131.
+      selector:
+        text:
+    voertuignummers:
+      name: Vehicle numbers (full)
+      selector:
+        text:
+    layout_id:
+      name: Layout ID
+      description: Optional saved layout; P1/P2 defaults can be selected explicitly.
+      selector:
+        text:
     duration:
       name: Duration
       default: 30

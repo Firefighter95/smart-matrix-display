@@ -20,6 +20,15 @@ fields:
   discipline:
     description: Discipline
     example: Brandweer
+  gespreksgroep:
+    description: Volledige gespreksgroep, bijvoorbeeld BMD-01
+    example: BMD-01
+  incident_type:
+    description: Korte incidentsoort, bijvoorbeeld BR WONING of REANIMATIE
+    example: BR WONING
+  voertuignummers:
+    description: Voertuignummers, gescheiden door spaties
+    example: 258131
   regio:
     description: Veiligheidsregio
     example: VR Flevoland
@@ -45,6 +54,37 @@ sequence:
         {{ prioriteit | default('', true) | string | upper | trim }}
       discipline_tekst: >-
         {{ discipline | default('Brandweer', true) | string | trim }}
+      gespreksgroep_tekst: >-
+        {% set opgegeven = gespreksgroep | default('', true) | string | upper | trim %}
+        {% if opgegeven %}
+          {{ opgegeven }}
+        {% else %}
+          {% set groepen = melding_tekst | regex_findall('(?i)\\b[A-Z]{2,5}-\\d{2}\\b') %}
+          {{ groepen[0] if groepen else '' }}
+        {% endif %}
+      voertuigen_tekst: >-
+        {% set opgegeven = voertuignummers | default('', true) | string | trim %}
+        {% if opgegeven %}
+          {{ opgegeven }}
+        {% else %}
+          {% set voertuigen = melding_tekst | regex_findall('(?<!\\d)\\d{6}(?!\\d)') %}
+          {{ voertuigen | join(' ') }}
+        {% endif %}
+      straat_tekst: >-
+        {{ adres_tekst.split(',')[0] | trim }}
+      incident_tekst: >-
+        {% set opgegeven = incident_type | default('', true) | string | trim %}
+        {% if opgegeven %}
+          {{ opgegeven }}
+        {% else %}
+          {% set tekst = melding_tekst %}
+          {% if prio %}{% set tekst = tekst | replace(prio, '') %}{% endif %}
+          {% if gespreksgroep_tekst %}{% set tekst = tekst | replace(gespreksgroep_tekst, '') %}{% endif %}
+          {% if straat_tekst %}{% set tekst = tekst | replace(straat_tekst, '') %}{% endif %}
+          {% if plaats_tekst %}{% set tekst = tekst | replace(plaats_tekst, '') %}{% endif %}
+          {% if voertuigen_tekst %}{% set tekst = tekst | replace(voertuigen_tekst, '') %}{% endif %}
+          {{ tekst | trim(' .,-') }}
+        {% endif %}
       regio_tekst: >-
         {{ regio | default('Onbekende regio', true) | string | trim }}
       bron_tekst: >-
@@ -181,13 +221,17 @@ sequence:
               payload:
                 title: "{{ titel | trim }}"
                 message: "{{ melding_tekst }}"
-                description: "{{ melding_tekst }}"
+                description: "{{ incident_tekst }}"
+                incidentType: "{{ incident_tekst }}"
                 priority: "{{ prio }}"
                 discipline: "{{ discipline_tekst }}"
+                gespreksgroep: "{{ gespreksgroep_tekst }}"
+                group: "{{ gespreksgroep_tekst }}"
                 place: "{{ plaats_tekst }}"
-                street: "{{ adres_tekst }}"
+                street: "{{ straat_tekst }}"
                 region: "{{ regio_tekst }}"
-                units: ""
+                units: "{{ voertuigen_tekst }}"
+                vehicleNumbers: "{{ voertuigen_tekst }}"
                 rawText: "{{ melding_tekst }}"
                 color: >-
                   {% if is_p1 %}#FF0000{% elif is_p2 %}#FF8C00{% else %}#FFFFFF{% endif %}

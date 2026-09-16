@@ -30,6 +30,17 @@ const layout = (id: string, name: string, category: LayoutCategory, elements: La
   metadata: { description, source: 'smart-matrix-defaults', createdAt: nowIso(), updatedAt: nowIso() },
 });
 
+const p2000FireLayout = (id: string, name: string, accent: string, backgroundColor: string, description: string): LayoutModel => layout(id, name, 'p2000', [
+  element({ id: 'background', type: 'filled_rectangle', x: 0, y: 0, width: 128, height: 64, backgroundColor }),
+  element({ id: 'border', type: 'rectangle', x: 0, y: 0, width: 128, height: 64, color: accent }),
+  element({ id: 'priority', type: 'dynamic_text', x: 2, y: 2, width: 124, height: 8, text: '{{priority}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'priority' } }),
+  element({ id: 'incident', type: 'dynamic_text', x: 2, y: 12, width: 124, height: 8, text: '{{incidentType}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'incidentType' } }),
+  element({ id: 'group', type: 'dynamic_text', x: 2, y: 22, width: 124, height: 8, text: '{{group}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'group' } }),
+  element({ id: 'street', type: 'dynamic_text', x: 2, y: 32, width: 124, height: 8, text: '{{street}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'street' } }),
+  element({ id: 'place', type: 'dynamic_text', x: 2, y: 42, width: 124, height: 8, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),
+  element({ id: 'vehicles', type: 'dynamic_text', x: 2, y: 52, width: 124, height: 8, text: '{{vehicleNumbers}}', align: 'center', color: accent, dataSource: { type: 'p2000', path: 'vehicleNumbers' } }),
+], description);
+
 export const createDefaultLayouts = (): LayoutModel[] => [
   layout('clock-minimal', 'Clock Minimal', 'clock', [
     element({ id: 'time', type: 'clock', x: 0, y: 12, width: 128, height: 28, scale: 4, align: 'center', color: '#F4F7FF' }),
@@ -73,10 +84,15 @@ export const createDefaultLayouts = (): LayoutModel[] => [
     element({ id: 'description', type: 'dynamic_text', x: 3, y: 31, width: 122, height: 28, text: '{{description}}', scale: 1, align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'description' }, overflow: 'wrap' }),
   ], 'Algemene P2000-melding.'),
   layout('p2000-fire', 'P2000 Brandweer', 'p2000', [
-    element({ id: 'title', type: 'text', x: 0, y: 3, width: 128, height: 12, text: 'BRANDWEER', scale: 2, align: 'center', color: '#F47F8E' }),
-    element({ id: 'place', type: 'dynamic_text', x: 0, y: 23, width: 128, height: 9, text: '{{place}}', align: 'center', color: '#F2B866', dataSource: { type: 'p2000', path: 'place' } }),
-    element({ id: 'description', type: 'dynamic_text', x: 3, y: 36, width: 122, height: 23, text: '{{description}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'description' }, overflow: 'wrap' }),
-  ], 'P2000-brandweerweergave.'),
+    element({ id: 'priority', type: 'dynamic_text', x: 2, y: 2, width: 124, height: 8, text: '{{priority}}', align: 'center', color: '#F47F8E', dataSource: { type: 'p2000', path: 'priority' } }),
+    element({ id: 'incident', type: 'dynamic_text', x: 2, y: 12, width: 124, height: 8, text: '{{incidentType}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'incidentType' } }),
+    element({ id: 'group', type: 'dynamic_text', x: 2, y: 22, width: 124, height: 8, text: '{{group}}', align: 'center', color: '#FFB0B0', dataSource: { type: 'p2000', path: 'group' } }),
+    element({ id: 'street', type: 'dynamic_text', x: 2, y: 32, width: 124, height: 8, text: '{{street}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'street' } }),
+    element({ id: 'place', type: 'dynamic_text', x: 2, y: 42, width: 124, height: 8, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),
+    element({ id: 'vehicles', type: 'dynamic_text', x: 2, y: 52, width: 124, height: 8, text: '{{vehicleNumbers}}', align: 'center', color: '#FF7070', dataSource: { type: 'p2000', path: 'vehicleNumbers' } }),
+  ], 'P2000-brandweerweergave met prioriteit, incident, gespreksgroep, locatie en voertuigen.'),
+  p2000FireLayout('p2000-fire-p1', 'P1 Brandweer', '#FF0000', '#260000', 'P1 met incidentsoort, gespreksgroep, locatie en voertuignummers.'),
+  p2000FireLayout('p2000-fire-p2', 'P2 Brandweer', '#FF8C00', '#211300', 'P2 met incidentsoort, gespreksgroep, locatie en voertuignummers.'),
   layout('p2000-ambulance', 'P2000 Ambulance', 'p2000', [
     element({ id: 'title', type: 'text', x: 0, y: 3, width: 128, height: 12, text: 'AMBULANCE', scale: 2, align: 'center', color: '#F2B866' }),
     element({ id: 'place', type: 'dynamic_text', x: 0, y: 23, width: 128, height: 9, text: '{{place}}', align: 'center', color: '#F4F7FF', dataSource: { type: 'p2000', path: 'place' } }),

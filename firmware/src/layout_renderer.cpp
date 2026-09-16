@@ -84,7 +84,7 @@ String LayoutRenderer::replaceVariables(String text, JsonObjectConst payload, Js
   text = replaceAll(text, "{{temperature}}", temperature);
   text = replaceAll(text, "{{wind}}", wind);
   text = replaceAll(text, "{{wifi_rssi}}", String(wifi_.rssi()));
-  const char* variables[] = {"title", "message", "priority", "discipline", "location", "street", "place", "description", "units", "rawText", "incidentId"};
+  const char* variables[] = {"title", "message", "priority", "discipline", "location", "street", "place", "description", "incidentType", "gespreksgroep", "group", "units", "vehicleNumbers", "vehicles", "rawText", "incidentId"};
   for (const char* variable : variables) {
     text = replaceAll(text, String("{{") + variable + "}}", valueAt(payload, variable));
   }

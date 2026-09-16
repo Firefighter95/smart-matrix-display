@@ -51,10 +51,13 @@ ATTR_PROFILE_ID = "profile_id"
 ATTR_BRIGHTNESS = "brightness"
 ATTR_ENABLED = "enabled"
 ATTR_DISCIPLINE = "discipline"
+ATTR_GESPREKSGROEP = "gespreksgroep"
+ATTR_INCIDENT_TYPE = "incident_type"
 ATTR_STREET = "street"
 ATTR_PLACE = "place"
 ATTR_REGION = "region"
 ATTR_UNITS = "units"
+ATTR_VEHICLE_NUMBERS = "voertuignummers"
 ATTR_INCIDENT_ID = "incident_id"
 
 ALIGNMENTS = ("left", "center", "right")
