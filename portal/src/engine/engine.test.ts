@@ -17,6 +17,14 @@ describe('layout and variable contracts', () => {
     expect(createDefaultLayouts().every((layout) => validateLayout(layout).length === 0)).toBe(true);
   });
 
+  it('uses a three-pixel border for P2000 alert layouts', () => {
+    const layouts = createDefaultLayouts();
+    for (const id of ['p2000-fire-p1', 'p2000-fire-p2', 'p2000-generic']) {
+      const border = layouts.find((layout) => layout.id === id)?.elements.find((item) => item.id === 'border');
+      expect(border?.properties?.strokeWidth).toBe(3);
+    }
+  });
+
   it('migrates clock blocks without leaving the matrix', () => {
     const migrated = migrateClockToLayout({ layout: 'builder', use24Hour: true, showSeconds: false, showDate: true, timeColor: '#fff', dateColor: '#fff', dividerColor: '#fff', backgroundColor: '#000', showStatusIndicator: true, timezone: 'Europe/Amsterdam', elements: [{ id: 'fault', enabled: true, x: 3, y: 57, scale: 1 }] });
     expect(validateLayout(migrated)).toEqual([]);

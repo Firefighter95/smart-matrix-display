@@ -252,8 +252,13 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
     ctx.rect(Math.max(0, item.x), Math.max(0, item.y), Math.max(1, item.width), Math.max(1, item.height));
     ctx.clip();
     if (item.type === 'rectangle') {
-      ctx.strokeStyle = item.color ?? '#F4F7FF';
-      ctx.strokeRect(item.x, item.y, item.width, item.height);
+      ctx.fillStyle = item.color ?? '#F4F7FF';
+      const requestedStroke = Number(item.properties?.strokeWidth ?? 1);
+      const strokeWidth = Math.max(1, Math.min(Math.floor(requestedStroke) || 1, Math.floor(Math.min(item.width, item.height) / 2) || 1));
+      ctx.fillRect(item.x, item.y, item.width, strokeWidth);
+      ctx.fillRect(item.x, item.y + item.height - strokeWidth, item.width, strokeWidth);
+      ctx.fillRect(item.x, item.y + strokeWidth, strokeWidth, Math.max(0, item.height - strokeWidth * 2));
+      ctx.fillRect(item.x + item.width - strokeWidth, item.y + strokeWidth, strokeWidth, Math.max(0, item.height - strokeWidth * 2));
     } else if (item.type === 'filled_rectangle') {
       ctx.fillStyle = item.backgroundColor ?? item.color ?? '#F4F7FF';
       ctx.fillRect(item.x, item.y, item.width, item.height);

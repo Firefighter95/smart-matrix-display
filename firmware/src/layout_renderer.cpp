@@ -158,10 +158,20 @@ void LayoutRenderer::render(JsonObjectConst layout, JsonObjectConst payload, Jso
     const String color = element["color"] | "#F4F7FF";
     if (type == "rectangle") {
       const uint16_t lineColor = colorFromHex(color, 0xFFFF);
-      display_.output()->drawFastHLine(x, y, width, lineColor);
-      display_.output()->drawFastHLine(x, y + height - 1, width, lineColor);
-      display_.output()->drawFastVLine(x, y, height, lineColor);
-      display_.output()->drawFastVLine(x + width - 1, y, height, lineColor);
+      const JsonObjectConst properties = element["properties"].as<JsonObjectConst>();
+      const int16_t requestedStroke = properties["strokeWidth"] | 1;
+      const int16_t strokeWidth = constrain(requestedStroke, 1, max<int16_t>(1, min(width, height) / 2));
+      for (int16_t inset = 0; inset < strokeWidth; ++inset) {
+        const int16_t borderX = x + inset;
+        const int16_t borderY = y + inset;
+        const int16_t borderWidth = width - (inset * 2);
+        const int16_t borderHeight = height - (inset * 2);
+        if (borderWidth <= 0 || borderHeight <= 0) break;
+        display_.output()->drawFastHLine(borderX, borderY, borderWidth, lineColor);
+        display_.output()->drawFastHLine(borderX, borderY + borderHeight - 1, borderWidth, lineColor);
+        display_.output()->drawFastVLine(borderX, borderY, borderHeight, lineColor);
+        display_.output()->drawFastVLine(borderX + borderWidth - 1, borderY, borderHeight, lineColor);
+      }
     } else if (type == "filled_rectangle") {
       display_.output()->fillRect(x, y, width, height, colorFromHex(element["backgroundColor"] | color, 0xFFFF));
     } else if (type == "line") {
