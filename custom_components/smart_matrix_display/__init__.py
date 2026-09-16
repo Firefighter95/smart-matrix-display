@@ -317,6 +317,8 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
         async def handle_show_event(call: ServiceCall) -> None:
             payload = {key: value for key, value in _device_payload(call).items() if key not in {ATTR_SOURCE, ATTR_EVENT_TYPE, ATTR_PAYLOAD}}
+            if ATTR_LAYOUT_ID in payload:
+                payload["layoutId"] = payload.pop(ATTR_LAYOUT_ID)
             payload.update({"source": call.data[ATTR_SOURCE], "type": call.data[ATTR_EVENT_TYPE], "payload": call.data.get(ATTR_PAYLOAD, {})})
             await _call_all(_target_runtimes(hass, call), "async_send_event", payload)
 

@@ -16,6 +16,34 @@ void ConfigManager::begin() {
     preferences_.putString("config", configJson_);
     return;
   }
+  bool storageMigration = false;
+  const uint8_t storedLayoutCount = preferences_.getUChar("lcount", 0);
+  if (storedLayoutCount > 0) {
+    JsonArray storedLayouts = document["layouts"].to<JsonArray>();
+    storedLayouts.clear();
+    for (uint8_t index = 0; index < storedLayoutCount; ++index) {
+      const String key = String("l") + index;
+      const String storedLayout = preferences_.getString(key.c_str(), "");
+      if (storedLayout.isEmpty()) continue;
+      JsonDocument layoutDocument;
+      if (deserializeJson(layoutDocument, storedLayout) == DeserializationError::Ok && layoutDocument.is<JsonObject>()) {
+        storedLayouts.add(layoutDocument.as<JsonObjectConst>());
+      }
+    }
+  } else {
+    // Compatibility with the first split-storage build, which used one
+    // (potentially too large) NVS string for the complete layout array.
+    const String storedLayouts = preferences_.getString("layouts", "");
+    if (!storedLayouts.isEmpty()) {
+      JsonDocument layoutsDocument;
+      if (deserializeJson(layoutsDocument, storedLayouts) == DeserializationError::Ok && layoutsDocument.is<JsonArray>()) {
+        document["layouts"] = layoutsDocument.as<JsonArrayConst>();
+        storageMigration = true;
+      }
+    } else if (document["layouts"].is<JsonArray>() && !document["layouts"].isNull() && document["layouts"].size() > 0) {
+      storageMigration = true;
+    }
+  }
   // Older production builds could persist a partial top-level config when a
   // portal update arrived before the full schema was present. Restore missing
   // objects from the current defaults without overwriting user values.
@@ -43,17 +71,18 @@ void ConfigManager::begin() {
     repaired = true;
   }
   const uint8_t storedVersion = document["schemaVersion"] | 1;
-  if (storedVersion < CURRENT_SCHEMA_VERSION || repaired) {
+  if (storedVersion < CURRENT_SCHEMA_VERSION || repaired || storageMigration) {
     if (storedVersion < 4) {
       String background = document["clock"]["backgroundColor"] | "";
       background.toLowerCase();
       if (background == "#050915") document["clock"]["backgroundColor"] = "#000000";
     }
     document["schemaVersion"] = CURRENT_SCHEMA_VERSION;
-    String migrated;
-    serializeJson(document, migrated);
-    configJson_ = migrated;
-    preferences_.putString("config", configJson_);
+    persistDocument(document);
+  } else {
+    String loaded;
+    serializeJson(document, loaded);
+    configJson_ = loaded;
   }
 }
 
@@ -66,10 +95,37 @@ bool ConfigManager::saveJson(const String& json) {
   if (deserializeJson(document, configJson_) != DeserializationError::Ok || !document.is<JsonObject>()) return false;
   for (JsonPair item : patch.as<JsonObject>()) document[item.key()] = item.value();
   document["schemaVersion"] = CURRENT_SCHEMA_VERSION;
-  String normalized;
-  serializeJson(document, normalized);
-  configJson_ = normalized;
-  preferences_.putString("config", configJson_);
+  return persistDocument(document);
+}
+
+bool ConfigManager::persistDocument(JsonDocument& document) {
+  JsonDocument base;
+  base.set(document);
+
+  JsonArrayConst layouts = document["layouts"].as<JsonArrayConst>();
+  const uint8_t layoutCount = layouts.isNull() ? 0 : static_cast<uint8_t>(min<size_t>(layouts.size(), 32));
+  for (uint8_t index = 0; index < layoutCount; ++index) {
+    String layoutJson;
+    serializeJson(layouts[index], layoutJson);
+    const String key = String("l") + index;
+    if (preferences_.putString(key.c_str(), layoutJson) != layoutJson.length()) return false;
+  }
+  const uint8_t oldLayoutCount = preferences_.getUChar("lcount", 0);
+  for (uint8_t index = layoutCount; index < oldLayoutCount; ++index) {
+    const String key = String("l") + index;
+    preferences_.remove(key.c_str());
+  }
+  preferences_.putUChar("lcount", layoutCount);
+  preferences_.remove("layouts");
+
+  base.remove("layouts");
+  String baseJson;
+  serializeJson(base, baseJson);
+  if (preferences_.putString("config", baseJson) != baseJson.length()) return false;
+
+  String fullJson;
+  serializeJson(document, fullJson);
+  configJson_ = fullJson;
   return true;
 }
 
@@ -87,6 +143,13 @@ String ConfigManager::hostname() { return preferences_.getString("hostname", "sm
 
 bool ConfigManager::reset() {
   preferences_.remove("config");
+  preferences_.remove("layouts");
+  const uint8_t storedLayoutCount = preferences_.getUChar("lcount", 0);
+  for (uint8_t index = 0; index < storedLayoutCount; ++index) {
+    const String key = String("l") + index;
+    preferences_.remove(key.c_str());
+  }
+  preferences_.remove("lcount");
   preferences_.remove("wifi_ssid");
   preferences_.remove("wifi_pass");
   preferences_.remove("hostname");

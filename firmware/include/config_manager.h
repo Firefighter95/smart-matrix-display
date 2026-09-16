@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <Preferences.h>
 
 class ConfigManager {
@@ -17,6 +18,8 @@ public:
   bool reset();
 
 private:
+  bool persistDocument(JsonDocument& document);
+
   Preferences preferences_;
   String configJson_;
 };
