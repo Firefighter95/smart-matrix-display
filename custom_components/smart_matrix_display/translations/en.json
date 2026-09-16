@@ -57,5 +57,8 @@
     "switch": {
       "display_power": {"name": "Display power"}
     }
+    ,"media_player": {
+      "speaker": {"name": "Speaker"}
+    }
   }
 }

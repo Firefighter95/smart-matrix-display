@@ -28,6 +28,8 @@ public:
   bool startAssist();
   bool stopAssist();
   bool speakerTest();
+  bool playUrl(const String& url, const String& contentType);
+  bool stopPlayback();
   bool setVolume(uint8_t percentage);
   String json() const;
 

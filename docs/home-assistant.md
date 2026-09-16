@@ -41,6 +41,11 @@ Per display worden status-entiteiten aangemaakt voor:
 
 Daarnaast zijn knoppen beschikbaar voor **Clear display** en **Restart**.
 
+De ingebouwde speaker verschijnt per display ook als een Home Assistant
+`media_player`. Deze ondersteunt volume instellen, stoppen en afspelen van
+lokale Home Assistant-media. Daardoor kan dezelfde speaker voor TTS- en Assist-
+aankondigingen worden gebruikt.
+
 Voor bediening vanuit het dashboard zijn ook beschikbaar: een brightness-number, een power-switch en select-entiteiten voor het actieve layout en profiel. De layout/profile-selecties gebruiken het gedeelde `/api/v1/`-contract; firmwareondersteuning voor persistente layout/profile-opslag volgt nog.
 
 ## Berichten sturen
@@ -92,6 +97,27 @@ Ook beschikbaar:
 - `smart_matrix_display.set_layout`
 - `smart_matrix_display.set_profile`
 - `smart_matrix_display.skip_event`
+
+### Aankondigingen via de speaker
+
+Gebruik hiervoor de standaard Home Assistant TTS-actie. De exacte TTS-entity
+hangt af van de geïnstalleerde provider, bijvoorbeeld Piper:
+
+```yaml
+action:
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      media_player_entity_id: media_player.matrix_slaapkamer_speaker
+      message: "Attentie, de voordeur is geopend."
+      language: nl
+```
+
+De eerste embedded audiofase accepteert WAV PCM via lokaal HTTP. Gebruik daarom
+een TTS-provider die WAV uitvoert en zorg dat Home Assistant en het display op
+hetzelfde netwerk zitten. De native wake-word- en volledige Assist-transportlaag
+wordt in een volgende fase toegevoegd.
 
 `send_p2000` wordt als structured event met bron `p2000` en type `dispatch` verstuurd. Daardoor blijven discipline-, straat-, plaats-, regio-, capcode-, units- en incidentgegevens beschikbaar voor regels en layouts. `send_alert` gebruikt dezelfde event-engine met bron `home_assistant` en type `alert`.
 

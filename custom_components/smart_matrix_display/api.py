@@ -106,6 +106,29 @@ class SmartMatrixApiClient:
 
         return await self._request("POST", "/api/v1/audio/test")
 
+    async def async_set_volume(self, volume: int) -> dict[str, Any]:
+        """Set the speaker volume percentage."""
+
+        return await self._request(
+            "PUT", "/api/v1/audio/volume", {"volume": volume}
+        )
+
+    async def async_play_audio_url(
+        self, url: str, content_type: str = "audio/mpeg"
+    ) -> dict[str, Any]:
+        """Stream a Home Assistant media-source URL through the device speaker."""
+
+        return await self._request(
+            "POST",
+            "/api/v1/audio/play-url",
+            {"url": url, "contentType": content_type},
+        )
+
+    async def async_stop_audio_playback(self) -> dict[str, Any]:
+        """Stop current speaker playback."""
+
+        return await self._request("POST", "/api/v1/audio/playback/stop")
+
     async def async_get_config(self) -> dict[str, Any]:
         """Fetch persisted device configuration."""
 

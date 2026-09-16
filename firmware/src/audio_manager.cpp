@@ -1,6 +1,7 @@
 #include "audio_manager.h"
 
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 #include <cmath>
 
 #include "hardware_config.h"
@@ -29,6 +30,48 @@ constexpr uint8_t ES7210_MIC2_POWER = 0x48;
 constexpr uint8_t ES7210_MIC12_POWER = 0x4B;
 constexpr size_t SPEAKER_TEST_FRAMES = 8000; // 500 ms at 16 kHz
 constexpr size_t SPEAKER_TEST_BUFFER_FRAMES = 512;
+constexpr size_t MAX_AUDIO_URL_LENGTH = 255;
+constexpr size_t WAV_HEADER_BYTES = 12;
+constexpr size_t AUDIO_READ_BUFFER_BYTES = 1024;
+
+bool readHttpBytes(WiFiClient& stream, uint8_t* target, size_t length) {
+  size_t received = 0;
+  const uint32_t deadline = millis() + 3000;
+  while (received < length && millis() < deadline) {
+    const size_t available = stream.available();
+    if (available == 0) {
+      delay(1);
+      continue;
+    }
+    const size_t chunk = min(available, length - received);
+    const int read = stream.read(target + received, chunk);
+    if (read <= 0) return false;
+    received += static_cast<size_t>(read);
+  }
+  return received == length;
+}
+
+bool skipHttpBytes(WiFiClient& stream, uint32_t length) {
+  uint8_t buffer[AUDIO_READ_BUFFER_BYTES];
+  while (length > 0) {
+    const size_t chunk = min(static_cast<size_t>(length), sizeof(buffer));
+    if (!readHttpBytes(stream, buffer, chunk)) return false;
+    length -= static_cast<uint32_t>(chunk);
+  }
+  return true;
+}
+
+uint32_t littleEndian32(const uint8_t* bytes) {
+  return static_cast<uint32_t>(bytes[0]) |
+         (static_cast<uint32_t>(bytes[1]) << 8) |
+         (static_cast<uint32_t>(bytes[2]) << 16) |
+         (static_cast<uint32_t>(bytes[3]) << 24);
+}
+
+uint16_t littleEndian16(const uint8_t* bytes) {
+  return static_cast<uint16_t>(bytes[0]) |
+         (static_cast<uint16_t>(bytes[1]) << 8);
+}
 }
 
 void AudioManager::begin(ConfigManager& config, LogManager& logs) {
@@ -302,6 +345,103 @@ bool AudioManager::speakerTest() {
                         totalWritten == SPEAKER_TEST_FRAMES ? LogLevel::INFO : LogLevel::ERROR,
                         totalWritten == SPEAKER_TEST_FRAMES ? "Speaker-test gestart" : "Speaker-test schrijven mislukt");
   return totalWritten == SPEAKER_TEST_FRAMES;
+}
+
+bool AudioManager::playUrl(const String& url, const String& contentType) {
+  if (!initialized_ || !speakerPresent_ || url.isEmpty() || url.length() > MAX_AUDIO_URL_LENGTH) {
+    setError("Audio-URL is ongeldig of speaker niet beschikbaar");
+    return false;
+  }
+  if (!url.startsWith("http://") || contentType.indexOf("wav") < 0) {
+    setError("Alleen lokale HTTP WAV-audio wordt ondersteund");
+    return false;
+  }
+
+  stopAssist();
+  digitalWrite(HardwareConfig::AudioConfig::POWER_AMP_ENABLE_PIN, HIGH);
+  playbackUntilMs_ = millis() + 1000;
+
+  WiFiClient client;
+  HTTPClient http;
+  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+  if (!http.begin(client, url) || http.GET() != HTTP_CODE_OK) {
+    http.end();
+    setError("Audio-URL kon niet worden geopend");
+    playbackUntilMs_ = 0;
+    return false;
+  }
+
+  WiFiClient* stream = http.getStreamPtr();
+  uint8_t header[WAV_HEADER_BYTES];
+  bool completed = readHttpBytes(*stream, header, sizeof(header)) &&
+                   memcmp(header, "RIFF", 4) == 0 && memcmp(header + 8, "WAVE", 4) == 0;
+  uint16_t channels = 0;
+  uint16_t bitsPerSample = 0;
+  uint32_t sampleRate = 0;
+  uint32_t dataBytes = 0;
+  while (completed && dataBytes == 0) {
+    uint8_t chunkHeader[8];
+    completed = readHttpBytes(*stream, chunkHeader, sizeof(chunkHeader));
+    if (!completed) break;
+    const uint32_t chunkSize = littleEndian32(chunkHeader + 4);
+    if (memcmp(chunkHeader, "fmt ", 4) == 0) {
+      uint8_t format[16];
+      completed = chunkSize >= sizeof(format) && readHttpBytes(*stream, format, sizeof(format));
+      if (!completed) break;
+      channels = littleEndian16(format + 2);
+      sampleRate = littleEndian32(format + 4);
+      bitsPerSample = littleEndian16(format + 14);
+      completed = littleEndian16(format) == 1 && (channels == 1 || channels == 2) &&
+                  bitsPerSample == 16 && sampleRate >= 8000 && sampleRate <= 48000;
+      if (chunkSize > sizeof(format)) completed = completed && skipHttpBytes(*stream, chunkSize - sizeof(format));
+    } else if (memcmp(chunkHeader, "data", 4) == 0) {
+      dataBytes = chunkSize;
+    } else {
+      completed = skipHttpBytes(*stream, chunkSize);
+    }
+  }
+
+  if (completed && dataBytes > 0) {
+    completed = i2s_set_sample_rates(I2S_NUM_0, sampleRate) == ESP_OK;
+    uint8_t buffer[AUDIO_READ_BUFFER_BYTES];
+    const size_t frameBytes = channels * sizeof(int16_t);
+    while (completed && dataBytes > 0) {
+      const size_t requested = min(static_cast<size_t>(dataBytes), sizeof(buffer));
+      const size_t aligned = requested - (requested % frameBytes);
+      if (aligned == 0 || !readHttpBytes(*stream, buffer, aligned)) {
+        completed = false;
+        break;
+      }
+      for (size_t offset = 0; offset < aligned; offset += frameBytes) {
+        const int16_t left = static_cast<int16_t>(buffer[offset] | (buffer[offset + 1] << 8));
+        const int16_t right = channels == 2 ? static_cast<int16_t>(buffer[offset + 2] | (buffer[offset + 3] << 8)) : left;
+        const uint32_t packed = (static_cast<uint32_t>(static_cast<uint16_t>(right)) << 16) |
+                                 static_cast<uint16_t>(left);
+        size_t written = 0;
+        if (i2s_write(I2S_NUM_0, &packed, sizeof(packed), &written, pdMS_TO_TICKS(100)) != ESP_OK || written != sizeof(packed)) {
+          completed = false;
+          break;
+        }
+      }
+      dataBytes -= static_cast<uint32_t>(aligned);
+      playbackUntilMs_ = millis() + 250;
+      yield();
+    }
+  }
+  http.end();
+  i2s_set_clk(I2S_NUM_0, AUDIO_SAMPLE_RATE, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_STEREO);
+  playbackUntilMs_ = completed ? millis() + 150 : 0;
+  if (logs_) logs_->add(LogCategory::HOME_ASSISTANT,
+                        completed ? LogLevel::INFO : LogLevel::ERROR,
+                        completed ? "HA-aankondiging afgespeeld" : "HA-aankondiging afspelen mislukt");
+  if (!completed) setError("HA-audio kon niet worden gedecodeerd");
+  return completed;
+}
+
+bool AudioManager::stopPlayback() {
+  playbackUntilMs_ = 0;
+  if (logs_) logs_->add(LogCategory::HOME_ASSISTANT, LogLevel::INFO, "Speakerweergave gestopt");
+  return true;
 }
 
 void AudioManager::setError(const String& message) {

@@ -96,6 +96,9 @@ De toekomstige acties zijn:
 - `POST /api/v1/audio/assist/start` → start de lokale microfoon-hardwaretest;
 - `POST /api/v1/audio/assist/stop` → beëindig de lokale capture-test;
 - `POST /api/v1/audio/test` → speel een korte 440 Hz speaker-test af.
+- `POST /api/v1/audio/play-url` met `{ "url": "http://...", "contentType": "audio/wav" }`
+  → speel een lokaal Home Assistant WAV-bestand af via de ES8311-speaker.
+- `POST /api/v1/audio/playback/stop` → stop actieve speakerweergave.
 - `PUT /api/v1/audio/volume` met `{ "volume": 0..100 }` → stel het
   speakervolume in en bewaar dit in de deviceconfiguratie.
 

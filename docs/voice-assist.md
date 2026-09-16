@@ -6,9 +6,9 @@ microphone codec, an ES8311 speaker codec and an onboard speaker header. The
 existing HUB75 display path remains independent from the audio path.
 
 This milestone validates the codecs, I2S and speaker output on the real device.
-It is not yet the final Home Assistant Assist transport: the current capture
-endpoint is a local hardware test and does not stream PCM audio to an Assist
-pipeline or run a wake word. That is the next implementation step.
+The HACS integration now exposes the onboard speaker as a Home Assistant
+`media_player` entity. Home Assistant can resolve a TTS media source and route
+the resulting announcement to the display.
 
 ## Hardware profile
 
@@ -41,8 +41,10 @@ actions and states to be used:
 - `PROCESSING`
 - `RESPONDING`
 
-The planned transport will stream 16 kHz, 16-bit microphone audio only while
-an Assist session is active and play returned TTS audio through ES8311. The
+The current announcement transport accepts local HTTP WAV audio (16-bit PCM,
+mono or stereo, 8–48 kHz) and plays it through ES8311. The planned Assist
+transport will stream 16 kHz, 16-bit microphone audio only while an Assist
+session is active and play returned TTS audio through ES8311. The
 HACS integration remains the Home Assistant-side adapter and keeps Home
 Assistant credentials out of the ESP32 firmware.
 
@@ -51,7 +53,8 @@ Assistant credentials out of the ESP32 firmware.
 1. **Completed:** audio hardware validation detects and initializes
    ES7210/ES8311 and exposes a local input meter plus speaker test.
 2. Push-to-talk Assist session over the local network.
-3. Native `assist_satellite` entity, announcements and HA automation actions.
+3. Native `assist_satellite` entity, wake-word detection and full HA Assist
+   conversation transport.
 4. Display feedback for listening, processing, responding and audio errors.
 5. Wake-word detection, preferably with ESP-SR/WakeNet after the audio path is
    stable and microphone gain/false-wake behavior have been tuned.
@@ -78,7 +81,9 @@ The live firmware exposes the following stable endpoints:
   transport capability;
 - `POST /api/v1/audio/assist/start` — start the local microphone capture test;
 - `POST /api/v1/audio/assist/stop` — stop capture;
-- `POST /api/v1/audio/test` — play the local speaker test tone.
+- `POST /api/v1/audio/test` — play the local speaker test tone;
+- `POST /api/v1/audio/play-url` — play a local HTTP WAV announcement;
+- `POST /api/v1/audio/playback/stop` — stop current speaker playback.
 - `PUT /api/v1/audio/volume` — set and persist speaker volume from 0–100.
 
 The current live response deliberately reports `transport: "none"` and
@@ -105,6 +110,29 @@ tests above.
 The portal uses a fast audio-status poll while capture is active. Speak or
 clap close to the microphones and confirm that `inputLevel` changes; a small
 ambient level is expected even in a quiet room.
+
+## Home Assistant announcement
+
+After updating the HACS integration, each display also has a media player,
+usually named `media_player.<display>_speaker`. Use Home Assistant's standard
+TTS action:
+
+```yaml
+action: tts.speak
+target:
+  entity_id: tts.piper
+data:
+  media_player_entity_id: media_player.matrix_slaapkamer_speaker
+  message: "Attentie, de voordeur is geopend."
+  language: nl
+```
+
+The exact TTS entity depends on the provider installed in Home Assistant. The
+current embedded decoder deliberately accepts WAV PCM over local HTTP. Choose
+a TTS provider that returns WAV, keep the display and Home Assistant on the
+same LAN, and avoid HTTPS-only media URLs during this first audio phase.
+MP3/HTTPS support and the native wake-word/Assist transport remain later
+phases.
 
 ## References
 

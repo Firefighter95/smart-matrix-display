@@ -79,6 +79,9 @@
     "switch": {
       "display_power": {"name": "Display aan/uit"}
       ,"display_enabled": {"name": "Display actief"}
+    },
+    "media_player": {
+      "speaker": {"name": "Speaker"}
     }
   }
 }

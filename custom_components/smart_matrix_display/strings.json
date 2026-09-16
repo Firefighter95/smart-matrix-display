@@ -81,6 +81,9 @@
     "switch": {
       "display_power": {"name": "Display power"}
       ,"display_enabled": {"name": "Display enabled"}
+    },
+    "media_player": {
+      "speaker": {"name": "Speaker"}
     }
   }
 }

@@ -73,6 +73,24 @@ void ApiServer::begin() {
     }
     request->send(202, "application/json", "{\"ok\":true,\"test\":\"440Hz\"}");
   });
+  server_.on("/api/v1/audio/playback/stop", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    audio_.stopPlayback();
+    request->send(200, "application/json", "{\"ok\":true,\"state\":\"IDLE\"}");
+  });
+  server_.on("/api/v1/audio/play-url", HTTP_POST, [this](AsyncWebServerRequest* request) {
+    JsonDocument document;
+    if (!parseJsonBody(request, document) || !document["url"].is<const char*>()) {
+      request->send(400, "application/json", "{\"ok\":false,\"error\":{\"code\":\"INVALID_AUDIO_URL\",\"message\":\"url is verplicht.\"}}");
+      return;
+    }
+    const String url = document["url"].as<String>();
+    const String contentType = document["contentType"] | "audio/mpeg";
+    if (!audio_.playUrl(url, contentType)) {
+      request->send(503, "application/json", "{\"ok\":false,\"error\":{\"code\":\"AUDIO_PLAYBACK_FAILED\",\"message\":\"Audio kon niet worden afgespeeld.\"}}");
+      return;
+    }
+    request->send(202, "application/json", "{\"ok\":true,\"state\":\"RESPONDING\"}");
+  }, nullptr, collectJsonBody);
   server_.on("/api/v1/audio/volume", HTTP_PUT, [this](AsyncWebServerRequest* request) {
     JsonDocument document;
     if (!parseJsonBody(request, document) || !document["volume"].is<int>()) {
