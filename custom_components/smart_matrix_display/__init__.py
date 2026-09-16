@@ -77,7 +77,16 @@ from .weather import async_send_weather_state
 
 _LOGGER = logging.getLogger(__name__)
 
-MESSAGE_SCHEMA = vol.Schema(
+def _targeted_schema(fields: dict[Any, Any]) -> vol.Schema:
+    """Accept target.device_id mirrored into service data by HA's editor."""
+
+    return vol.Schema({
+        **fields,
+        vol.Optional(ATTR_DEVICE_ID): vol.Any(cv.string, [cv.string]),
+    })
+
+
+MESSAGE_SCHEMA = _targeted_schema(
     {
         vol.Required(ATTR_MESSAGE): cv.string,
         vol.Optional(ATTR_TITLE, default=""): cv.string,
@@ -92,13 +101,13 @@ MESSAGE_SCHEMA = vol.Schema(
     }
 )
 
-WEATHER_SCHEMA = vol.Schema(
+WEATHER_SCHEMA = _targeted_schema(
     {
         vol.Optional(ATTR_WEATHER_ENTITY): cv.entity_id,
     }
 )
 
-P2000_SCHEMA = vol.Schema(
+P2000_SCHEMA = _targeted_schema(
     {
         vol.Required(ATTR_MESSAGE): cv.string,
         vol.Optional(ATTR_TITLE, default="P2000"): cv.string,
@@ -121,7 +130,7 @@ P2000_SCHEMA = vol.Schema(
     }
 )
 
-ALERT_SCHEMA = vol.Schema(
+ALERT_SCHEMA = _targeted_schema(
     {
         vol.Required(ATTR_MESSAGE): cv.string,
         vol.Optional(ATTR_TITLE, default="ALERT"): cv.string,
@@ -133,7 +142,7 @@ ALERT_SCHEMA = vol.Schema(
     }
 )
 
-EVENT_SCHEMA = vol.Schema(
+EVENT_SCHEMA = _targeted_schema(
     {
         vol.Required(ATTR_SOURCE): vol.In(("portal", "home_assistant", "p2000", "system", "timer", "weather", "api")),
         vol.Required(ATTR_EVENT_TYPE): vol.All(cv.string, vol.Length(min=1, max=64)),
@@ -141,13 +150,10 @@ EVENT_SCHEMA = vol.Schema(
         vol.Optional(ATTR_DURATION, default=20): vol.All(vol.Coerce(int), vol.Range(min=1, max=86400)),
         vol.Optional(ATTR_PRIORITY, default=50): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
         vol.Optional(ATTR_PAYLOAD, default={}): vol.All(dict, vol.Length(max=64)),
-        # Backwards compatibility for older HA action-editor output. The
-        # canonical location remains target.device_id.
-        vol.Optional(ATTR_DEVICE_ID): vol.Any(cv.string, [cv.string]),
     }
 )
 
-LAYOUT_SCHEMA = vol.Schema(
+LAYOUT_SCHEMA = _targeted_schema(
     {
         vol.Required(ATTR_LAYOUT_ID): cv.string,
         vol.Optional(ATTR_DURATION, default=20): vol.All(vol.Coerce(int), vol.Range(min=1, max=86400)),
@@ -156,10 +162,10 @@ LAYOUT_SCHEMA = vol.Schema(
     }
 )
 
-BRIGHTNESS_SCHEMA = vol.Schema({vol.Required(ATTR_BRIGHTNESS): vol.All(vol.Coerce(int), vol.Range(min=0, max=100))})
-PROFILE_SCHEMA = vol.Schema({vol.Required(ATTR_PROFILE_ID): vol.All(cv.string, vol.Length(min=1, max=32))})
-POWER_SCHEMA = vol.Schema({vol.Required(ATTR_ENABLED): cv.boolean})
-LAYOUT_SELECT_SCHEMA = vol.Schema({vol.Required(ATTR_LAYOUT_ID): vol.All(cv.string, vol.Length(min=1, max=64))})
+BRIGHTNESS_SCHEMA = _targeted_schema({vol.Required(ATTR_BRIGHTNESS): vol.All(vol.Coerce(int), vol.Range(min=0, max=100))})
+PROFILE_SCHEMA = _targeted_schema({vol.Required(ATTR_PROFILE_ID): vol.All(cv.string, vol.Length(min=1, max=32))})
+POWER_SCHEMA = _targeted_schema({vol.Required(ATTR_ENABLED): cv.boolean})
+LAYOUT_SELECT_SCHEMA = _targeted_schema({vol.Required(ATTR_LAYOUT_ID): vol.All(cv.string, vol.Length(min=1, max=64))})
 
 
 def _as_list(value: Any) -> list[str]:
@@ -187,6 +193,12 @@ def _target_runtimes(hass: HomeAssistant, call: ServiceCall) -> list[dict[str, A
             "No configured Smart Matrix Display matched the target"
         )
     return runtimes
+
+
+def _device_payload(call: ServiceCall) -> dict[str, Any]:
+    """Remove a mirrored target field before sending data to the device."""
+
+    return {key: value for key, value in call.data.items() if key != ATTR_DEVICE_ID}
 
 
 async def _call_all(
@@ -248,7 +260,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             await _call_all(
                 _target_runtimes(hass, call),
                 "async_send_message",
-                dict(call.data),
+                _device_payload(call),
             )
 
         async def handle_clear_display(call: ServiceCall) -> None:
@@ -269,7 +281,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             message = call.data[ATTR_MESSAGE].strip()
             if location:
                 message = f"{location}\n{message}"
-            payload = dict(call.data)
+            payload = _device_payload(call)
             payload[ATTR_MESSAGE] = message
             event = {
                 "source": "p2000",
@@ -282,7 +294,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             await _call_all(_target_runtimes(hass, call), "async_send_event", event)
 
         async def handle_send_alert(call: ServiceCall) -> None:
-            payload = dict(call.data)
+            payload = _device_payload(call)
             event = {
                 "source": "home_assistant",
                 "type": "alert",
@@ -294,15 +306,15 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             await _call_all(_target_runtimes(hass, call), "async_send_event", event)
 
         async def handle_show_message(call: ServiceCall) -> None:
-            await _call_all(_target_runtimes(hass, call), "async_send_message", dict(call.data))
+            await _call_all(_target_runtimes(hass, call), "async_send_message", _device_payload(call))
 
         async def handle_show_layout(call: ServiceCall) -> None:
-            payload = {key: value for key, value in call.data.items() if key != ATTR_PAYLOAD}
+            payload = {key: value for key, value in _device_payload(call).items() if key != ATTR_PAYLOAD}
             payload[ATTR_PAYLOAD] = call.data.get(ATTR_PAYLOAD, {})
             await _call_all(_target_runtimes(hass, call), "async_show_layout", payload)
 
         async def handle_show_event(call: ServiceCall) -> None:
-            payload = {key: value for key, value in call.data.items() if key not in {ATTR_SOURCE, ATTR_EVENT_TYPE, ATTR_PAYLOAD}}
+            payload = {key: value for key, value in _device_payload(call).items() if key not in {ATTR_SOURCE, ATTR_EVENT_TYPE, ATTR_PAYLOAD}}
             payload.update({"source": call.data[ATTR_SOURCE], "type": call.data[ATTR_EVENT_TYPE], "payload": call.data.get(ATTR_PAYLOAD, {})})
             await _call_all(_target_runtimes(hass, call), "async_send_event", payload)
 
