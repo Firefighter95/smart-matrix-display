@@ -184,6 +184,7 @@ void ApiServer::begin() {
     String layoutJson;
     serializeJson(layout, layoutJson);
     if (!config_.saveLayout(layoutJson)) {
+      logs_.add(LogCategory::CONFIG, LogLevel::ERROR, config_.lastStorageError());
       request->send(500, "application/json", "{\"ok\":false,\"error\":{\"code\":\"CONFIG_ERROR\",\"message\":\"Layout kon niet worden opgeslagen.\"}}");
       return;
     }

@@ -1,5 +1,6 @@
 #include "config_manager.h"
 #include <ArduinoJson.h>
+#include <nvs.h>
 
 namespace {
 const char* DEFAULT_CONFIG = R"json({"schemaVersion":4,"display":{"enabled":true,"brightness":25,"maxBrightness":100,"nightMode":true,"scheduleEnabled":true,"brightnessMode":"schedule","brightnessSchedule":[{"id":"morning","time":"07:00","brightness":45},{"id":"evening","time":"18:00","brightness":25},{"id":"late","time":"22:00","brightness":8},{"id":"midnight","time":"00:00","brightness":2}]},"clock":{"layout":"minimal","use24Hour":true,"showSeconds":false,"showDate":true,"timeColor":"#f4f7ff","dateColor":"#72e6a8","dividerColor":"#43506f","backgroundColor":"#000000","showStatusIndicator":true,"timezone":"Europe/Amsterdam"},"layouts":[],"rules":[],"profiles":[]})json";
@@ -101,6 +102,7 @@ void ConfigManager::begin() {
 String ConfigManager::json() const { return configJson_; }
 
 bool ConfigManager::saveJson(const String& json) {
+  lastStorageError_ = "";
   JsonDocument patch;
   if (deserializeJson(patch, json) != DeserializationError::Ok || !patch.is<JsonObject>()) return false;
   JsonDocument document;
@@ -113,14 +115,19 @@ bool ConfigManager::saveJson(const String& json) {
 }
 
 bool ConfigManager::saveLayout(const String& json) {
+  lastStorageError_ = "";
   JsonDocument layout;
   if (deserializeJson(layout, json) != DeserializationError::Ok || !layout.is<JsonObject>() ||
       !layout["id"].is<const char*>() || !layout["elements"].is<JsonArray>()) {
+    lastStorageError_ = "Layout JSON ongeldig of onvoldoende geheugen.";
     return false;
   }
 
   JsonDocument document;
-  if (deserializeJson(document, configJson_) != DeserializationError::Ok || !document.is<JsonObject>()) return false;
+  if (deserializeJson(document, configJson_) != DeserializationError::Ok || !document.is<JsonObject>()) {
+    lastStorageError_ = "Bestaande configuratie kon niet in geheugen worden geladen.";
+    return false;
+  }
   JsonArray layouts = document["layouts"].as<JsonArray>();
   if (layouts.isNull()) layouts = document["layouts"].to<JsonArray>();
 
@@ -136,6 +143,8 @@ bool ConfigManager::saveLayout(const String& json) {
   return persistDocument(document);
 }
 
+String ConfigManager::lastStorageError() const { return lastStorageError_; }
+
 bool ConfigManager::persistDocument(JsonDocument& document) {
   JsonArrayConst layouts = document["layouts"].as<JsonArrayConst>();
   const uint8_t layoutCount = layouts.isNull() ? 0 : static_cast<uint8_t>(min<size_t>(layouts.size(), 32));
@@ -143,7 +152,13 @@ bool ConfigManager::persistDocument(JsonDocument& document) {
     String layoutJson;
     serializeJson(layouts[index], layoutJson);
     const String key = String("l") + index;
-    if (preferences_.putString(key.c_str(), layoutJson) != layoutJson.length()) return false;
+    if (preferences_.putString(key.c_str(), layoutJson) != layoutJson.length()) {
+      nvs_stats_t stats{};
+      nvs_get_stats(nullptr, &stats);
+      lastStorageError_ = String("NVS-write mislukt voor ") + key + " (" + layoutJson.length() +
+                          " bytes; vrije entries " + stats.free_entries + "/" + stats.total_entries + ").";
+      return false;
+    }
   }
   const uint8_t oldLayoutCount = preferences_.getUChar("lcount", 0);
   for (uint8_t index = layoutCount; index < oldLayoutCount; ++index) {
@@ -158,7 +173,13 @@ bool ConfigManager::persistDocument(JsonDocument& document) {
   document.remove("layouts");
   String baseJson;
   serializeJson(document, baseJson);
-  if (preferences_.putString("config", baseJson) != baseJson.length()) return false;
+  if (preferences_.putString("config", baseJson) != baseJson.length()) {
+    nvs_stats_t stats{};
+    nvs_get_stats(nullptr, &stats);
+    lastStorageError_ = String("NVS-write mislukt voor config (") + baseJson.length() +
+                        " bytes; vrije entries " + stats.free_entries + "/" + stats.total_entries + ").";
+    return false;
+  }
 
   configJson_ = fullJson;
   return true;

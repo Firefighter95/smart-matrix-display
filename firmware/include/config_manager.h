@@ -12,6 +12,7 @@ public:
   String json() const;
   bool saveJson(const String& json);
   bool saveLayout(const String& json);
+  String lastStorageError() const;
   bool saveWifi(const String& ssid, const String& password, const String& hostname);
   String wifiSsid();
   String wifiPassword();
@@ -23,4 +24,5 @@ private:
 
   Preferences preferences_;
   String configJson_;
+  String lastStorageError_;
 };
