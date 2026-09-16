@@ -121,6 +121,9 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
     if (text.isEmpty()) text = source["fallback"] | "";
   }
   text = replaceVariables(text, payload, clockConfig);
+  // The built-in matrix font does not contain the UTF-8 degree glyph. Render
+  // legacy layouts safely as " C" instead of showing a filled replacement box.
+  text.replace("\xC2\xB0", " ");
   const String prefix = element["prefix"] | "";
   const String suffix = element["suffix"] | "";
   return prefix + text + suffix;

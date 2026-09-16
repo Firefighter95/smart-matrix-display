@@ -141,6 +141,9 @@ EVENT_SCHEMA = vol.Schema(
         vol.Optional(ATTR_DURATION, default=20): vol.All(vol.Coerce(int), vol.Range(min=1, max=86400)),
         vol.Optional(ATTR_PRIORITY, default=50): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
         vol.Optional(ATTR_PAYLOAD, default={}): vol.All(dict, vol.Length(max=64)),
+        # Backwards compatibility for older HA action-editor output. The
+        # canonical location remains target.device_id.
+        vol.Optional(ATTR_DEVICE_ID): vol.Any(cv.string, [cv.string]),
     }
 )
 
@@ -168,6 +171,8 @@ def _as_list(value: Any) -> list[str]:
 def _target_runtimes(hass: HomeAssistant, call: ServiceCall) -> list[dict[str, Any]]:
     targets = call.target or {}
     target_device_ids = set(_as_list(targets.get(ATTR_DEVICE_ID)))
+    if not target_device_ids:
+        target_device_ids = set(_as_list(call.data.get(ATTR_DEVICE_ID)))
     if not target_device_ids:
         raise ServiceValidationError("Select at least one Smart Matrix Display device")
 

@@ -49,7 +49,7 @@ export const createDefaultLayouts = (): LayoutModel[] => [
     element({ id: 'time', type: 'clock', x: 0, y: 1, width: 128, height: 22, scale: 3, align: 'center', color: '#F4F7FF' }),
     element({ id: 'date', type: 'date', x: 0, y: 27, width: 128, height: 8, align: 'center', color: '#72E6A8' }),
     element({ id: 'divider', type: 'line', x: 8, y: 40, width: 112, height: 1, color: '#43506F' }),
-    element({ id: 'temperature', type: 'dynamic_text', x: 4, y: 47, width: 58, height: 8, text: '{{temperature}}°C', dataSource: { type: 'weather', path: 'temperatureC', fallback: '--' }, color: '#70D7F4' }),
+    element({ id: 'temperature', type: 'dynamic_text', x: 4, y: 47, width: 58, height: 8, text: '{{temperature}}C', dataSource: { type: 'weather', path: 'temperatureC', fallback: '--' }, color: '#70D7F4' }),
     element({ id: 'wind', type: 'dynamic_text', x: 64, y: 47, width: 60, height: 8, text: '{{wind}}M/S', dataSource: { type: 'weather', path: 'windSpeedMs', fallback: '--.-' }, color: '#70D7F4', align: 'right' }),
   ], 'Klok met actuele temperatuur en windsnelheid.'),
   layout('generic-message', 'Generic Message', 'generic_message', [

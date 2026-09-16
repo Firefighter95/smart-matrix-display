@@ -15,7 +15,7 @@ const clockElementToLayoutElement = (item: NonNullable<ClockConfig['elements']>[
   scale: item.scale,
   color: '#F4F7FF',
   dataSource: item.id === 'temperature' ? { type: 'weather', path: 'temperatureC', fallback: '--' } : item.id === 'wind' ? { type: 'weather', path: 'windSpeedMs', fallback: '--.-' } : item.id === 'fault' ? { type: 'system', path: 'faults', fallback: '' } : undefined,
-  text: item.id === 'temperature' ? '{{temperature}}°C' : item.id === 'wind' ? '{{wind}}M/S' : item.id === 'fault' ? '{{faults}}' : undefined,
+  text: item.id === 'temperature' ? '{{temperature}}C' : item.id === 'wind' ? '{{wind}}M/S' : item.id === 'fault' ? '{{faults}}' : undefined,
 });
 
 export function migrateClockToLayout(clock: ClockConfig, id = 'clock-main', name = 'Hoofdklok'): LayoutModel {

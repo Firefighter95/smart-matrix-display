@@ -81,6 +81,8 @@ Invoke-RestMethod http://smartmatrix.local/api/v1/status | ConvertTo-Json -Depth
 
 De portal-layout `weather` gebruikt `temperatureC` voor de temperatuur en rekent `windSpeedKph` visueel om naar m/s. Het transportcontract blijft km/h; dit voorkomt providerafhankelijke eenheden in de HA-integratie. Op het dashboard zie je de laatste ontvangen conditie, temperatuur, windsnelheid, bron en timestamp.
 
+Voor de fysieke matrix gebruikt de ingebouwde tekstfont de veilige notatie `15.5C`; het Unicode-gradensymbool wordt door de firmware uit oudere layouts verwijderd zodat het geen blokteken kan worden.
+
 ## Audio / Voice Assist
 
 `GET /api/v1/audio` geeft de audio-capabilities en huidige Assist-status terug.
