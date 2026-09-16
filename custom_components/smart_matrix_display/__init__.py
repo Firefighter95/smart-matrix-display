@@ -175,7 +175,9 @@ def _as_list(value: Any) -> list[str]:
 
 
 def _target_runtimes(hass: HomeAssistant, call: ServiceCall) -> list[dict[str, Any]]:
-    targets = call.target or {}
+    # ServiceCall.target is not exposed by every supported HA core version.
+    # Newer action-editor calls may instead mirror device_id into call.data.
+    targets = getattr(call, "target", None) or {}
     target_device_ids = set(_as_list(targets.get(ATTR_DEVICE_ID)))
     if not target_device_ids:
         target_device_ids = set(_as_list(call.data.get(ATTR_DEVICE_ID)))
