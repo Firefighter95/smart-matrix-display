@@ -220,8 +220,8 @@ export const weatherMetricsSummary = (weather?: WeatherSnapshot): string => {
 
 export const horizontalScrollWindow = (text: string, visibleCharacters: number, timeMs: number): string => {
   if (text.length <= visibleCharacters || visibleCharacters < 1) return text;
-  const stream = `${text}    `;
-  const start = Math.floor(timeMs / 300) % stream.length;
+  const stream = `${text}  `;
+  const start = Math.floor(timeMs / 100) % stream.length;
   return Array.from({ length: visibleCharacters }, (_, index) => stream[(start + index) % stream.length]).join('');
 };
 

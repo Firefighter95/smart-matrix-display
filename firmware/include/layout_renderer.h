@@ -17,9 +17,16 @@ public:
   bool hasHorizontalScroll(JsonObjectConst layout) const;
 
 private:
+  struct ScrollState {
+    String elementId;
+    size_t offset = 0;
+    uint32_t lastStepAtMs = 0;
+  };
+
   String valueAt(JsonObjectConst object, const String& path) const;
   String replaceVariables(String text, JsonObjectConst payload, JsonObjectConst clockConfig) const;
   String elementValue(JsonObjectConst element, JsonObjectConst payload, JsonObjectConst clockConfig) const;
+  size_t scrollOffset(const String& elementId, size_t streamLength);
   uint16_t colorFromHex(const String& value, uint16_t fallback) const;
   uint16_t statusColor() const;
   String timeText(JsonObjectConst clockConfig) const;
@@ -31,4 +38,5 @@ private:
   TimeManager& time_;
   WifiManager& wifi_;
   WeatherScreen& weather_;
+  ScrollState scrollStates_[4];
 };

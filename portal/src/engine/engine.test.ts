@@ -48,7 +48,9 @@ describe('layout and variable contracts', () => {
     expect(weatherMetricsSummary(weather)).toBe('17C WZW 9.2m/s V0 M0');
     const text = 'DEZE TEKST IS LANGER DAN HET VENSTER';
     expect(horizontalScrollWindow(text, 20, 0)).toHaveLength(20);
-    expect(horizontalScrollWindow(text, 20, 300)).not.toBe(horizontalScrollWindow(text, 20, 0));
+    expect(horizontalScrollWindow(text, 20, 99)).toBe(horizontalScrollWindow(text, 20, 0));
+    expect(horizontalScrollWindow(text, 20, 100)).not.toBe(horizontalScrollWindow(text, 20, 0));
+    expect(horizontalScrollWindow(text, 20, 200)).not.toBe(horizontalScrollWindow(text, 20, 100));
   });
 
   it('migrates clock blocks without leaving the matrix', () => {

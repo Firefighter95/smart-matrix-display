@@ -214,6 +214,37 @@ bool LayoutRenderer::hasHorizontalScroll(JsonObjectConst layout) const {
   return false;
 }
 
+size_t LayoutRenderer::scrollOffset(const String& elementId, size_t streamLength) {
+  if (streamLength == 0) return 0;
+
+  ScrollState* state = nullptr;
+  ScrollState* available = nullptr;
+  for (ScrollState& candidate : scrollStates_) {
+    if (candidate.elementId == elementId && !elementId.isEmpty()) {
+      state = &candidate;
+      break;
+    }
+    if (!available && candidate.elementId.isEmpty()) available = &candidate;
+  }
+  if (!state) {
+    state = available ? available : &scrollStates_[0];
+    state->elementId = elementId;
+    state->offset = 0;
+    state->lastStepAtMs = millis();
+    return 0;
+  }
+
+  const uint32_t now = millis();
+  state->offset %= streamLength;
+  // Advance one character per rendered frame at most. If other work delays a
+  // frame, keep the ticker moving steadily instead of jumping over positions.
+  if (now - state->lastStepAtMs >= 100) {
+    state->offset = (state->offset + 1) % streamLength;
+    state->lastStepAtMs = now;
+  }
+  return state->offset;
+}
+
 void LayoutRenderer::drawText(const String& text, int16_t x, int16_t y, int16_t width, int16_t height,
                               uint8_t scale, const String& color, const String& align) {
   if (!display_.output() || text.isEmpty()) return;
@@ -286,8 +317,9 @@ void LayoutRenderer::render(JsonObjectConst layout, JsonObjectConst payload, Jso
       const int16_t visibleCharacters = max<int16_t>(1, width / (6 * scale));
       if (String(element["overflow"] | "") == "horizontal_scroll" && text.length() > visibleCharacters) {
         text.toUpperCase();
-        const String stream = text + "    ";
-        const size_t start = (millis() / 300UL) % stream.length();
+        const String stream = text + "  ";
+        const String elementId = element["id"] | "";
+        const size_t start = scrollOffset(elementId, stream.length());
         String window;
         window.reserve(visibleCharacters);
         for (int16_t index = 0; index < visibleCharacters; ++index) {
