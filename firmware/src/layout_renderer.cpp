@@ -238,7 +238,7 @@ size_t LayoutRenderer::scrollOffset(const String& elementId, size_t streamLength
   state->offset %= streamLength;
   // Advance one character per rendered frame at most. If other work delays a
   // frame, keep the ticker moving steadily instead of jumping over positions.
-  if (now - state->lastStepAtMs >= 100) {
+  if (now - state->lastStepAtMs >= 250) {
     state->offset = (state->offset + 1) % streamLength;
     state->lastStepAtMs = now;
   }
