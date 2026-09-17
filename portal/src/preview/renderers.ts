@@ -1,4 +1,4 @@
-import type { ClockConfig, DeviceStatus, DisplayEvent, LayoutElement, LayoutModel, Message } from '../../../shared/schemas/models';
+import type { ClockConfig, DeviceStatus, DisplayEvent, LayoutElement, LayoutModel, Message, WeatherSnapshot } from '../../../shared/schemas/models';
 import { createDefaultClockElements } from '../../../shared/schemas/models';
 import { faultColor } from '../status/health';
 import { resolveVariables } from '../engine/variables';
@@ -191,6 +191,40 @@ const pathValue = (value: unknown, path?: string): unknown => {
   }, value);
 };
 
+export const weatherForecastSummary = (weather?: WeatherSnapshot): string => {
+  const warning = weather?.warning?.trim();
+  const warningIsSafe = !warning || ['veilig', 'safe', 'geen waarschuwing', 'geen waarschuwingen'].includes(warning.toLocaleLowerCase('nl-NL'));
+  return (warningIsSafe ? weather?.forecast : warning)?.replace(/\s+/g, ' ').trim() ?? '';
+};
+
+export const weatherMetricsSummary = (weather?: WeatherSnapshot): string => {
+  if (!weather) return '';
+  const temperature = `${Math.round(weather.temperatureC)}C`;
+  const windSpeedMs = weather.windSpeedKph === undefined ? undefined : (weather.windSpeedKph / 3.6).toFixed(1);
+  const windDirection = weather.windDirection?.trim().toLocaleUpperCase('nl-NL');
+  const wind = windSpeedMs === undefined ? undefined : [windDirection, `${windSpeedMs}m/s`].filter(Boolean).join(' ');
+  const compose = (windValue = wind, includePercent = true) => [
+    temperature,
+    windValue,
+    weather.precipitationTodayProbability === undefined ? undefined : `V${Math.round(weather.precipitationTodayProbability)}${includePercent ? '%' : ''}`,
+    weather.precipitationTomorrowProbability === undefined ? undefined : `M${Math.round(weather.precipitationTomorrowProbability)}${includePercent ? '%' : ''}`,
+  ].filter((part): part is string => Boolean(part)).join(' ');
+  let summary = compose();
+  if (summary.length > 20) summary = compose(wind, false);
+  if (summary.length > 20 && windSpeedMs !== undefined) {
+    const roundedSpeed = `${Math.round(Number(windSpeedMs))}m/s`;
+    summary = compose([windDirection, roundedSpeed].filter(Boolean).join(' '), false);
+  }
+  return summary;
+};
+
+export const horizontalScrollWindow = (text: string, visibleCharacters: number, timeMs: number): string => {
+  if (text.length <= visibleCharacters || visibleCharacters < 1) return text;
+  const stream = `${text}    `;
+  const start = Math.floor(timeMs / 300) % stream.length;
+  return Array.from({ length: visibleCharacters }, (_, index) => stream[(start + index) % stream.length]).join('');
+};
+
 const dataValue = (element: LayoutElement, status: DeviceStatus, event: DisplayEvent | undefined): unknown => {
   const source = element.dataSource;
   if (!source) return undefined;
@@ -199,46 +233,14 @@ const dataValue = (element: LayoutElement, status: DeviceStatus, event: DisplayE
     const weather = status.weather;
     const windSpeedMs = weather?.windSpeedKph === undefined ? undefined : (weather.windSpeedKph / 3.6).toFixed(1);
     const temperature = weather?.temperatureC.toFixed(1);
-    const rainToday = weather?.precipitationTodayProbability;
-    const rainTomorrow = weather?.precipitationTomorrowProbability;
-    const warning = weather?.warning?.trim();
-    const warningIsSafe = !warning || ['veilig', 'safe', 'geen waarschuwing', 'geen waarschuwingen'].includes(warning.toLocaleLowerCase('nl-NL'));
-    const weatherLine = (warningIsSafe ? weather?.forecast : warning)?.split(/[.!?\r\n]/, 1)[0]?.trim() ?? '';
-    const forecastSummary = weatherLine.length <= 20
-      ? weatherLine
-      : `${weatherLine.slice(0, 17).replace(/\s+\S*$/, '').trim() || weatherLine.slice(0, 17).trim()}...`;
-    const metrics = [
-      temperature === undefined ? undefined : `${temperature}C`,
-      windSpeedMs === undefined ? undefined : `W${windSpeedMs}m/s`,
-      rainToday === undefined ? undefined : `V${Math.round(rainToday)}%`,
-      rainTomorrow === undefined ? undefined : `M${Math.round(rainTomorrow)}%`,
-    ].filter((part): part is string => Boolean(part));
-    let metricsSummary = metrics.join(' ');
-    if (metricsSummary.length > 20) metricsSummary = metricsSummary.replaceAll('%', '');
-    if (metricsSummary.length > 20) {
-      metricsSummary = [
-        temperature === undefined ? undefined : `${Math.round(weather!.temperatureC)}C`,
-        windSpeedMs === undefined ? undefined : `W${windSpeedMs}m/s`,
-        rainToday === undefined ? undefined : `V${Math.round(rainToday)}`,
-        rainTomorrow === undefined ? undefined : `M${Math.round(rainTomorrow)}`,
-      ].filter((part): part is string => Boolean(part)).join(' ');
-    }
-    if (metricsSummary.length > 20) {
-      metricsSummary = [
-        temperature === undefined ? undefined : `${Math.round(weather!.temperatureC)}C`,
-        windSpeedMs === undefined ? undefined : `W${Math.round(Number(windSpeedMs))}`,
-        rainToday === undefined ? undefined : `V${Math.round(rainToday)}`,
-        rainTomorrow === undefined ? undefined : `M${Math.round(rainTomorrow)}`,
-      ].filter((part): part is string => Boolean(part)).join(' ');
-    }
     const derived = {
       ...weather,
       summary: [weather?.weatherCode, weather?.description].filter(Boolean).join(' '),
       windSpeedMs,
       temperatureWindSummary: [temperature === undefined ? undefined : `${temperature}C`, windSpeedMs === undefined ? undefined : `${windSpeedMs}M/S`].filter(Boolean).join(' '),
-      rainSummary: [rainToday === undefined ? undefined : `V${rainToday}%`, rainTomorrow === undefined ? undefined : `M${rainTomorrow}%`].filter(Boolean).join(' '),
-      forecastSummary,
-      metricsSummary,
+      rainSummary: [weather?.precipitationTodayProbability === undefined ? undefined : `V${weather.precipitationTodayProbability}%`, weather?.precipitationTomorrowProbability === undefined ? undefined : `M${weather.precipitationTomorrowProbability}%`].filter(Boolean).join(' '),
+      forecastSummary: weatherForecastSummary(weather),
+      metricsSummary: weatherMetricsSummary(weather),
     };
     return pathValue(derived, source.path);
   }
@@ -268,9 +270,14 @@ const elementText = (element: LayoutElement, status: DeviceStatus, event: Displa
   return value === undefined || value === null ? element.dataSource?.fallback ?? '' : `${element.prefix ?? ''}${String(value)}${element.suffix ?? ''}`;
 };
 
-const drawLayoutText = (ctx: CanvasRenderingContext2D, element: LayoutElement, text: string) => {
+const drawLayoutText = (ctx: CanvasRenderingContext2D, element: LayoutElement, text: string, now: Date) => {
   const scale = Math.max(1, Math.min(4, Math.round(element.scale ?? element.fontSize ?? 1)));
-  const lines = element.overflow === 'wrap' ? wrapPixelText(text.toUpperCase(), scale, element.width) : [text.toUpperCase()];
+  const normalizedText = text.toUpperCase();
+  const visibleCharacters = Math.max(1, Math.floor(element.width / (6 * scale)));
+  const displayedText = element.overflow === 'horizontal_scroll'
+    ? horizontalScrollWindow(normalizedText, visibleCharacters, now.getTime())
+    : normalizedText;
+  const lines = element.overflow === 'wrap' ? wrapPixelText(displayedText, scale, element.width) : [displayedText];
   const lineHeight = 8 * scale + 1;
   lines.slice(0, Math.max(1, Math.floor(element.height / lineHeight))).forEach((line, index) => {
     const width = textWidth(line, scale);
@@ -330,7 +337,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
       drawText(ctx, item.icon ?? '◆', item.x, item.y, item.scale ?? 1, item.color ?? '#F4F7FF');
     } else if (item.type === 'timer') {
       const remaining = Number(dataValue(item, context.status, context.event) ?? context.event?.duration ?? 0);
-      drawLayoutText(ctx, { ...renderItem, text: `${Math.max(0, Math.ceil(remaining))}S` }, `${Math.max(0, Math.ceil(remaining))}S`);
+      drawLayoutText(ctx, { ...renderItem, text: `${Math.max(0, Math.ceil(remaining))}S` }, `${Math.max(0, Math.ceil(remaining))}S`, now);
     } else if (item.type === 'progress') {
       const progress = Math.max(0, Math.min(1, Number(dataValue(item, context.status, context.event) ?? 0)));
       ctx.fillStyle = item.backgroundColor ?? '#1A2639';
@@ -340,12 +347,12 @@ export function drawLayout(ctx: CanvasRenderingContext2D, layout: LayoutModel, c
     } else if (item.type === 'clock') {
       const config: ClockConfig = { layout: 'minimal', use24Hour: true, showSeconds: false, showDate: false, timeColor: item.color ?? '#F4F7FF', dateColor: '#72E6A8', dividerColor: '#43506F', backgroundColor: context.backgroundColor ?? '#000000', showStatusIndicator: false, timezone: 'Europe/Amsterdam' };
       const value = formatTime(now, config);
-      drawLayoutText(ctx, { ...renderItem, text: value }, value);
+      drawLayoutText(ctx, { ...renderItem, text: value }, value, now);
     } else if (item.type === 'date') {
       const value = formatDate(now);
-      drawLayoutText(ctx, { ...renderItem, text: value }, value);
+      drawLayoutText(ctx, { ...renderItem, text: value }, value, now);
     } else {
-      drawLayoutText(ctx, renderItem, elementText(renderItem, context.status, context.event, now));
+      drawLayoutText(ctx, renderItem, elementText(renderItem, context.status, context.event, now), now);
     }
     ctx.restore();
   });

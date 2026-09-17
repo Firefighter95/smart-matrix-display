@@ -10,6 +10,25 @@ from homeassistant.exceptions import HomeAssistantError
 from .api import SmartMatrixApiError
 
 UNKNOWN_STATES = {"unknown", "unavailable", "none"}
+WIND_DIRECTIONS_16 = ("N", "NNO", "NO", "ONO", "O", "OZO", "ZO", "ZZO", "Z", "ZZW", "ZW", "WZW", "W", "WNW", "NW", "NNW")
+WIND_DIRECTION_NAMES = {
+    "north": "N", "noord": "N",
+    "northnortheast": "NNO", "noordnoordoost": "NNO", "nne": "NNO", "nno": "NNO",
+    "northeast": "NO", "noordoost": "NO", "ne": "NO", "no": "NO",
+    "eastnortheast": "ONO", "oostnoordoost": "ONO", "ene": "ONO", "ono": "ONO",
+    "east": "O", "oost": "O", "e": "O",
+    "eastsoutheast": "OZO", "oostzuidoost": "OZO", "ese": "OZO", "ozo": "OZO",
+    "southeast": "ZO", "zuidoost": "ZO", "se": "ZO", "zo": "ZO",
+    "southsoutheast": "ZZO", "zuidzuidoost": "ZZO", "sse": "ZZO", "zzo": "ZZO",
+    "south": "Z", "zuid": "Z", "s": "Z",
+    "southsouthwest": "ZZW", "zuidzuidwest": "ZZW", "ssw": "ZZW", "zzw": "ZZW",
+    "southwest": "ZW", "zuidwest": "ZW", "sw": "ZW", "zw": "ZW",
+    "westsouthwest": "WZW", "westzuidwest": "WZW", "wsw": "WZW", "wzw": "WZW",
+    "west": "W", "w": "W",
+    "westnorthwest": "WNW", "westnoordwest": "WNW", "wnw": "WNW",
+    "northwest": "NW", "noordwest": "NW", "nw": "NW",
+    "northnorthwest": "NNW", "noordnoordwest": "NNW", "nnw": "NNW",
+}
 
 
 def _number(value: Any) -> float | None:
@@ -59,6 +78,24 @@ def _text(value: Any) -> str | None:
     return result[:96]
 
 
+def _wind_direction(attributes: dict[str, Any], supplemental: dict[str, Any] | None) -> str | None:
+    raw_direction = _text((supplemental or {}).get("windDirection")) or _text(
+        _attribute(attributes, "wind_direction", "winddirection", "windrichting")
+    )
+    bearing = _number(raw_direction)
+    if bearing is None:
+        bearing = _number(
+            _attribute(attributes, "wind_bearing", "windbearing", "wind_direction_degrees", "wind_direction_deg")
+        )
+    if bearing is not None:
+        index = int((bearing % 360 + 11.25) // 22.5) % len(WIND_DIRECTIONS_16)
+        return WIND_DIRECTIONS_16[index]
+    if raw_direction:
+        normalized = "".join(character for character in raw_direction.lower() if character.isalpha())
+        return WIND_DIRECTION_NAMES.get(normalized, raw_direction[:8].upper())
+    return None
+
+
 def snapshot_from_state(
     state: State, supplemental: dict[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -86,13 +123,16 @@ def snapshot_from_state(
         "description": ("description", "weather_description", "omschrijving", "condition_text"),
         "forecast": ("forecast", "weather_forecast", "weersverwachting", "forecast_text"),
         "warning": ("warning", "weather_warning", "waarschuwing"),
-        "windDirection": ("wind_direction", "winddirection", "windrichting"),
         "sunState": ("sun_state", "sunstate", "zon"),
     }
     for target, names in text_fields.items():
         value = _text((supplemental or {}).get(target)) or _text(_attribute(attributes, *names))
         if value:
             payload[target] = value
+
+    wind_direction = _wind_direction(attributes, supplemental)
+    if wind_direction:
+        payload["windDirection"] = wind_direction
 
     numeric_fields = {
         "rainTodayMm": ("rain_today", "rain_today_mm"),

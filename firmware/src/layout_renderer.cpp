@@ -142,25 +142,24 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
             value = warning;
           }
           value.trim();
-          int sentenceEnd = value.indexOf('.');
-          if (sentenceEnd < 0) sentenceEnd = value.indexOf('!');
-          if (sentenceEnd < 0) sentenceEnd = value.indexOf('?');
-          if (sentenceEnd >= 0) value = value.substring(0, sentenceEnd);
           value.trim();
-          if (value.length() > 20) {
-            String prefix = value.substring(0, 17);
-            const int lastSpace = prefix.lastIndexOf(' ');
-            if (lastSpace > 0) prefix = prefix.substring(0, lastSpace);
-            value = prefix + "...";
-          }
+          value.replace("\r", " ");
+          value.replace("\n", " ");
         }
         else if (path == "metricsSummary") {
           String temperature;
           String wind;
           String today;
           String tomorrow;
-          if (weather["temperatureC"].is<float>()) temperature = String(weather["temperatureC"].as<float>(), 1) + "C";
-          if (weather["windSpeedKph"].is<float>()) wind = "W" + String(weather["windSpeedKph"].as<float>() / 3.6f, 1) + "m/s";
+          if (weather["temperatureC"].is<float>()) {
+            temperature = String(static_cast<int>(roundf(weather["temperatureC"].as<float>()))) + "C";
+          }
+          const String windDirection = String(weather["windDirection"] | "");
+          if (weather["windSpeedKph"].is<float>()) {
+            wind = windDirection;
+            if (!wind.isEmpty()) wind += " ";
+            wind += String(weather["windSpeedKph"].as<float>() / 3.6f, 1) + "m/s";
+          }
           if (weather["precipitationTodayProbability"].is<float>()) today = "V" + String(static_cast<int>(roundf(weather["precipitationTodayProbability"].as<float>()))) + "%";
           if (weather["precipitationTomorrowProbability"].is<float>()) tomorrow = "M" + String(static_cast<int>(roundf(weather["precipitationTomorrowProbability"].as<float>()))) + "%";
           auto composeMetrics = [](const String& temp, const String& windValue, const String& todayValue, const String& tomorrowValue, bool includePercent) {
@@ -176,12 +175,10 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
           };
           value = composeMetrics(temperature, wind, today, tomorrow, true);
           if (value.length() > 20) value = composeMetrics(temperature, wind, today, tomorrow, false);
-          if (value.length() > 20 && weather["temperatureC"].is<float>()) {
-            temperature = String(static_cast<int>(roundf(weather["temperatureC"].as<float>()))) + "C";
-            value = composeMetrics(temperature, wind, today, tomorrow, false);
-          }
           if (value.length() > 20 && weather["windSpeedKph"].is<float>()) {
-            wind = "W" + String(static_cast<int>(roundf(weather["windSpeedKph"].as<float>() / 3.6f)));
+            wind = windDirection;
+            if (!wind.isEmpty()) wind += " ";
+            wind += String(static_cast<int>(roundf(weather["windSpeedKph"].as<float>() / 3.6f))) + "m/s";
             value = composeMetrics(temperature, wind, today, tomorrow, false);
           }
         }
@@ -203,6 +200,18 @@ String LayoutRenderer::elementValue(JsonObjectConst element, JsonObjectConst pay
   const String prefix = element["prefix"] | "";
   const String suffix = element["suffix"] | "";
   return prefix + text + suffix;
+}
+
+bool LayoutRenderer::hasHorizontalScroll(JsonObjectConst layout) const {
+  JsonArrayConst elements = layout["elements"].as<JsonArrayConst>();
+  for (JsonObjectConst element : elements) {
+    if (!(element["visible"] | true) || String(element["overflow"] | "") != "horizontal_scroll") continue;
+    const uint8_t scale = constrain(element["scale"] | element["fontSize"] | 1, 1, 4);
+    const int16_t width = constrain(element["width"] | 128, 1, 128);
+    const int16_t visibleCharacters = max<int16_t>(1, width / (6 * scale));
+    if (elementValue(element, JsonObjectConst(), JsonObjectConst()).length() > visibleCharacters) return true;
+  }
+  return false;
 }
 
 void LayoutRenderer::drawText(const String& text, int16_t x, int16_t y, int16_t width, int16_t height,
@@ -272,7 +281,22 @@ void LayoutRenderer::render(JsonObjectConst layout, JsonObjectConst payload, Jso
       display_.output()->fillRect(x, y, min<int16_t>(6, width), min<int16_t>(6, height), statusColor());
     } else {
       const uint8_t scale = constrain(element["scale"] | element["fontSize"] | 1, 1, 4);
-      drawText(elementValue(element, payload, clockConfig), x, y, width, height, scale, color, element["align"] | "left");
+      String text = elementValue(element, payload, clockConfig);
+      String align = element["align"] | "left";
+      const int16_t visibleCharacters = max<int16_t>(1, width / (6 * scale));
+      if (String(element["overflow"] | "") == "horizontal_scroll" && text.length() > visibleCharacters) {
+        text.toUpperCase();
+        const String stream = text + "    ";
+        const size_t start = (millis() / 300UL) % stream.length();
+        String window;
+        window.reserve(visibleCharacters);
+        for (int16_t index = 0; index < visibleCharacters; ++index) {
+          window += stream[(start + index) % stream.length()];
+        }
+        text = window;
+        align = "left";
+      }
+      drawText(text, x, y, width, height, scale, color, align);
     }
   }
   display_.drawAudioIndicator();

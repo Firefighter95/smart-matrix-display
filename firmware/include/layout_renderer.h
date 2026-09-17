@@ -14,6 +14,7 @@ public:
       : display_(display), time_(time), wifi_(wifi), weather_(weather) {}
 
   void render(JsonObjectConst layout, JsonObjectConst payload, JsonObjectConst clockConfig, uint16_t background);
+  bool hasHorizontalScroll(JsonObjectConst layout) const;
 
 private:
   String valueAt(JsonObjectConst object, const String& path) const;

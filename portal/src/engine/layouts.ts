@@ -60,8 +60,8 @@ export const createDefaultLayouts = (): LayoutModel[] => [
     element({ id: 'time', type: 'clock', x: 4, y: 4, width: 120, height: 16, scale: 2, align: 'center', color: '#F4F7FF' }),
     element({ id: 'date', type: 'date', x: 4, y: 22, width: 120, height: 8, align: 'center', color: '#F4F7FF' }),
     element({ id: 'weather-summary', type: 'dynamic_text', x: 4, y: 32, width: 120, height: 8, dataSource: { type: 'weather', path: 'description', fallback: 'WEERDATA ONTBREEKT' }, align: 'center', color: '#70D7F4', properties: { colorFromWeatherCode: true } }),
-    element({ id: 'forecast-summary', type: 'dynamic_text', x: 4, y: 42, width: 120, height: 8, text: '', dataSource: { type: 'weather', path: 'forecastSummary', fallback: '' }, align: 'center', color: '#F4F7FF' }),
-    element({ id: 'weather-metrics', type: 'dynamic_text', x: 4, y: 52, width: 120, height: 8, dataSource: { type: 'weather', path: 'metricsSummary', fallback: 'WEERDATA ONTBREEKT' }, align: 'center', color: '#70D7F4' }),
+    element({ id: 'forecast-summary', type: 'dynamic_text', x: 4, y: 42, width: 120, height: 8, text: '', dataSource: { type: 'weather', path: 'forecastSummary', fallback: '' }, align: 'left', color: '#F4F7FF', overflow: 'horizontal_scroll' }),
+    element({ id: 'weather-metrics', type: 'dynamic_text', x: 4, y: 52, width: 120, height: 8, dataSource: { type: 'weather', path: 'metricsSummary', fallback: 'WEERDATA ONTBREEKT' }, align: 'center', color: '#70D7F4', overflow: 'horizontal_scroll' }),
   ], 'Weerklok met veilige bezel-marges, omschrijving in weercodekleur, verwachting of waarschuwing, en compacte meetwaarden.'),
   layout('generic-message', 'Generic Message', 'generic_message', [
     element({ id: 'title', type: 'message_title', x: 0, y: 6, width: 128, height: 14, scale: 2, align: 'center', color: '#72E6A8', dataSource: { type: 'event_payload', path: 'title' } }),

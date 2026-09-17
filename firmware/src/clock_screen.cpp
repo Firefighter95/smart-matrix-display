@@ -24,6 +24,8 @@ void ClockScreen::dateText(const struct tm& local, char* buffer, size_t length) 
 
 void ClockScreen::begin() {
   lastSecond_ = -1;
+  animatedLayout_ = false;
+  lastFrameAtMs_ = 0;
   if (display_.mode() == DisplayMode::CLOCK) render();
 }
 
@@ -31,10 +33,10 @@ void ClockScreen::update() {
   if (display_.mode() != DisplayMode::CLOCK || !display_.output()) return;
   struct tm local;
   if (!time_.localTime(local)) {
-    if (millis() % 2000 < 40) render();
+    if ((animatedLayout_ && millis() - lastFrameAtMs_ >= 100) || millis() % 2000 < 40) render();
     return;
   }
-  if (local.tm_sec != lastSecond_) render();
+  if (local.tm_sec != lastSecond_ || (animatedLayout_ && millis() - lastFrameAtMs_ >= 100)) render();
 }
 
 void ClockScreen::render() {
@@ -59,12 +61,15 @@ void ClockScreen::render() {
   // renderer below remains available for older configurations.
   const String activeLayoutId = document["activeLayoutId"] | "";
   JsonArray layouts = document["layouts"].as<JsonArray>();
+  animatedLayout_ = false;
   if (!activeLayoutId.isEmpty()) {
     for (JsonObject layoutModel : layouts) {
       const String category = layoutModel["category"] | "";
       if (String(layoutModel["id"] | "") == activeLayoutId &&
           (category == "clock" || category == "weather" || category == "system")) {
+        animatedLayout_ = renderer_.hasHorizontalScroll(layoutModel);
         renderer_.render(layoutModel, JsonObjectConst(), clock, background);
+        lastFrameAtMs_ = millis();
         if (hasLocalTime) lastSecond_ = local.tm_sec;
         return;
       }

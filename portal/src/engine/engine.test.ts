@@ -3,7 +3,7 @@ import type { DeviceStatus, DisplayEvent } from '../../../shared/schemas/models'
 import { EventEngine } from './eventEngine';
 import { createDefaultLayouts, validateLayout } from './layouts';
 import { migrateClockToLayout } from './migrations';
-import { weatherCodeColor } from '../preview/renderers';
+import { horizontalScrollWindow, weatherCodeColor, weatherForecastSummary, weatherMetricsSummary } from '../preview/renderers';
 import { evaluateRules } from './rules';
 import { resolveVariables } from './variables';
 
@@ -35,9 +35,20 @@ describe('layout and variable contracts', () => {
     expect(weatherLayout?.elements.find((item) => item.id === 'weather-summary')?.properties?.colorFromWeatherCode).toBe(true);
     expect(weatherLayout?.elements.find((item) => item.id === 'weather-summary')?.dataSource?.path).toBe('description');
     expect(weatherLayout?.elements.find((item) => item.id === 'weather-metrics')?.dataSource?.path).toBe('metricsSummary');
+    expect(weatherLayout?.elements.find((item) => item.id === 'forecast-summary')?.overflow).toBe('horizontal_scroll');
+    expect(weatherLayout?.elements.find((item) => item.id === 'weather-metrics')?.overflow).toBe('horizontal_scroll');
     expect(weatherLayout?.elements.every((item) => item.x >= 4 && item.x + item.width <= 124 && item.y >= 4 && item.y + item.height <= 60)).toBe(true);
     expect(weatherCodeColor({ source: 'home_assistant', condition: 'cloudy', weatherCode: 'Groen', temperatureC: 13.9, observedAt: 'now' })).toBe('#72E6A8');
     expect(weatherCodeColor({ source: 'home_assistant', condition: 'cloudy', weatherCode: 'Oranje', temperatureC: 13.9, observedAt: 'now' })).toBe('#FF8C00');
+  });
+
+  it('scrolls the complete forecast and places wind direction before its speed', () => {
+    const weather = { source: 'home_assistant' as const, condition: 'rainy', temperatureC: 17, windSpeedKph: 33.12, windDirection: 'WZW', precipitationTodayProbability: 0, precipitationTomorrowProbability: 0, forecast: 'In de loop van de middag en avond enige tijd regen.', observedAt: 'now' };
+    expect(weatherForecastSummary(weather)).toBe('In de loop van de middag en avond enige tijd regen.');
+    expect(weatherMetricsSummary(weather)).toBe('17C WZW 9.2m/s V0 M0');
+    const text = 'DEZE TEKST IS LANGER DAN HET VENSTER';
+    expect(horizontalScrollWindow(text, 20, 0)).toHaveLength(20);
+    expect(horizontalScrollWindow(text, 20, 300)).not.toBe(horizontalScrollWindow(text, 20, 0));
   });
 
   it('migrates clock blocks without leaving the matrix', () => {

@@ -27,4 +27,6 @@ private:
   WeatherScreen& weather_;
   LayoutRenderer renderer_;
   int lastSecond_ = -1;
+  bool animatedLayout_ = false;
+  uint32_t lastFrameAtMs_ = 0;
 };
