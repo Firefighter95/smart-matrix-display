@@ -89,7 +89,8 @@
     },
     "binary_sensor": {
       "online": {"name": "Online"},
-      "time_synced": {"name": "Tijd gesynchroniseerd"}
+      "time_synced": {"name": "Tijd gesynchroniseerd"},
+      "display_enabled": {"name": "Display actief"}
       ,"audio_available": {"name": "Audio beschikbaar"}
       ,"speaker_connected": {"name": "Speaker verbonden"}
     },

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -19,11 +19,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SmartMatrixPowerSwitch(SmartMatrixEntity, SwitchEntity):
     """Display output power state."""
 
-    _attr_translation_key = "display_power"
+    entity_description = SwitchEntityDescription(
+        key="display_power", translation_key="display_power"
+    )
 
     def __init__(self, coordinator, api, device_id: str, name: str) -> None:
         super().__init__(coordinator, device_id, name)
         self._api = api
+        self.entity_description = type(self).entity_description
         self._attr_unique_id = f"{device_id}_display_power"
 
     @property

@@ -1,5 +1,9 @@
 # Home Assistant / HACS
 
+## Compatibiliteitsfix 1.5.3
+
+De entity-platforms gebruiken officiële Home Assistant `EntityDescription`-objecten. Bestaande unique-ID's, entity keys, device registration en config entries blijven daarbij behouden.
+
 Smart Matrix Display bevat een lokale Home Assistant custom integration die via HACS kan worden geïnstalleerd. De integratie communiceert rechtstreeks met iedere ESP32 over het lokale netwerk via `/api/v1/`.
 
 ## Installatie via HACS

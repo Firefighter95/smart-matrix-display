@@ -8,6 +8,7 @@ from typing import Any
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
+    BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -18,22 +19,20 @@ from .entity import SmartMatrixEntity
 
 
 @dataclass(frozen=True, kw_only=True)
-class _BinarySensorSpec:
-    key: str
-    translation_key: str
-    device_class: BinarySensorDeviceClass | None = None
+class SmartMatrixBinarySensorDescription(BinarySensorEntityDescription):
+    """Description for a Smart Matrix binary status sensor."""
 
 
 BINARY_SENSORS = (
-    _BinarySensorSpec(
+    SmartMatrixBinarySensorDescription(
         key="online",
         translation_key="online",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
-    _BinarySensorSpec(key="time_synced", translation_key="time_synced"),
-    _BinarySensorSpec(key="display_enabled", translation_key="display_enabled"),
-    _BinarySensorSpec(key="audio_available", translation_key="audio_available"),
-    _BinarySensorSpec(key="speaker_connected", translation_key="speaker_connected"),
+    SmartMatrixBinarySensorDescription(key="time_synced", translation_key="time_synced"),
+    SmartMatrixBinarySensorDescription(key="display_enabled", translation_key="display_enabled"),
+    SmartMatrixBinarySensorDescription(key="audio_available", translation_key="audio_available"),
+    SmartMatrixBinarySensorDescription(key="speaker_connected", translation_key="speaker_connected"),
 )
 
 
@@ -57,13 +56,11 @@ class SmartMatrixBinarySensor(SmartMatrixEntity, BinarySensorEntity):
     """A binary sensor backed by a field in GET /api/v1/status."""
 
     def __init__(
-        self, coordinator, device_id: str, name: str, spec: _BinarySensorSpec
+        self, coordinator, device_id: str, name: str, spec: SmartMatrixBinarySensorDescription
     ) -> None:
         super().__init__(coordinator, device_id, name)
         self.entity_description = spec
         self._attr_unique_id = f"{device_id}_{spec.key}"
-        self._attr_translation_key = spec.translation_key
-        self._attr_device_class = spec.device_class
 
     @property
     def is_on(self) -> Any:

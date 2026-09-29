@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.select import SelectEntity
+from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -20,14 +20,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class _SmartMatrixSelect(SmartMatrixEntity, SelectEntity):
+    entity_description: SelectEntityDescription
+
     def __init__(self, coordinator, api, device_id: str, name: str, suffix: str) -> None:
         super().__init__(coordinator, device_id, name)
         self._api = api
+        self.entity_description = type(self).entity_description
         self._attr_unique_id = f"{device_id}_{suffix}"
 
 
 class SmartMatrixLayoutSelect(_SmartMatrixSelect):
-    _attr_translation_key = "active_layout"
+    entity_description = SelectEntityDescription(
+        key="active_layout", translation_key="active_layout"
+    )
 
     def __init__(self, coordinator, api, device_id: str, name: str) -> None:
         super().__init__(coordinator, api, device_id, name, "active_layout")
@@ -46,7 +51,9 @@ class SmartMatrixLayoutSelect(_SmartMatrixSelect):
 
 
 class SmartMatrixProfileSelect(_SmartMatrixSelect):
-    _attr_translation_key = "active_profile"
+    entity_description = SelectEntityDescription(
+        key="active_profile", translation_key="active_profile"
+    )
 
     def __init__(self, coordinator, api, device_id: str, name: str) -> None:
         super().__init__(coordinator, api, device_id, name, "active_profile")

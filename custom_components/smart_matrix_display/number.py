@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
@@ -24,11 +24,19 @@ class SmartMatrixBrightnessNumber(SmartMatrixEntity, NumberEntity):
     _attr_native_max_value = 100
     _attr_native_step = 1
     _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_translation_key = "brightness_control"
+    entity_description = NumberEntityDescription(
+        key="brightness_control",
+        translation_key="brightness_control",
+        native_unit_of_measurement=PERCENTAGE,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+    )
 
     def __init__(self, coordinator, api, device_id: str, name: str) -> None:
         super().__init__(coordinator, device_id, name)
         self._api = api
+        self.entity_description = type(self).entity_description
         self._attr_unique_id = f"{device_id}_brightness_control"
 
     @property

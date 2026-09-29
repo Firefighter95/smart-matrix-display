@@ -89,7 +89,8 @@
     },
     "binary_sensor": {
       "online": {"name": "Online"},
-      "time_synced": {"name": "Time synchronized"}
+      "time_synced": {"name": "Time synchronized"},
+      "display_enabled": {"name": "Display enabled"}
       ,"audio_available": {"name": "Audio available"}
       ,"speaker_connected": {"name": "Speaker connected"}
     },
